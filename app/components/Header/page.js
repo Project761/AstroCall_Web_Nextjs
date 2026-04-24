@@ -122,15 +122,19 @@ export default function Header() {
   };
 
   const handleTalkClick = () => {
-
-    handleNavigation("/talk-to-astrologers");
-
+    if (isLogin) {
+      handleNavigation("/talk-to-astrologers");
+    } else {
+      setIsAuthModalOpen(true);
+    }
   };
 
   const handleChatClick = () => {
-
-    handleNavigation("/chat-to-astrologers");
-
+    if (isLogin) {
+      handleNavigation("/chat-to-astrologers");
+    } else {
+      setIsAuthModalOpen(true);
+    }
   };
 
   const amount = loginUserData?.WalletAmt || 0;
