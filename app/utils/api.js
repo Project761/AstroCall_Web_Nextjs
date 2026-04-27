@@ -1,16 +1,31 @@
 // Next.js API utilities - Converted from React version
 
+const normalizeBaseUrl = (baseUrl) => {
+  if (!baseUrl) return '';
+  return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+};
+
+const buildUrl = (baseUrl, pathOrUrl) => {
+  if (!pathOrUrl) return normalizeBaseUrl(baseUrl);
+  if (String(pathOrUrl).startsWith('http')) return pathOrUrl;
+
+  const base = normalizeBaseUrl(baseUrl);
+  const path = String(pathOrUrl).replace(/^\/+/, '');
+  return new URL(path, base).toString();
+};
+
 // Environment variables for API URLs
 const getApiUrl = () => {
   if (typeof window === 'undefined') {
     // Server-side rendering
-    return process.env.NEXT_PUBLIC_API_BASE_URL || 'https://liveapi.astrocall.live/api/';
+    return normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL || 'https://liveapi.astrocall.live/api/');
   }
 
   const urlSet = window.location.origin;
-  return urlSet === 'https://astrocall.live'
+  const base = urlSet === 'https://astrocall.live'
     ? 'https://api.astrocall.live/api/'  // Live domain
     : 'https://liveapi.astrocall.live/api/';  // Local development domain
+  return normalizeBaseUrl(base);
 };
 
 // Get visitor ID from localStorage (client-side only)
@@ -38,7 +53,7 @@ const refreshAuthToken = async () => {
   if (!auth?.refresh_token) return null;
 
   try {
-    const loginUrl = getApiUrl() + '/Astrologer/Astrologer_Login';
+    const loginUrl = buildUrl(getApiUrl(), 'Astrologer/Astrologer_Login');
     const refreshVal = {
       refresh_token: auth.refresh_token,
       grant_type: 'refresh_token'
@@ -90,8 +105,7 @@ export const fetchData = async (URL) => {
 export const getPostData = async (url, postData) => {
   try {
     const visitorId = getVisitorId();
-    const apiUrl = getApiUrl();
-    const fullUrl = url.startsWith('http') ? url : `${apiUrl}${url}`;
+    const fullUrl = buildUrl(getApiUrl(), url);
 
     const response = await fetch(fullUrl, {
       method: 'POST',
@@ -116,7 +130,7 @@ export const GetWithToken = async (url) => {
   const makeApiCall = async () => {
     const auth = getAuthToken();
     const visitorId = getVisitorId();
-    const apiUrl = getApiUrl() + '/' + url;
+    const apiUrl = buildUrl(getApiUrl(), url);
 
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -163,7 +177,7 @@ export const postWithToken = async (url, postData) => {
   const makeApiCall = async () => {
     const auth = getAuthToken();
     const visitorId = getVisitorId();
-    const apiUrl = getApiUrl() + '/' + url;
+    const apiUrl = buildUrl(getApiUrl(), url);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -211,7 +225,7 @@ export const TokenWithDeleteUpadateAdd = async (url, postData) => {
   const makeApiCall = async () => {
     const auth = getAuthToken();
     const visitorId = getVisitorId();
-    const apiUrl = getApiUrl() + '/' + url;
+    const apiUrl = buildUrl(getApiUrl(), url);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -259,7 +273,7 @@ export const TokenImageUpload = async (url, formData) => {
   const makeApiCall = async () => {
     const auth = getAuthToken();
     const visitorId = getVisitorId();
-    const apiUrl = getApiUrl() + '/' + url;
+    const apiUrl = buildUrl(getApiUrl(), url);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -307,7 +321,7 @@ export const getPostTicketData = async (url, postData) => {
   const makeApiCall = async () => {
     const auth = getAuthToken();
     const visitorId = getVisitorId();
-    const apiUrl = getApiUrl() + '/' + url;
+    const apiUrl = buildUrl(getApiUrl(), url);
 
     try {
       const response = await fetch(apiUrl, {
@@ -374,8 +388,7 @@ export const AddDeleteUpadate = async (url, postData) => {
 // Simple GET with data parsing
 export const getData = async (url, postData) => {
   try {
-    const apiUrl = getApiUrl();
-    const fullUrl = url.startsWith('http') ? url : `${apiUrl}${url}`;
+    const fullUrl = buildUrl(getApiUrl(), url);
     const response = await fetch(fullUrl, postData);
     const data = await response.json();
     const parseData = JSON.parse(data?.data);
