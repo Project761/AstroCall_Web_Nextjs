@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 
 export default function SimpleOTPInput({ value, onChange, numInputs = 4 }) {
   const [otpValues, setOtpValues] = useState(Array(numInputs).fill(''));

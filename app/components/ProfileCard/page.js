@@ -5,9 +5,10 @@ import { useState, useRef, useEffect } from "react";
 import { FaWallet, FaHeart, FaGem, FaPray, FaComments, FaPhone, FaUser, FaHandsHelping, FaChevronRight } from "react-icons/fa";
 import { SlUserFollowing } from "react-icons/sl";
 import { MdAccessTime } from "react-icons/md";
-import { formatIndianNumber } from "../../utils/utility";
+
 import Image from "next/image";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
+
 
 export default function ProfileCard({onClose, isOpen, onLogout }) {
 
@@ -89,7 +90,7 @@ export default function ProfileCard({onClose, isOpen, onLogout }) {
           <FaWallet className="text-orange-500" />
           <span className="font-semibold text-gray-800">Balance:</span>
         </div>
-        <span className="font-bold text-orange-600">{formatIndianNumber(loginUserData?.WalletAmt || 0)}</span>
+        <span className="font-bold text-orange-600">₹{loginUserData?.WalletAmt || 0}</span>
       </div>
 
       {/* Menu Items */}

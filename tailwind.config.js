@@ -1,0 +1,21 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primaryColor: "#FF6600",
+        secondaryColor: "#fd7f2a62",
+        backgroundColor: "#EEEEEE",
+      }
+    },
+  },
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
+}
+

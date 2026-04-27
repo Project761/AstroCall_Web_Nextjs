@@ -103,73 +103,20 @@ export default function Carousel() {
   if (!isClient) return null;
 
   return (
-    // <div className="relative w-full overflow-hidden">
-    //   <div className="relative w-full min-h-[180px] sm:min-h-[240px] md:min-h-[280px]">
-
-    //     {/* Fallback BG */}
-    //     {images.length === 0 && (
-    //       <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100" />
-    //     )}
-
-    //     {images.map((image, index) => (
-    //       <div
-    //         key={index}
-    //         className={`transition-opacity duration-700 ${
-    //           index === currentIndex
-    //             ? "opacity-100"
-    //             : "opacity-0 absolute inset-0"
-    //         }`}
-    //       >
-    //         {index === 0 ? (
-    //           <img
-    //             src={getImageUrl(image.imagesurl)}
-    //             className="w-full object-cover"
-    //             alt={`Slide ${index + 1}`}
-    //             loading="eager"
-    //             fetchPriority="high"
-    //           />
-    //         ) : (
-    //           <LazyLoadImage
-    //             src={getImageUrl(image.imagesurl)}
-    //             className="w-full object-cover"
-    //             alt={`Slide ${index + 1}`}
-    //             effect="blur"
-    //           />
-    //         )}
-
-    //         {/* Text Overlay */}
-    //         <div className="absolute inset-0 flex flex-col md:flex-row justify-center items-center px-4 md:px-10 text-center md:text-left">
-    //           <h1 className="text-white md:text-black font-bold text-sm sm:text-lg md:text-2xl lg:text-3xl drop-shadow">
-    //             Talk to India's Best Astrologers Online – Kundali, Horoscope & Consultation
-    //           </h1>
-
-    //           {/* Desktop Buttons */}
-    //           <div className="hidden md:flex flex-col gap-3 ml-auto">
-    //             <AppStoreButton url={IOSUrl} theme="dark" />
-    //           </div>
-    //         </div>
-    //       </div>
-    //     ))}
-    //   </div>
-
-    //   {/* Mobile Buttons */}
-    //   <div className="flex md:hidden justify-center py-3 gap-3">
-    //     <GooglePlayButton url={APKUrl} theme="dark" />
-    //     <AppStoreButton url={IOSUrl} theme="dark" />
-    //   </div>
-    // </div>
-
     <div className="main-container relative w-full overflow-hidden">
       <div className="relative w-full h-auto min-h-[180px] sm:min-h-[240px] md:min-h-[280px]">
         {images?.length === 0 && (
           <div
             className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
-          // aria-hidden
+            aria-hidden
           />
         )}
         {images?.map((image, index) => (
           <div
             key={index}
+            // className={`transition-opacity duration-700 ease-in-out ${index === currentIndex ? "opacity-100" : "opacity-0 absolute inset-0"
+            //   }`}
+            // data-carousel-item
             className={`transition-opacity duration-700 ease-in-out ${index === currentIndex ? "opacity-100" : "opacity-0 absolute inset-0"
               }`}
             data-carousel-item

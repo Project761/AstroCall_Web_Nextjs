@@ -15,8 +15,11 @@ import CommonLoader from "../components/Common/Loader";
 
 
 const Blog = () => {
+  const getSessionValue = (key) =>
+    typeof window !== "undefined" ? sessionStorage.getItem(key) || "" : "";
+
   const urlCategory = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('category') : null;
-  const BlogCategory = sessionStorage.getItem("category") || "";
+  const BlogCategory = getSessionValue("category");
   // const { setLanguageStatus } = useContext(MenuContext);
   const [blogData, setBlogData] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -44,7 +47,9 @@ const Blog = () => {
       });
 
       if (matchedCategory) {
-        sessionStorage.setItem("category", matchedCategory.BlogCategoryID);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("category", matchedCategory.BlogCategoryID);
+        }
         setSelectedCategory(matchedCategory);
       }
     }
@@ -52,10 +57,12 @@ const Blog = () => {
 
 
   useEffect(() => {
-    const cameFromCategory = sessionStorage.getItem("fromCategory");
+    const cameFromCategory = getSessionValue("fromCategory");
     if (cameFromCategory) {
       return () => {
-        sessionStorage.removeItem("fromCategory");
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("fromCategory");
+        }
       };
     }
   }, [BlogCategory]);
@@ -90,7 +97,7 @@ const Blog = () => {
 
   const filteredBlogs = useMemo(() => {
     let blogs = blogData;
-    const currentBlogCategory = sessionStorage.getItem("category") || BlogCategory;
+    const currentBlogCategory = getSessionValue("category") || BlogCategory;
     if (currentBlogCategory) {
       blogs = blogs?.filter((item) => item?.BlogCategoryID == currentBlogCategory);
     }
@@ -116,7 +123,7 @@ const Blog = () => {
 
   return (
     <>
-      <Header />
+
 
       <>
         <SEO
@@ -137,8 +144,9 @@ const Blog = () => {
             ]
           }}
         />
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 pt-32 sm:pt-40">
-          <div className="main-container rounded-lg sm:rounded-xl text-white text-center py-8 sm:py-10 md:py-12 px-3 sm:px-4">
+
+        <div className="bg-[#F973160D] pt-20 lg:pt-24">
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 main-container rounded-lg sm:rounded-xl text-white text-center py-8 sm:py-10 md:py-12 px-3 sm:px-4 mt-4 sm:mt-6 shadow-lg">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold px-2 text-white drop-shadow-lg">AstroCall Blog</h1>
             <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mt-2 px-2 text-white/95 drop-shadow-md">
               Vedic Guidance, Festival Tips, Astrological Remedies
@@ -403,7 +411,7 @@ const Blog = () => {
         </div>
       </>
 
-      <Footer footers={{}} />
+
     </>
   );
 };

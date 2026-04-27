@@ -144,6 +144,7 @@ export default function CommonAstrologicalServices() {
                           src="/images/kundli.webp"
                           alt={card.title}
                           fill
+                          sizes="(max-width: 1024px) 96px, 96px"
                           className="object-contain"
                         />
                       </div>

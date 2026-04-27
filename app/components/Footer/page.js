@@ -327,8 +327,8 @@ export default function Footer({ footers }) {
               {iseleven2 ? null : (
                 <li>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Astrologer Login</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Astrologer Registration</Link></li>
+                    <li><Link href="/astrologer-login" className="text-sm sm:text-base hover:underline transition">Astrologer Login</Link></li>
+                    <li><Link href="/astrologer-register" className="text-sm sm:text-base hover:underline transition">Astrologer Registration</Link></li>
                   </ul>
                 </li>
               )}
