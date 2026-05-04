@@ -205,7 +205,7 @@ const AstrologerLogin = () => {
                 toastifySuccess("Successfully LogIn");
                 router.push('/astrologer-panel/dashboard');
                 // requestForToken(Resdata[0]?.Astro) - to be implemented
-                // HandleAstro(0) - to be implemented
+               
             }
             else if (Resdata?.[0]?.IsVerified === "0") {
                 // Logout User if logged in - to be implemented
@@ -216,7 +216,7 @@ const AstrologerLogin = () => {
                 }
                 router.push('/astrologer-panel/dashboard');
                 // requestForToken(Resdata[0]?.Astro) - to be implemented
-                // HandleAstro(0) - to be implemented
+                
             }
         }
         catch (error) {

@@ -118,20 +118,24 @@ const ChatToAstrologers = () => {
     const [showPopup, setShowPopup] = useState(false);
     const [selected, setSelected] = useState("Popularity");
     const GenderOptions = ["Male", "Female"];
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         }
     }, []);
+
     useEffect(() => {
         if (UserLoginId) {
             GetData_ActivityLog("ChatFragment", "Chat astrologer list is fetch Now");
         }
     }, [UserLoginId]);
+
     useEffect(() => {
         Get_Data_Astrologer();
         Get_BusyTimes();
     }, []);
+
     useEffect(() => {
         if (typeof document !== 'undefined') {
             document.body.style.overflow = "auto";
@@ -140,10 +144,13 @@ const ChatToAstrologers = () => {
             };
         }
     }, []);
+
     const GetPrice = PricePerMinastro ? PricePerMinastro * 5 : popupData?.Rate * 5;
+
     const handleSearchChange = (e) => {
         setSearchVal(e.target.value);
     };
+
     useEffect(() => {
         const filteredData = astrologers?.filter((item) => item?.DisplayName &&
             typeof item?.DisplayName === "string" &&
@@ -151,10 +158,11 @@ const ChatToAstrologers = () => {
         setastrologerdata(filteredData);
         setDisplayedAstrologers(filteredData);
     }, [searchVal, AstroNameHomePage, astrologers]);
+    
     const loginOrChatModal = (card) => {
         try {
             if (typeof window !== 'undefined' && localStorage.getItem("UserLoginId")) {
-                const navUrl = `/UserChatHome?page=chat-to-astro&AstroId=${card?.ID}&Type=chat&IsChat=${card?.IsChat}`;
+                const navUrl = `/chat-to-astrologers/user-chat-home?AstroId=${card?.ID}&Type=chat&IsChat=${card?.IsChat}`;
                 router.push(navUrl);
             }
             else {
@@ -164,7 +172,7 @@ const ChatToAstrologers = () => {
         catch (error) {
             console.error("Navigation error in loginOrChatModal:", error);
             if (typeof window !== 'undefined' && localStorage.getItem("UserLoginId") && card?.ID) {
-                window.location.href = `/UserChatHome?page=chat-to-astro&AstroId=${card?.ID}&Type=chat&IsChat=${card?.IsChat}`;
+                window.location.href = `/chat-to-astrologers/user-chat-home?AstroId=${card?.ID}&Type=chat&IsChat=${card?.IsChat}`;
             }
         }
     };

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { FaWallet, FaHeart, FaGem, FaPray, FaComments, FaPhone, FaUser, FaHandsHelping, FaChevronRight } from "react-icons/fa";
+import { FaWallet, FaHeart, FaGem, FaPray, FaComments, FaPhone, FaUser, FaHandsHelping, FaChevronRight, FaStar } from "react-icons/fa";
 import { SlUserFollowing } from "react-icons/sl";
 import { MdAccessTime } from "react-icons/md";
 
@@ -15,7 +15,7 @@ export default function ProfileCard({onClose, isOpen, onLogout }) {
   const { loginUserData, loadingUserData, Get_SingleData_User } = useMenuContext();
   
 
-  console.log(loginUserData ,'sdf')
+  // console.log(loginUserData ,'sdf')
   const router = useRouter();
   const profileRef = useRef(null);
 
@@ -145,6 +145,16 @@ export default function ProfileCard({onClose, isOpen, onLogout }) {
           >
             <FaGem className="text-orange-500" />
             <span>My GemStone</span>
+            <FaChevronRight className="ml-auto text-gray-400" />
+          </button>
+
+          {/* Suggested */}
+          <button
+            onClick={() => handleNavigation("/my-account/suggested")}
+            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
+          >
+            <FaStar className="text-orange-500" />
+            <span>Suggested</span>
             <FaChevronRight className="ml-auto text-gray-400" />
           </button>
 

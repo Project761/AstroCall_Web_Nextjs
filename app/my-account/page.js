@@ -1,14 +1,28 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FaUser, FaEnvelope, FaPhone, FaCamera, FaSave, FaEdit } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaCamera, FaSave, FaEdit, FaHeart, FaGem, FaComments, FaWallet, FaShoppingBag, FaQuestionCircle, FaHeadset, FaStar, FaUsers } from "react-icons/fa";
 import SEO from "../components/SEO/page";
 import { useMenuContext } from "../hooks/useMenuContext";
 export default function MyAccount() {
     const router = useRouter();
     const { loginUserData, loadingUserData, Get_SingleData_User } = useMenuContext();
-    console.log("loginUserData", loginUserData);
+    // console.log("loginUserData", loginUserData);
     const [isEditing, setIsEditing] = useState(false);
+    const [activeTab, setActiveTab] = useState("profile");
+
+    const menuItems = [
+        { id: "profile", label: "Profile", icon: <FaUser />, path: "/my-account" },
+        { id: "favorites", label: "Favorites", icon: <FaHeart />, path: "/my-favorites" },
+        { id: "following", label: "Following", icon: <FaUsers />, path: "/my-following" },
+        { id: "gemstone", label: "My Gemstone", icon: <FaGem />, path: "/my-gemstone" },
+        { id: "suggested", label: "Suggested", icon: <FaStar />, path: "/my-account/suggested" },
+        { id: "chats", label: "My Chats", icon: <FaComments />, path: "/my-chats" },
+        { id: "wallet", label: "My Wallet", icon: <FaWallet />, path: "/my-wallet" },
+        { id: "packages", label: "My Packages", icon: <FaShoppingBag />, path: "/my-packages" },
+        { id: "questions", label: "My Questions", icon: <FaQuestionCircle />, path: "/my-questions" },
+        { id: "support", label: "Support", icon: <FaHeadset />, path: "/support" },
+    ];
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -99,7 +113,33 @@ export default function MyAccount() {
       <SEO title="My Account - AstroCall" description="Manage your profile information and preferences" keywords="my account, profile, astrocall"/>
       
       <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          {/* Navigation Tabs */}
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div className="flex flex-wrap gap-2">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (item.path === "/my-account") {
+                      setActiveTab("profile");
+                    } else {
+                      router.push(item.path);
+                    }
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === item.id && item.path === "/my-account"
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <span className="text-sm">{item.icon}</span>
+                  <span className="text-sm font-medium">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Page Header */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex items-center justify-between">

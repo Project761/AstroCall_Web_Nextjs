@@ -1,141 +1,152 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { FaGem, FaSearch, FaShoppingCart, FaStar } from "react-icons/fa";
-import SEO from "../components/SEO/page";
-export default function MyGemStone() {
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { postWithToken } from '../utils/api';
+import { FaGem } from 'react-icons/fa';
+import { PiCertificateLight } from 'react-icons/pi';
+import { format } from 'date-fns';
+
+const MyGemStone = () => {
     const router = useRouter();
-    const [userData, setUserData] = useState(null);
-    const [gemstones, setGemstones] = useState([]);
-    const [searchTerm, setSearchTerm] = useState("");
+    const UserLoginId = localStorage.getItem("UserLoginId") || "";
+    const [bookingGemStone, setBookingGemStone] = useState([]);
+    const [activeTab, setActiveTab] = useState('My Orders');
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        const loginData = localStorage.getItem("LoginTokenData");
-        if (loginData) {
-            try {
-                const parsedData = JSON.parse(loginData);
-                setUserData(parsedData);
-                // Mock gemstone data - replace with actual API call
-                setGemstones([
-                    {
-                        id: 1,
-                        name: "Blue Sapphire",
-                        price: 2500,
-                        image: "/images/gemstone1.webp",
-                        description: "Brings wealth and prosperity",
-                        benefits: ["Wealth", "Career Growth", "Health"],
-                        rating: 4.7,
-                        reviews: 45,
-                        isPurchased: true,
-                        purchaseDate: "2024-04-20"
-                    },
-                    {
-                        id: 2,
-                        name: "Red Coral",
-                        price: 1800,
-                        image: "/images/gemstone2.webp",
-                        description: "Enhances courage and confidence",
-                        benefits: ["Courage", "Leadership", "Energy"],
-                        rating: 4.5,
-                        reviews: 32,
-                        isPurchased: true,
-                        purchaseDate: "2024-04-15"
-                    }
-                ]);
-            }
-            catch (error) {
-                console.error("Error parsing user data:", error);
-                router.push("/");
-            }
+        if (UserLoginId) {
+            Get_Data_Gemstone();
         }
-        else {
-            router.push("/");
+    }, [UserLoginId]);
+
+    const Get_Data_Gemstone = async () => {
+        const val = { UserID: UserLoginId, IsActive: '1' };
+        try {
+            const res = await postWithToken('GemstoneOrder/GetData_GemstoneOrder', val);
+            if (res) setBookingGemStone(res);
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
         }
-    }, [router]);
-    const filteredGemstones = gemstones.filter(gemstone => gemstone.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        gemstone.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    if (!userData) {
-        return (<div className="min-h-screen bg-gray-50">
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
-          </div>
-        </div>
-      </div>);
-    }
-    return (<>
-      <SEO title="My GemStone - AstroCall" description="View your purchased gemstones and remedies"/>
-      
-      <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex items-center gap-3">
-              <FaGem className="text-purple-500 text-2xl"/>
-              <h1 className="text-2xl font-bold text-gray-800">My GemStone</h1>
-              <span className="bg-purple-100 text-purple-600 px-2 py-1 rounded-full text-sm font-semibold">
-                {gemstones.length}
-              </span>
+    };
+
+    const tabs = ['My Orders', 'Certificates'];
+
+    return (
+        <div className="min-h-screen p-4">
+            <div className=" main-container mx-auto">
+                <h1 className="text-2xl  text-orange-500 font-semibold mb-1">My Gemstones</h1>
+                <p className="text-gray-600 text-sm mb-6">View your gemstone purchases, authenticity certificates, and recommended gemstones.</p>
+                
+                {/* Tabs */}
+                <div className="flex border-b mb-6 space-x-6">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`pb-2 text-sm font-medium ${activeTab === tab
+                                ? 'text-orange-500 border-b-2 border-orange-500'
+                                : 'text-gray-500 hover:text-orange-500'
+                                }`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Loader */}
+                {loading ? (
+                    <div className="flex justify-center py-24">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                    </div>
+                ) : (
+                    <>
+                        {bookingGemStone.length > 0 ? (
+                            <div className="space-y-6">
+                                {bookingGemStone?.map((order) => (
+                                    <div
+                                        key={order.GemstoneOrderID}
+                                        className="bg-white border border-orange-100 shadow-sm rounded-xl p-5"
+                                    >
+                                        {/* Header */}
+                                        <div className="flex justify-between text-sm text-gray-500 mb-3">
+                                            <span>Order #{order.GemstoneOrderID}</span>
+                                            <div className="flex items-center space-x-2">
+                                                <span> {format(new Date(order.CreatedDtTm), "yyyy-MM-dd HH:mm")}</span>
+                                                <span
+                                                    className={`${order?.OrderStatus === "Delivered"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : "bg-red-100 text-red-700"
+                                                        } text-xs px-2 py-0.5 rounded-full font-medium`}
+                                                >
+                                                    {order?.OrderStatus}
+                                                </span>
+
+                                            </div>
+                                        </div>
+
+                                        {/* Product */}
+                                        <div className="flex gap-4">
+                                            <img
+                                                src={order?.Image1 ? `https://${order?.Image1?.replace(/\\/g, "/")}` : '/gemstone-placeholder.jpg'}
+                                                alt={order.GemstoneName}
+                                                className="w-20 h-20 object-cover rounded border"
+                                            />
+                                            <div>
+                                                <h3 className="text-gray-800 font-semibold text-sm">{order.GemstoneName}</h3>
+                                                <p className="text-orange-600 font-semibold text-sm mt-1">₹{order.Amt}</p>
+                                                <p className="text-xs text-gray-500">Quantity: {order.Qty}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Certificate */}
+                                        <div className="mt-4 bg-orange-50 border border-dashed border-orange-200 p-4 rounded-md flex items-start gap-3">
+                                            <FaGem className="text-orange-400 text-lg mt-0.5" />
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-orange-900">Authenticity Certificate</h4>
+                                                <p className="text-xs text-gray-600 mt-0.5">
+                                                    Your gemstone comes with an authenticity certificate. You can download it from the Certificates tab.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Footer */}
+                                        <div className="mt-4 flex justify-between items-center">
+                                            <p className="text-sm font-medium text-gray-700">
+                                                Total: <span className="text-black">₹{order.Amt || '2,100'}</span>
+                                            </p>
+                                            <div className="space-x-2">
+                                                <button 
+                                                    onClick={() => router.push(`/gemstone?Gemstone-to-astrologersGT=${order?.GemstoneId}`)}
+                                                    className="px-4 py-1.5 border text-sm rounded text-orange-500 border-orange-300 hover:bg-orange-100"
+                                                >
+                                                    Details
+                                                </button>
+
+                                                <button 
+                                                    onClick={() => router.push(`/gemstone?Gemstone-to-astrologersGT=${order?.GemstoneId}`)}
+                                                    className="px-4 py-1.5 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+                                                >
+                                                    Buy Again
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-24 text-gray-500">
+                                <FaGem className="mx-auto text-5xl mb-4 text-orange-200" />
+                                <h2 className="text-lg font-semibold text-gray-700">No Orders Found</h2>
+                                <p className="text-sm">You haven't purchased any gemstones yet.</p>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-3 text-gray-400"/>
-              <input type="text" placeholder="Search gemstones..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"/>
-            </div>
-          </div>
-
-          {filteredGemstones.length === 0 ? (<div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <FaGem className="text-gray-300 text-6xl mx-auto mb-4"/>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No gemstones purchased yet</h3>
-              <p className="text-gray-600 mb-6">Explore our collection of authentic gemstones</p>
-              <button onClick={() => router.push("/gemstones")} className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors">
-                Browse Gemstones
-              </button>
-            </div>) : (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredGemstones.map((gemstone) => (<div key={gemstone.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <div className="relative">
-                    <div className="h-48 w-full rounded-t-lg overflow-hidden bg-gray-100">
-                      <Image src={gemstone.image} alt={gemstone.name} width={200} height={200} className="w-full h-full object-cover"/>
-                    </div>
-                    {gemstone.isPurchased && (<div className="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        Purchased
-                      </div>)}
-                  </div>
-
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-800 mb-1">{gemstone.name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{gemstone.description}</p>
-                    
-                    <div className="flex items-center gap-1 mb-2">
-                      <FaStar className="text-yellow-400 text-sm"/>
-                      <span className="text-sm font-medium">{gemstone.rating}</span>
-                      <span className="text-xs text-gray-500">({gemstone.reviews} reviews)</span>
-                    </div>
-
-                    <div className="mb-3">
-                      <p className="text-sm font-medium text-gray-700 mb-1">Benefits:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {gemstone.benefits.map((benefit, index) => (<span key={index} className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded">
-                            {benefit}
-                          </span>))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-lg font-bold text-purple-600">₹{gemstone.price}</span>
-                      {gemstone.isPurchased && (<span className="text-xs text-gray-500">Purchased: {gemstone.purchaseDate}</span>)}
-                    </div>
-
-                    <button className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center gap-2">
-                      <FaShoppingCart className="text-sm"/>
-                      <span>View Details</span>
-                    </button>
-                  </div>
-                </div>))}
-            </div>)}
         </div>
-      </div>
-    </>);
-}
+    );
+};
+
+export default MyGemStone;
