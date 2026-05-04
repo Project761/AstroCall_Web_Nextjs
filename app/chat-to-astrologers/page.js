@@ -389,11 +389,11 @@ const ChatToAstrologers = () => {
         }}/>
 
       <div className="bg-[#F973160D]">
-        <div className="main-container text-left py-3 sm:py-4 md:py-5 mt-16">
-          <div className="bg-orange-500 rounded-md w-full text-white text-center py-2 sm:py-3 md:py-4 px-3 sm:px-4">
+        <div className="main-container text-left py-3 sm:py-4 md:py-5 ">
+          <div className="bg-orange-500 rounded-md w-full text-white text-center py-2 sm:py-3 md:py-4 px-3 sm:px-4 mt-16">
             <div className="flex flex-col items-center justify-center text-center">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 flex-wrap">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold">
                   Chat with Our Expert Astrologers
                 </h1>
               </div>
