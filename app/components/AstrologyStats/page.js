@@ -1,14 +1,7 @@
 "use client";
-
 import React from "react";
 import { useRouter } from "next/navigation";
-import {
-  FaCalendarAlt,
-  FaHeart,
-  FaGem,
-  FaPhoneAlt,
-  FaComments,
-} from "react-icons/fa";
+import { FaCalendarAlt, FaHeart, FaGem, FaPhoneAlt, FaComments } from "react-icons/fa";
 import { GiSun, GiBookCover, GiCrystalBall } from "react-icons/gi";
 import { MdStars, MdOutlineHomeWork } from "react-icons/md";
 import { RiNumbersFill } from "react-icons/ri";
@@ -145,15 +138,15 @@ export default function AstrologyStats() {
 
       {/* Stats */}
       <div className="max-w-6xl mx-auto mt-10 grid grid-cols-2 md:grid-cols-4 gap-6 px-4">
-        {stats.map((item, i) => (
+        {stats.map((item, index) => (
           <div
-            key={i}
+            key={index}
             className="bg-white shadow rounded-xl p-6 text-center"
           >
             <h3 className="text-xl font-bold text-orange-500">{item.value}</h3>
             <p className="text-gray-600 text-sm mt-1">{item.label}</p>
           </div>
-        ))}
+        ))} 
       </div>
 
       {/* Description */}
