@@ -35,6 +35,7 @@ import { MdPhoneInTalk } from "react-icons/md";
 import { IoMdChatboxes } from "react-icons/io";
 
 import { useMenuContext } from "@/app/hooks/useMenuContext";
+import UserChat from "@/app/user-chat/page";
 
 
 
@@ -737,6 +738,8 @@ export default function Header() {
         onLoginSuccess={handleLoginSuccess}
 
       />
+
+      <UserChat />
 
     </>
 

@@ -39,12 +39,13 @@ body {
   margin: 0 auto;
 }
 
-.line, .line-3 {
+.line,
+.line-3 {
   background: #f76f32;
 }
 
 .text-shadow-xl {
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Homepage specific styles */
@@ -81,4 +82,8 @@ body {
   .right-image {
     display: none;
   }
+}
+
+.bg{
+  background-color: #15a821;
 }

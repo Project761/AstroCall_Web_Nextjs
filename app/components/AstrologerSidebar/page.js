@@ -17,6 +17,8 @@ import {
 import { MdOutlineAssignmentTurnedIn } from "react-icons/md";
 import { BsChatDots } from "react-icons/bs";
 import { FiPhoneCall } from "react-icons/fi";
+import { useMenuContext } from "@/app/hooks/useMenuContext";
+import Image from "next/image";
 
 const NAV_ITEMS = [
   { name: "Dashboard", icon: <FaTachometerAlt />, path: "/astrologer-panel/dashboard" },
@@ -35,6 +37,9 @@ const NAV_ITEMS = [
 ];
 
 const AstrologerSidebar = ({ isOpen = true, onNavigate }) => {
+
+  const { loginAstrologerData, setLoginAstrologerData, astrows } = useMenuContext();
+
   const pathname = usePathname();
   const router = useRouter();
 
@@ -59,18 +64,20 @@ const AstrologerSidebar = ({ isOpen = true, onNavigate }) => {
           <div className="relative">
             <div className="relative mt-4 flex items-center justify-center">
               <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                <img
-                  src="/images/profile pic.webp"
-                  alt="Profile"
+                <Image
+                  src={loginAstrologerData?.AvatarUrl ? `https://${loginAstrologerData?.AvatarUrl?.replace(/\\/g, "/")}` : "/images/profile pic.webp"}
+                  width={80}
+                  height={80}
                   loading="lazy"
                   decoding="async"
                   className="max-h-full max-w-full object-contain"
+                  alt="Profile"
                 />
               </div>
             </div>
             <span className="absolute bottom-1 right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
           </div>
-          <h5 className="text-white text-sm font-semibold mt-2 capitalize">Astrologer</h5>
+          <h5 className="text-white text-sm font-semibold mt-2 capitalize">{loginAstrologerData?.FirstName || "Astrologer"}</h5>
         </div>
 
         <nav className="flex-1 overflow-y-auto">
@@ -82,9 +89,8 @@ const AstrologerSidebar = ({ isOpen = true, onNavigate }) => {
                   <Link
                     href={item.path}
                     onClick={onNavigate}
-                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-colors ${
-                      isActive ? "bg-orange-600 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                    }`}
+                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-colors ${isActive ? "bg-orange-600 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      }`}
                   >
                     <span className="text-lg">{item.icon}</span>
                     <span>{item.name}</span>

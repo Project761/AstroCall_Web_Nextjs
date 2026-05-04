@@ -4,73 +4,25 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { FaHeart, FaStar, FaPhone, FaComment, FaSearch, FaFilter } from "react-icons/fa";
 import SEO from "../components/SEO/page";
+import { postWithToken, TokenWithDeleteUpadateAdd } from "../utils/api";
 export default function MyFavorites() {
     const router = useRouter();
     const [userData, setUserData] = useState(null);
-    const [favorites, setFavorites] = useState([]);
+    const [favouritedata, setfavouritedata] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterCategory, setFilterCategory] = useState("all");
+    
+    const UserLoginId = localStorage.getItem("UserLoginId") ? localStorage.getItem("UserLoginId") : "";
     useEffect(() => {
         const loginData = localStorage.getItem("LoginTokenData");
         if (loginData) {
             try {
                 const parsedData = JSON.parse(loginData);
                 setUserData(parsedData);
-                // Mock favorite astrologers data - replace with actual API call
-                setFavorites([
-                    {
-                        id: 1,
-                        name: "Dr. Priya Sharma",
-                        expertise: "Vedic Astrology",
-                        rating: 4.8,
-                        reviews: 234,
-                        experience: "15 years",
-                        price: 50,
-                        image: "/images/profile pic.webp",
-                        languages: ["Hindi", "English"],
-                        isOnline: true,
-                        isFavorite: true
-                    },
-                    {
-                        id: 2,
-                        name: "Acharya Rajesh Kumar",
-                        expertise: "Numerology & Vastu",
-                        rating: 4.9,
-                        reviews: 189,
-                        experience: "12 years",
-                        price: 75,
-                        image: "/images/profile pic.webp",
-                        languages: ["Hindi", "English", "Tamil"],
-                        isOnline: false,
-                        isFavorite: true
-                    },
-                    {
-                        id: 3,
-                        name: "Guru Maya Devi",
-                        expertise: "Tarot Reading",
-                        rating: 4.7,
-                        reviews: 156,
-                        experience: "10 years",
-                        price: 60,
-                        image: "/images/profile pic.webp",
-                        languages: ["Hindi", "English"],
-                        isOnline: true,
-                        isFavorite: true
-                    },
-                    {
-                        id: 4,
-                        name: "Pandit Suresh Joshi",
-                        expertise: "Kundli Matching",
-                        rating: 4.6,
-                        reviews: 98,
-                        experience: "8 years",
-                        price: 40,
-                        image: "/images/profile pic.webp",
-                        languages: ["Hindi", "Marathi"],
-                        isOnline: false,
-                        isFavorite: true
-                    }
-                ]);
+                if (UserLoginId) {
+                    Get_Data_favouriteslist();
+                }
             }
             catch (error) {
                 console.error("Error parsing user data:", error);
@@ -81,23 +33,56 @@ export default function MyFavorites() {
             router.push("/");
         }
     }, [router]);
-    const handleRemoveFavorite = (astrologerId) => {
-        setFavorites(prev => prev.filter(astrologer => astrologer.id !== astrologerId));
+    
+    const Get_Data_favouriteslist = async () => {
+        const val = { 'UserID': UserLoginId, 'IsActive': '1' };
+        try {
+            const res = await postWithToken('Astrofavouriteslist/GetData_Astrofavouriteslist', val);
+            if (res) {
+                setfavouritedata(res?.filter((item) => item?.AstroID));
+            }
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+            console.log(error, 'error')
+        }
     };
-    const handleTalkToAstrologer = (astrologerId) => {
-        router.push(`/talk-to-astrologers/${astrologerId}`);
+
+    const favouriteslist_Delete = async (astroId) => {
+        const favorite = favouritedata.find(fav => fav.AstroID === astroId);
+        if (!favorite) return;
+
+        const val = {
+            'FavouritesID': favorite.FavouritesID,
+            'DeleteByUser': '1',
+            'IsActive': '0',
+        };
+        try {
+            const res = await TokenWithDeleteUpadateAdd('Astrofavouriteslist/Delete_Astrofavouriteslist', val);
+            if (res) {
+                Get_Data_favouriteslist();
+            }
+        } catch (error) {
+            console.error('Error deleting favourite:', error);
+        }
     };
-    const handleChatWithAstrologer = (astrologerId) => {
-        router.push(`/chat-to-astrologers/${astrologerId}`);
+    const handleRemoveFavorite = (astroId) => {
+        favouriteslist_Delete(astroId);
     };
-    const filteredFavorites = favorites.filter(astrologer => {
-        const matchesSearch = astrologer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            astrologer.expertise.toLowerCase().includes(searchTerm.toLowerCase());
+    const handleTalkToAstrologer = (astroId) => {
+        router.push(`/talk-to-astrologers/${astroId}`);
+    };
+    const handleChatWithAstrologer = (astroId) => {
+        router.push(`/chat-to-astrologers/${astroId}`);
+    };
+    const filteredFavorites = favouritedata.filter(astrologer => {
+        const matchesSearch = astrologer.AstroName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            astrologer.Expertise?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter = filterCategory === "all" ||
-            astrologer.expertise.toLowerCase().includes(filterCategory.toLowerCase());
+            astrologer.Expertise?.toLowerCase().includes(filterCategory.toLowerCase());
         return matchesSearch && matchesFilter;
     });
-    if (!userData) {
+    if (!userData || loading) {
         return (<div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
@@ -119,7 +104,7 @@ export default function MyFavorites() {
                 <FaHeart className="text-red-500 text-2xl"/>
                 <h1 className="text-2xl font-bold text-gray-800">My Favorites</h1>
                 <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-sm font-semibold">
-                  {favorites.length}
+                  {favouritedata.length}
                 </span>
               </div>
             </div>
@@ -155,58 +140,58 @@ export default function MyFavorites() {
                 Explore Astrologers
               </button>
             </div>) : (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredFavorites.map((astrologer) => (<div key={astrologer.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              {filteredFavorites.map((astrologer) => (<div key={astrologer.AstroID} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
                   {/* Astrologer Image and Favorite Button */}
                   <div className="relative">
                     <div className="h-48 w-full rounded-t-lg overflow-hidden bg-gray-100">
-                      <Image src={astrologer.image} alt={astrologer.name} width={200} height={200} className="w-full h-full object-cover"/>
+                      <Image src={astrologer.AstroProfile || "/images/profile pic.webp"} alt={astrologer.AstroName} width={200} height={200} className="w-full h-full object-cover"/>
                     </div>
-                    <button onClick={() => handleRemoveFavorite(astrologer.id)} className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md hover:bg-red-50 transition-colors">
+                    <button onClick={() => handleRemoveFavorite(astrologer.AstroID)} className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md hover:bg-red-50 transition-colors">
                       <FaHeart className="text-red-500"/>
                     </button>
-                    {astrologer.isOnline && (<div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    {astrologer.IsOnline && (<div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
                         Online
                       </div>)}
                   </div>
 
                   {/* Astrologer Info */}
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-800 mb-1">{astrologer.name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{astrologer.expertise}</p>
+                    <h3 className="font-semibold text-gray-800 mb-1">{astrologer.AstroName}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{astrologer.Expertise}</p>
                     
                     {/* Rating */}
                     <div className="flex items-center gap-1 mb-2">
                       <FaStar className="text-yellow-400 text-sm"/>
-                      <span className="text-sm font-medium">{astrologer.rating}</span>
-                      <span className="text-xs text-gray-500">({astrologer.reviews} reviews)</span>
+                      <span className="text-sm font-medium">{astrologer.Rating || '4.5'}</span>
+                      <span className="text-xs text-gray-500">({astrologer.TotalReviews || '0'} reviews)</span>
                     </div>
 
                     {/* Experience */}
                     <p className="text-sm text-gray-600 mb-3">
-                      <span className="font-medium">Experience:</span> {astrologer.experience}
+                      <span className="font-medium">Experience:</span> {astrologer.Experience || 'N/A'}
                     </p>
 
                     {/* Languages */}
                     <div className="flex flex-wrap gap-1 mb-3">
-                      {astrologer.languages.map((lang, index) => (<span key={index} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                          {lang}
+                      {astrologer.Languages?.split(',').map((lang, index) => (<span key={index} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                          {lang.trim()}
                         </span>))}
                     </div>
 
                     {/* Price */}
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-lg font-bold text-orange-600">
-                        ₹{astrologer.price}/min
+                        ₹{astrologer.PricePerMin || '50'}/min
                       </span>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex gap-2">
-                      <button onClick={() => handleTalkToAstrologer(astrologer.id)} className="flex-1 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 text-sm">
+                      <button onClick={() => handleTalkToAstrologer(astrologer.AstroID)} className="flex-1 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 text-sm">
                         <FaPhone className="text-xs"/>
                         <span>Talk</span>
                       </button>
-                      <button onClick={() => handleChatWithAstrologer(astrologer.id)} className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-1 text-sm">
+                      <button onClick={() => handleChatWithAstrologer(astrologer.AstroID)} className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-1 text-sm">
                         <FaComment className="text-xs"/>
                         <span>Chat</span>
                       </button>
