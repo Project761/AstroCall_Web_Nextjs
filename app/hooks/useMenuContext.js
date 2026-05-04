@@ -6,7 +6,5 @@ export const useMenuContext = () => {
     if (!context) {
         throw new Error("useMenuContext must be used within a MenuProvider");
     }
-
-    
     return context;
 };

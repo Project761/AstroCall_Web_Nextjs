@@ -39,7 +39,7 @@ export default function HomeFAQ() {
               className="w-full text-left bg-white rounded-lg shadow p-4 flex justify-between items-center hover:shadow-lg transition-shadow"
             >
               <span className="font-medium">{faq.question}</span>
-              <span className="text-orange-500 text-[22px]">{openIndex === index ? '-' : '+'}</span>
+              <span className="text-orange-500">{openIndex === index ? '−' : '+'}</span>
             </button>
             {openIndex === index && (
               <div className="bg-white rounded-b-lg shadow p-4 border-t">

@@ -9,15 +9,9 @@ import { useMenuContext } from "@/app/hooks/useMenuContext";
 
 const Plans = () => {
     const router = useRouter();
-    const [UserLoginId, setUserLoginId] = useState("");
+    const UserLoginId = typeof window !== 'undefined' && localStorage.getItem("UserLoginId") ? localStorage.getItem("UserLoginId") : "";
     const { Get_SingleData_User, PlanSuccessPopup, setPlanSuccessPopup } = useMenuContext();
     const [plansdata, setplansdata] = useState();
-
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            setUserLoginId(localStorage.getItem("UserLoginId") || "");
-        }
-    }, []);
 
     useEffect(() => {
         Get_Data_WalletPackage();

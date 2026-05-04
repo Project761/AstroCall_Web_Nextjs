@@ -48,8 +48,6 @@ export const useUserData = () => {
         };
         fetchUserData();
     }, [router]);
-
-    
     const refreshUserData = async () => {
         if (!userData?.ID && !userData?.UserID)
             return;
