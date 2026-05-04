@@ -170,7 +170,7 @@ const OnlinePuja = () => {
             };
             const res = await TokenWithDeleteUpadateAdd("PhonePay/OrderStatus", val);
             if (res?.state === "COMPLETED") {
-                console.log(res, "res");
+                // console.log(res, "res");
                 setpujareviewstatus(true);
                 if (typeof window !== 'undefined') {
                     sessionStorage.removeItem("MerchantId");

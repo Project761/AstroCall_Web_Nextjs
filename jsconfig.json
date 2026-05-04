@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "https://liveapi.astrocall.live/api/",
     "paths": {
       "@/*": [
         "./*"

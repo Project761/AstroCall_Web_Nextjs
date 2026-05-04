@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import Header from "./Header/page";
 import Footer from "./Footer/page";
 import MenuProvider from "./MenuProvider";
+import { SocketProvider } from "../context/SocketContext";
+
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
@@ -13,9 +15,12 @@ export default function AppShell({ children }) {
 
   return (
     <MenuProvider>
-      {!hideLayout && <Header />}
-      {children}
-      {!hideLayout && <Footer footers={[]} />}
+      <SocketProvider>
+        {!hideLayout && <Header />}
+        {children}
+        {!hideLayout && <Footer footers={[]} />}
+       
+      </SocketProvider>
     </MenuProvider>
   );
 }

@@ -100,9 +100,9 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
     try {
       const val = { MobileNo: phone };
       const res = await getPostData("Astrologer/CheckIfMobileRegistered", val);
-      console.log(res, 'res')
+      // console.log(res, 'res')
       if (res[0]?.Message === "Astrologer Found") {
-        console.log("click1")
+        // console.log("click1")
         setPhone("");
         setErrorMessage("Number is not Registered with the User Account.");
       } else if (res[0]?.Message === "User Found") {

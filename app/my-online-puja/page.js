@@ -4,58 +4,56 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { FaPray, FaSearch, FaCalendar, FaClock, FaRupeeSign, FaOm } from "react-icons/fa";
 import SEO from "../components/SEO/page";
+import { postWithToken } from "../utils/api";
+
 export default function MyOnlinePuja() {
     const router = useRouter();
+    const UserLoginId = localStorage.getItem("UserLoginId") || '';
     const [userData, setUserData] = useState(null);
     const [pujas, setPujas] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
         const loginData = localStorage.getItem("LoginTokenData");
         if (loginData) {
             try {
                 const parsedData = JSON.parse(loginData);
                 setUserData(parsedData);
-                // Mock puja data - replace with actual API call
-                setPujas([
-                    {
-                        id: 1,
-                        name: "Ganesh Puja",
-                        description: "For success and removing obstacles",
-                        priest: "Pandit Sharma",
-                        date: "2024-04-25",
-                        time: "10:00 AM",
-                        duration: "45 min",
-                        cost: 1500,
-                        image: "/images/puja1.webp",
-                        status: "upcoming",
-                        benefits: ["Success", "Obstacle Removal", "Prosperity"]
-                    },
-                    {
-                        id: 2,
-                        name: "Lakshmi Puja",
-                        description: "For wealth and prosperity",
-                        priest: "Pandit Kumar",
-                        date: "2024-04-20",
-                        time: "06:00 PM",
-                        duration: "30 min",
-                        cost: 1200,
-                        image: "/images/puja2.webp",
-                        status: "completed",
-                        benefits: ["Wealth", "Prosperity", "Financial Growth"]
-                    }
-                ]);
-            }
-            catch (error) {
+                fetchPujas();
+            } catch (error) {
                 console.error("Error parsing user data:", error);
                 router.push("/");
             }
         }
-        else {
-            router.push("/");
-        }
     }, [router]);
+
+    const fetchPujas = async () => {
+        setLoading(true);
+        try {
+            const val = {
+                "CreatedFrom": '',
+                "CreatedTo": '',
+                "OrderStatus": '',
+                "UserID": UserLoginId,
+                "PujaStatus": '',
+                "AstroID": '',
+                "IsActive": '1',
+            };
+            const response = await postWithToken('BookingPuja/GetData_BookingPuja', val);
+            if (response) {
+                setPujas(response);
+            }
+        } catch (error) {
+            console.error('Error fetching pujas:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const filteredPujas = pujas.filter(puja => puja.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         puja.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
     if (!userData) {
         return (<div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center h-screen">
