@@ -5,12 +5,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useContext, useRef, useEffect } from "react";
 import { IoIosArrowDown } from "react-icons/io";
-import { AppStoreButton, GooglePlayButton } from "react-mobile-app-button";
-import { useTranslation } from "react-i18next";
+
 import { MenuContext } from "@/app/context/MenuContext";
 
 export default function Footer(props) {
-  const { t } = useTranslation();
+
   const { MuhuratData, setMuhuratData, loginUserData, Get_Data_Muhurat, setVratUpvaasData, VratUpvaasData, Get_Data_VratandUpvaas, LanguageDropdown, HandleAstro, setIsModalOpen } = useContext(MenuContext);
   const [GetAstroLoginId, setGetAstroLoginId] = useState("");
   const [UserLoginId, setUserLoginId] = useState("");
@@ -328,7 +327,7 @@ export default function Footer(props) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleThirdHeading}
                 >
-                  {t("onlinePuja")} <IoIosArrowDown className="text-sm sm:text-base" />
+                  online Puja <IoIosArrowDown className="text-sm sm:text-base" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] drop-shadow-md"></div>
               </li>

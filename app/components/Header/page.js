@@ -13,7 +13,6 @@ import ProfileCard from "../ProfileCard/page";
 import LanguageDropdown from "../LanguageDropdown/page";
 
 import { MenuContext } from "@/app/context/MenuContext";
-import { useTranslation } from "react-i18next";
 import { postWithToken, getPostData, TokenWithDeleteUpadateAdd } from "@/app/utils/api";
 import { toastifySuccess } from "@/app/utils/utility";
 
@@ -44,7 +43,7 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { t } = useTranslation();
+  
 
   const {
     isMenuOpen,

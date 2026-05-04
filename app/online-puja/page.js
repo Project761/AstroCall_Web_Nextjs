@@ -49,7 +49,7 @@ const OnlinePuja = () => {
   const [opD, setopD] = useState('');
   const router = useRouter();
   const pathname = usePathname();
-  // Simple translation function (replacement for react-i18next)
+
   const t = (key) => {
     const translations = {
       "bookNow": "Book Now"
