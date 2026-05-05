@@ -151,14 +151,14 @@ export default function TodayPanchang() {
     // ---------------- UI ----------------
     return (
         <div className="min-h-screen bg-gray-50 pt-20">
-            <div className="max-w-7xl mx-auto px-4 py-12">
+            <div className="max-w-7xl mx-auto px-4 mt-2">
                 {/* <h1 className="text-4xl font-bold text-center mb-10">
                     Talk with Astrologers
                 </h1> */}
                 <div className="bg-gradient-to-b from-orange-50 to-white min-h-screen pb-20">
 
                     {/* 🔥 HERO SECTION */}
-                    <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-16 text-center shadow-lg">
+                    <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-16 text-center shadow-lg rounded-lg sm:rounded-xl">
                         <h1 className="text-4xl font-bold tracking-tight">
                             Today’s Panchang
                         </h1>
