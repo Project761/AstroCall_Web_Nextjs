@@ -82,7 +82,7 @@ export default function UserChat() {
         setUsermessage(ChatStartUser);
         setPopupData(data);
         setChatPopUpStatus(true);
-        router.push(`/user-chat/chat?channel=${encodeURIComponent(popupData?.ChannelName || '')}&UserChatTokenId=${encodeURIComponent(popupData?.UserChatTokenId || '')}&WaitingListId=${encodeURIComponent(popupData?.WaitingListId || '')}`);
+        router.push(`/user-chat/chat?channel=${encodeURIComponent(data?.ChannelName || '')}&UserChatTokenId=${encodeURIComponent(data?.UserChatTokenId || '')}&WaitingListId=${encodeURIComponent(data?.WaitingListId || '')}`);
         break;
 
       case "CancelRequest":
@@ -295,8 +295,8 @@ export default function UserChat() {
     console.log(popupData, 'popupDatasdfsd')
     if (popupData?.Message === "User Chat is Start" || popupData?.Message === "User Chat is Live.") {
       router.push(`/user-chat/chat?channel=${encodeURIComponent(popupData?.ChannelName || '')}&UserChatTokenId=${encodeURIComponent(popupData?.UserChatTokenId || '')}&WaitingListId=${encodeURIComponent(popupData?.WaitingListId || '')}`);
-    } 
-   
+    }
+
   }
 
   const UserCancelRequest = async () => {
@@ -381,20 +381,15 @@ export default function UserChat() {
             >
 
               <div className="relative">
-                {
-                  popupData?.AvatarUrl ?
-                    <Image
-                      src={
-                        popupData?.AvatarUrl
-                          ? `https://${popupData.AvatarUrl.replace(/\\/g, "/")}`
-                          : ""
-                      }
-                      alt="Avatar"
-                      className="h-[70px] w-[70px] rounded-full object-cover border-2 border-orange-400"
-                    />
-
-                    : ''
-                }
+                {popupData?.AvatarUrl && (
+                  <Image
+                    src={`https://${popupData.AvatarUrl.replace(/\\/g, "/")}`}
+                    alt="Avatar"
+                    width={70}
+                    height={70}
+                    className="rounded-full object-cover border-2 border-orange-400"
+                  />
+                )}
               </div>
 
               <div className="flex-1">

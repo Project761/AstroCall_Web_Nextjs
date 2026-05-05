@@ -79,7 +79,7 @@ export default function AstroChat() {
 
         // Update URL with channel ID
         if (messageData?.ChannelName) {
-          router.push(`/astrologer-panel/astro-chat/chat?channel=${messageData.ChannelName}&AstroChatTokenId=${encodeURIComponent(messageData?.AstroChatTokenId || '')}`);
+          router.push(`/astrologer-panel/astro-chat/chat?channel=${messageData.ChannelName}&AstroChatTokenId=${encodeURIComponent(messageData?.AstroChatTokenId || '')}&WaitingListId=${encodeURIComponent(messageData?.WaitingListId || '')}`);
         }
         break;
 
@@ -99,7 +99,7 @@ export default function AstroChat() {
 
         // Update URL with channel ID
         if (messageData?.ChannelName) {
-          router.push(`/astrologer-panel/astro-chat/chat?channel=${messageData.ChannelName}&AstroChatTokenId=${encodeURIComponent(messageData?.AstroChatTokenId || '')}`);
+          router.push(`/astrologer-panel/astro-chat/chat?channel=${messageData.ChannelName}&AstroChatTokenId=${encodeURIComponent(messageData?.AstroChatTokenId || '')}&WaitingListId=${encodeURIComponent(messageData?.WaitingListId || '')}`);
         }
         break;
 

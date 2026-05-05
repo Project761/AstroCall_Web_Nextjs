@@ -7,6 +7,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import socketService from '@/app/services/socketService';
+import Image from 'next/image';
 
 const UserChatHome = () => {
     const router = useRouter();
@@ -211,7 +212,7 @@ const UserChatHome = () => {
         }
     };
 
-  
+
 
     const InsertWaitingList = () => {
         if (!ChatUserBioID) {
@@ -683,13 +684,13 @@ const UserChatHome = () => {
                                         className="bg-white rounded-lg p-6 shadow-lg w-80 text-center"
                                     >
                                         {card?.AvatarUrl ? (
-                                            <img
+                                            <Image
                                                 src={card?.AvatarUrl ? `https://${card?.AvatarUrl.replace(/\\/g, "/")}` : ''}
                                                 alt="User"
                                                 className="w-20 h-20 rounded-full mx-auto"
                                             />
                                         ) : (
-                                            <img src="/images/profile pic.webp" alt="User" className="w-20 h-20 rounded-full mx-auto" />
+                                            <Image src="/images/profile pic.webp" alt="User" className="w-20 h-20 rounded-full mx-auto" />
                                         )}
 
                                         <h2 className="text-xl font-semibold mt-2">{card?.DisplayName}</h2>
@@ -733,13 +734,13 @@ const UserChatHome = () => {
                                     <div className="flex flex-col items-center">
                                         {
                                             loginUserData?.ProfilePic ?
-                                                <img
+                                                <Image
                                                     src={loginUserData?.ProfilePic ? `https://${loginUserData?.ProfilePic?.replace(/\\/g, "/")}` : ''}
                                                     alt="User"
                                                     className="w-12 h-12 rounded-full border"
                                                 />
                                                 :
-                                                <img
+                                                <Image
                                                     src="/images/profile pic.webp"
                                                     alt="User"
                                                     className="w-12 h-12 rounded-full border"
@@ -752,13 +753,13 @@ const UserChatHome = () => {
                                     <div className="flex flex-col items-center">
                                         {
                                             astroimage ?
-                                                <img
+                                                <Image
                                                     src={astroimage ? `https://${astroimage?.replace(/\\/g, "/")}` : ''}
                                                     alt="User"
                                                     className="w-12 h-12 rounded-full border"
                                                 />
                                                 :
-                                                <img
+                                                <Image
                                                     src="/images/profile pic.webp"
                                                     alt="User"
                                                     className="w-12 h-12 rounded-full border"
