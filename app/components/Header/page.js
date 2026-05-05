@@ -224,7 +224,7 @@ export default function Header() {
               {/* Wallet Balance */}
 
               {isLogin && loginUserData && (
-                <div className="hidden md:flex items-center gap-2 border border-orange-200 rounded-md px-3 py-2 bg-orange-50">
+                <div className="hidden md:flex items-center gap-2 border border-orange-200 rounded-md px-3 py-1 bg-orange-50">
                   <FaWallet className="text-orange-600" />
                   <span className="text-black font-medium">₹{amount}</span>
                 </div>

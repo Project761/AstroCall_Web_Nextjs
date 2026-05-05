@@ -11,6 +11,7 @@ import Header from "../components/Header/page";
 import { MenuContext } from "../context/MenuContext";
 import DOMPurify from 'dompurify';
 import SEO from "../components/SEO/page";
+import Image from "next/image";
 import CommonLoader from "../components/Common/Loader";
 
 
@@ -174,8 +175,8 @@ const Blog = () => {
 
 
           <div className="bg-[#FFF9F1] py-6 sm:py-8 md:py-10">
-            <div className="main-container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10 px-3 sm:px-4">
-              <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+            <div className="main-container mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-3 sm:px-4">
+              <div className="lg:col-span-9 space-y-4 sm:space-y-6">
                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 px-2 sm:px-0 mb-6 flex items-center gap-3">
                   <span className="w-2 h-8 bg-gradient-to-b from-orange-400 to-orange-600 rounded-full"></span>
                   Latest Articles
@@ -209,18 +210,21 @@ const Blog = () => {
 
 
                           className="bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 h-full flex flex-col group">
-                          <div className="relative">
-                            <img
-                              src={card.Imageurl ? `https://${card.Imageurl.replace(/\\/g, "/")}` : "default-image.jpg"}
+                          <div className="relative w-full h-[180px] sm:h-[200px] md:h-[220px] overflow-hidden rounded-t-lg sm:rounded-t-xl bg-gray-100 flex items-center justify-center">
+                            <Image
+                              src={
+                                card.Imageurl
+                                  ? `https://${card.Imageurl.replace(/\\/g, "/")}`
+                                  : "/default-image.jpg"
+                              }
                               alt={card?.Title || "Featured"}
-                              className="w-full h-[180px] sm:h-[200px] md:h-[220px] object-cover rounded-t-lg sm:rounded-t-xl group-hover:scale-105 transition-transform duration-300"
-                              onError={(e) => {
-                                e.target.src = "default-image.jpg";
-                              }}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                              className="object-fit transition-transform duration-300 group-hover:scale-105"
                             />
 
-                            <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 text-[10px] sm:text-xs rounded-md flex items-center gap-1 shadow-md">
-                              <FaEye className="text-xs sm:text-sm" />
+                            <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 text-[10px] sm:text-xs rounded-md flex items-center gap-1 shadow-md">
+                              <FaEye />
                               <span>{card?.CountReViews || "0"}</span>
                             </div>
                           </div>
@@ -276,7 +280,7 @@ const Blog = () => {
               </div>
 
               {/* Sidebar */}
-              <div className="space-y-4 sm:space-y-6">
+              <div className="lg:col-span-3 space-y-4 sm:space-y-6">
                 {/* Categories */}
                 <div className="bg-white shadow-lg rounded-xl p-5 sm:p-6 border border-orange-100">
                   <h4 className="text-lg sm:text-xl font-bold text-orange-600 mb-4 flex items-center gap-2">
