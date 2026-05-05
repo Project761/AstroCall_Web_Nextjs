@@ -83,6 +83,10 @@ body {
   padding: 10px;
   /* overflow-x: hidden; */
 }
+.blog-details-container{
+  padding: 0px !important;
+
+}
 
 /* Responsive styles for different screen sizes */
 @media (max-width: 600px) {

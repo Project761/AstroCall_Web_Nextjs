@@ -151,7 +151,7 @@ function HomepageContent() {
           </LazyInView>
         </div>
 
-        <div className="bg-[#FECEAD] relative">
+        <div className="bg-[#FECEAD] relative py-10">
           <div className="absolute bottom-0 right-[-100px] right-image">
             <img src="/images/customar-before.webp" alt="" loading="lazy" decoding="async" fetchPriority="low"/>
           </div>
