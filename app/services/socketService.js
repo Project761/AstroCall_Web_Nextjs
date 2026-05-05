@@ -1,49 +1,55 @@
 // app/services/socketService.js
 
 class SocketService {
-  WS_URL =
-    typeof window !== "undefined" &&
+  constructor() {
+    this.WS_URL =
+      typeof window !== "undefined" &&
       window.location.origin === "https://astrocall.live"
-      ? "wss://websocket.astrocall.live/api/Chat"
-      : "wss://astrocallapi.com/api/Chat";
+        ? "wss://websocket.astrocall.live/api/Chat"
+        : "wss://astrocallapi.com/api/Chat";
 
-  userSocket = null;
-  astroSocket = null;
+    this.userSocket = null;
+    this.astroSocket = null;
 
-  userPingInterval = null;
-  astroPingInterval = null;
+    this.userPingInterval = null;
+    this.astroPingInterval = null;
 
-  userReconnectInterval = null;
-  astroReconnectInterval = null;
+    this.userReconnectInterval = null;
+    this.astroReconnectInterval = null;
 
-  userLastPong = Date.now();
-  astroLastPong = Date.now();
+    this.userLastPong = Date.now();
+    this.astroLastPong = Date.now();
 
-  userPongChecker = null;
-  astroPongChecker = null;
+    this.userPongChecker = null;
+    this.astroPongChecker = null;
 
-  onUserMessage = null;
-  onAstroMessage = null;
+    this.onUserMessage = null;
+    this.onAstroMessage = null;
+  }
 
   // =========================
-  // ✅ SAFE SEND
+  // ✅ SAFE SEND (FIXED)
   // =========================
-  safeSend(socket, data) {
+  safeSend = (socket, data) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify(data));
     } else {
       console.warn("⚠️ Socket not connected");
     }
-  }
+  };
 
   // =========================
   // ✅ USER SOCKET
   // =========================
-  connectUser(userId) {
+  connectUser = (userId) => {
     if (!userId || typeof window === "undefined") return;
 
-    if (this.userSocket && (this.userSocket.readyState === WebSocket.OPEN || this.userSocket.readyState === WebSocket.CONNECTING)) {
-      console.log("⏳ User WS already active");
+    if (
+      this.userSocket &&
+      (this.userSocket.readyState === WebSocket.OPEN ||
+        this.userSocket.readyState === WebSocket.CONNECTING)
+    ) {
+      // console.log("⏳ User WS already active");
       return;
     }
 
@@ -61,7 +67,6 @@ class SocketService {
       this.startUserPing(userId);
       this.startUserPongCheck(userId);
 
-      // clear reconnect
       if (this.userReconnectInterval) {
         clearInterval(this.userReconnectInterval);
         this.userReconnectInterval = null;
@@ -72,13 +77,11 @@ class SocketService {
       try {
         const parsed = JSON.parse(event.data);
 
-        // 🟡 PONG
         if (parsed?.Type === "pong") {
           this.userLastPong = Date.now();
           return;
         }
 
-        // 🟡 ACK
         if (parsed?.messageId) {
           this.safeSend(this.userSocket, {
             Type: "ACK",
@@ -86,7 +89,7 @@ class SocketService {
           });
         }
 
-        this.onUserMessage && this.onUserMessage(parsed);
+        this.onUserMessage?.(parsed);
       } catch (e) {
         console.error("❌ User parse error", e);
       }
@@ -94,7 +97,6 @@ class SocketService {
 
     this.userSocket.onclose = () => {
       console.log("🔴 USER DISCONNECTED");
-
       this.clearUserIntervals();
       this.reconnectUser(userId);
     };
@@ -102,9 +104,9 @@ class SocketService {
     this.userSocket.onerror = () => {
       console.log("❌ USER SOCKET ERROR");
     };
-  }
+  };
 
-  startUserPing(userId) {
+  startUserPing = (userId) => {
     this.clearUserIntervals();
 
     this.userPingInterval = setInterval(() => {
@@ -113,29 +115,28 @@ class SocketService {
         Type: "ping",
       });
     }, 3000);
-  }
+  };
 
-  startUserPongCheck(userId) {
+  startUserPongCheck = (userId) => {
     this.userLastPong = Date.now();
 
     this.userPongChecker = setInterval(() => {
       if (Date.now() - this.userLastPong > 7000) {
         console.warn("❌ USER no pong → reconnect");
-
         this.userSocket?.close();
       }
     }, 2000);
-  }
+  };
 
-  clearUserIntervals() {
+  clearUserIntervals = () => {
     if (this.userPingInterval) clearInterval(this.userPingInterval);
     if (this.userPongChecker) clearInterval(this.userPongChecker);
 
     this.userPingInterval = null;
     this.userPongChecker = null;
-  }
+  };
 
-  reconnectUser(userId) {
+  reconnectUser = (userId) => {
     if (this.userReconnectInterval) return;
 
     this.userReconnectInterval = setInterval(() => {
@@ -147,21 +148,23 @@ class SocketService {
         this.userReconnectInterval = null;
       }
     }, 2000);
-  }
+  };
 
-  sendUser(data) {
+  sendUser = (data) => {
     this.safeSend(this.userSocket, data);
-  }
-
-  
+  };
 
   // =========================
   // ✅ ASTRO SOCKET
   // =========================
-  connectAstro(astroId) {
+  connectAstro = (astroId) => {
     if (!astroId || typeof window === "undefined") return;
 
-    if (this.astroSocket && (this.astroSocket.readyState === WebSocket.OPEN || this.astroSocket.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.astroSocket &&
+      (this.astroSocket.readyState === WebSocket.OPEN ||
+        this.astroSocket.readyState === WebSocket.CONNECTING)
+    ) {
       console.log("⏳ Astro WS already active");
       return;
     }
@@ -202,7 +205,7 @@ class SocketService {
           });
         }
 
-        this.onAstroMessage && this.onAstroMessage(parsed);
+        this.onAstroMessage?.(parsed);
       } catch (e) {
         console.error("❌ Astro parse error", e);
       }
@@ -210,7 +213,6 @@ class SocketService {
 
     this.astroSocket.onclose = () => {
       console.log("🔴 ASTRO DISCONNECTED");
-
       this.clearAstroIntervals();
       this.reconnectAstro(astroId);
     };
@@ -218,9 +220,9 @@ class SocketService {
     this.astroSocket.onerror = () => {
       console.log("❌ ASTRO SOCKET ERROR");
     };
-  }
+  };
 
-  startAstroPing(astroId) {
+  startAstroPing = (astroId) => {
     this.clearAstroIntervals();
 
     this.astroPingInterval = setInterval(() => {
@@ -229,61 +231,60 @@ class SocketService {
         Type: "ping",
       });
     }, 3000);
-  }
+  };
 
-  startAstroPongCheck(astroId) {
+  startAstroPongCheck = (astroId) => {
     this.astroLastPong = Date.now();
 
     this.astroPongChecker = setInterval(() => {
       if (Date.now() - this.astroLastPong > 7000) {
         console.warn("❌ ASTRO no pong → reconnect");
-
         this.astroSocket?.close();
       }
     }, 2000);
-  }
+  };
 
-  clearAstroIntervals() {
+  clearAstroIntervals = () => {
     if (this.astroPingInterval) clearInterval(this.astroPingInterval);
     if (this.astroPongChecker) clearInterval(this.astroPongChecker);
 
     this.astroPingInterval = null;
     this.astroPongChecker = null;
-  }
+  };
 
-  reconnectAstro(astroId) {
+  reconnectAstro = (astroId) => {
     if (this.astroReconnectInterval) return;
 
     this.astroReconnectInterval = setInterval(() => {
       console.log("🔄 Reconnecting ASTRO...");
       this.connectAstro(astroId);
 
-      if (this.astroSocket?.readyState == WebSocket.OPEN) {
+      if (this.astroSocket?.readyState === WebSocket.OPEN) {
         clearInterval(this.astroReconnectInterval);
         this.astroReconnectInterval = null;
       }
     }, 2000);
-  }
+  };
 
-  sendAstro(data) {
+  sendAstro = (data) => {
     this.safeSend(this.astroSocket, data);
-  }
+  };
 
   // =========================
   // ✅ LISTENERS
   // =========================
-  setUserListener(cb) {
+  setUserListener = (cb) => {
     this.onUserMessage = cb;
-  }
+  };
 
-  setAstroListener(cb) {
+  setAstroListener = (cb) => {
     this.onAstroMessage = cb;
-  }
+  };
 
   // =========================
   // ✅ DISCONNECT
   // =========================
-  disconnectAll() {
+  disconnectAll = () => {
     this.clearUserIntervals();
     this.clearAstroIntervals();
 
@@ -293,8 +294,9 @@ class SocketService {
     this.userSocket = null;
     this.astroSocket = null;
 
-    console.log("🔌 All sockets disconnected");
-  }
+    // console.log("🔌 All sockets disconnected");
+  };
 }
 
-export default new SocketService();
+const socketService = new SocketService();
+export default socketService;

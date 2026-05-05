@@ -71,9 +71,9 @@ const ChatToAstrologers = () => {
     const [popupData, setPopupData] = useState(null);
     const [isLoadingAstrologerData, setIsLoadingAstrologerData] = useState(false);
     // Mock functions - replace with actual implementations
-    const GetData_ActivityLog = (page, action) => {
-        console.log(`Activity: ${page} - ${action}`);
-    };
+    // const GetData_ActivityLog = (page, action) => {
+    //     console.log(`Activity: ${page} - ${action}`);
+    // };
     const Get_Data_Astrologer = async () => {
         setIsLoadingAstrologerData(true);
         try {
@@ -125,11 +125,11 @@ const ChatToAstrologers = () => {
         }
     }, []);
 
-    useEffect(() => {
-        if (UserLoginId) {
-            GetData_ActivityLog("ChatFragment", "Chat astrologer list is fetch Now");
-        }
-    }, [UserLoginId]);
+    // useEffect(() => {
+    //     if (UserLoginId) {
+    //         GetData_ActivityLog("ChatFragment", "Chat astrologer list is fetch Now");
+    //     }
+    // }, [UserLoginId]);
 
     useEffect(() => {
         Get_Data_Astrologer();
