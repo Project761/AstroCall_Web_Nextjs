@@ -6,6 +6,7 @@ import { toastifySuccess } from "../../utils/utility";
 import { getPostData } from "@/app/utils/api";
 import axios from "axios";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
+import Image from "next/image";
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
 
@@ -232,18 +233,21 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-800">
+        <div className="relative flex items-center bg-orange-500 text-white px-6 py-3">
+
+          <h2 className="w-full text-center text-xl font-bold">
             {numstatus ? "Continue with Phone" : "Verify Phone"}
           </h2>
+
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="absolute cursor-pointer right-4 text-white hover:text-gray-200 transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+
         </div>
 
         {/* Content */}
@@ -251,15 +255,21 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           {numstatus && (
             <>
               <div className="text-center mb-4">
-                <p className="text-gray-600">
-                  You will receive a 4 digit code for verification
-                </p>
+                <label
+                  htmlFor=""
+                  style={{ width: "20.5em", margin: "auto" }}
+                  className="m-auto text-center text-md font-medium mt-5"
+                >
+                  You will receive a 4 digit code <br /> for verification
+                </label>
               </div>
 
               <div className="flex items-center border rounded-lg mb-4">
                 <div className="flex items-center px-3 border-r">
                   <span className="text-gray-600">+91</span>
                 </div>
+                {/* <img width={25} src={indianicon} alt="" /> */}
+                <Image src="/images/indian.webp" alt="indian" width={20} height={20}/>
                 <input
                   ref={inputRef}
                   type="tel"

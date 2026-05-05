@@ -114,7 +114,7 @@ export default function CommonAstrologicalServices() {
         <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
           Common Astrological Services
         </h2>
-        <div className="w-20 h-1 bg-orange-500 mx-auto mt-3 rounded-full"></div>
+        <div className="w-37.5 h-0.75 m-auto rounded-full bg-orange-500 my-2 mb-10"></div>
 
         {/* Carousel */}
         <div className="flex items-center mt-10 gap-4">
@@ -122,9 +122,9 @@ export default function CommonAstrologicalServices() {
           {/* Left Arrow */}
           <button
             onClick={handlePrev}
-            className="hidden lg:flex items-center justify-center w-10 h-10 border border-orange-500 rounded-full text-orange-500 hover:bg-orange-500 hover:text-white transition"
+            className="hidden lg:block bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition"
           >
-            <FaChevronLeft />
+            <FaChevronLeft size={24} />
           </button>
 
           {/* Cards */}
@@ -132,32 +132,38 @@ export default function CommonAstrologicalServices() {
             {visibleCards.map((card) => (
               <div
                 key={card.id}
-                className="flex-1 bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300"
+                className="flex-1 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden sellerCard bg-[#f3f3f3]"
+                tyle={{
+                  boxShadow: "rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px"
+                }}
               >
                 <Link href={card.link}>
-                  <div className="cursor-pointer">
+                  <div className="cursor-pointer text-center">
 
-                    {/* Image */}
-                    <div className="bg-orange-50 py-6 rounded-t-2xl flex justify-center">
-                      <div className="w-24 h-24 relative">
-                        <Image
-                          src="/images/kundli.webp"
-                          alt={card.title}
-                          fill
-                          sizes="(max-width: 1024px) 96px, 96px"
-                          className="object-contain"
-                        />
+                    {/* 🔶 Top Section */}
+                    <div className="w-full flex items-center justify-center bg-[#FFF3E7] rounded-t-xl py-5">
+                      <div className="w-20 h-20 rounded-full bg-orange-500 flex items-center justify-center shadow-md">
+                        <div className="relative w-14 h-14">
+                          <Image
+                            src="/images/kundli.webp"
+                            alt={card.title}
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    {/* Content */}
+                    {/* 🔶 Content */}
                     <div className="p-5">
-                      <h3 className="text-lg font-semibold text-orange-500">
-                        {card.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-3">
-                        {card.description}
-                      </p>
+                      <div className="text-primaryColor inline-block">
+                        <h3 className="custom-heading text-lg font-semibold text-[#FF6600]">{card.title}</h3>
+                        <div className="soft-glow-line mt-1"></div>
+                      </div>
+
+                      <div className="text text-sm text-justify mt-5">
+                        <p>{card.description}</p>
+                      </div>
                     </div>
 
                   </div>
@@ -169,9 +175,9 @@ export default function CommonAstrologicalServices() {
           {/* Right Arrow */}
           <button
             onClick={handleNext}
-            className="hidden lg:flex items-center justify-center w-10 h-10 border border-orange-500 rounded-full text-orange-500 hover:bg-orange-500 hover:text-white transition"
+            className="hidden lg:block bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition"
           >
-            <FaChevronRight />
+            <FaChevronRight size={24} />
           </button>
         </div>
 
@@ -181,9 +187,8 @@ export default function CommonAstrologicalServices() {
             <button
               key={i}
               onClick={() => setCurrentIndex(i)}
-              className={`mx-1 w-3 h-3 rounded-full ${
-                i === currentIndex ? "bg-orange-500" : "bg-gray-300"
-              }`}
+              className={`mx-1 w-3 h-3 rounded-full ${i === currentIndex ? "bg-orange-500" : "bg-gray-300"
+                }`}
             />
           ))}
         </div>
