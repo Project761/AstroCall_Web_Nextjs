@@ -4,137 +4,137 @@ import { useRouter } from "next/navigation";
 import { postWithToken } from "../../utils/api.js";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 const HomeOnlinepuja = () => {
-    const router = useRouter();
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [pujadata, setPujadata] = useState([]);
-    const [cardsToShow, setCardsToShow] = useState(getCardsToShow());
-    const [isPaused, setIsPaused] = useState(false);
-    function getCardsToShow() {
-        if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 1024)
-                return 3;
-            if (window.innerWidth >= 747)
-                return 2;
-            return 1;
-        }
-        return 3; // Default for SSR
+  const router = useRouter();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [pujadata, setPujadata] = useState([]);
+  const [cardsToShow, setCardsToShow] = useState(getCardsToShow());
+  const [isPaused, setIsPaused] = useState(false);
+  function getCardsToShow() {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth >= 1024)
+        return 3;
+      if (window.innerWidth >= 747)
+        return 2;
+      return 1;
     }
-    useEffect(() => {
-        const handleResize = () => setCardsToShow(getCardsToShow());
-        if (typeof window !== 'undefined') {
-            window.addEventListener("resize", handleResize);
-            return () => window.removeEventListener("resize", handleResize);
-        }
-    }, []);
-    useEffect(() => {
-        Get_Data_OnlinePuja();
-    }, []);
-    const Get_Data_OnlinePuja = async () => {
-        try {
-            const val = {
-                IsActive: "1",
-                IsHomePage: true,
-            };
-            const res = await postWithToken("Puja/GetData_Puja", val);
-            if (res)
-                setPujadata(res.filter((item) => item?.PujaID));
-        }
-        catch (error) {
-            console.error(error);
-        }
-    };
-    // Calculate the visible cards for the slider
-    const getVisibleCards = () => {
-        if (pujadata.length === 0)
-            return [];
-        if (currentIndex + cardsToShow <= pujadata.length) {
-            return pujadata.slice(currentIndex, currentIndex + cardsToShow);
-        }
-        else {
-            // Wrap around for infinite effect
-            return [
-                ...pujadata.slice(currentIndex),
-            ];
-        }
-    };
-    const visibleCards = getVisibleCards();
-    const handlePrev = () => {
-        setCurrentIndex((prev) => prev === 0 ? pujadata.length - cardsToShow : prev - 1);
-    };
-    const handleNext = () => {
-        setCurrentIndex((prev) => prev === pujadata.length - cardsToShow ? 0 : prev + 1);
-    };
-    return (<>
-      <div className="main-container mx-auto py-12 px-0 relative ">
-        <h2 className="text-3xl font-semibold text-center text-orange-600">
-          Book Online Puja & Anusthan
-        </h2>
-        <div className="h-1 w-40 bg-orange-500 mx-auto my-4 rounded-full"/>
-        <p className="text-center text-gray-600 max-w-2xl mx-auto px-4">
-          Perform sacred rituals and ceremonies from the comfort of your home. Connect with experienced priests and ensure all Vedic procedures are followed.
-        </p>
-        <div className="flex justify-center items-center w-full mx-auto gap-4 my-8 " onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
-          <button className="hidden lg:block bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition" onClick={handlePrev} disabled={pujadata.length <= cardsToShow}>
-            <FaChevronLeft size={24}/>
-          </button>
-          <div className="flex justify-start items-center gap-6  w-full">
-            {visibleCards.map((card, idx) => (<div key={idx} className="flex-shrink-0" style={{ flexBasis: `calc((100% - ${(cardsToShow - 1) * 1.5}rem) / ${cardsToShow})` }}>
-                <div className="bg-white shadow-lg rounded-2xl overflow-hidden flex flex-col justify-between cursor-pointer h-[420px]">
-                  <div className="h-[250px] overflow-hidden flex items-center justify-center">
-                    <img src={card?.PujaImage ? `https://${card?.PujaImage.replace(/\\/g, "/")}` : "/images/default-puja.webp"} alt={card?.PujaName} className="w-full h-full object-cover transition-transform duration-500 ease-in-out hover:scale-105" width={300} height={250}/>
-                  </div>
-                  <div className="px-5">
-                    <h3 className="text-lg font-semibold mt-3 text-orange-600 text-center">
-                      {card?.PujaName}
-                    </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed text-center">
-                      {card?.ShortDescription || "Perform sacred puja for divine blessings and personal peace."}
-                    </p>
+    return 3; // Default for SSR
+  }
+  useEffect(() => {
+    const handleResize = () => setCardsToShow(getCardsToShow());
+    if (typeof window !== 'undefined') {
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
+  useEffect(() => {
+    Get_Data_OnlinePuja();
+  }, []);
+  const Get_Data_OnlinePuja = async () => {
+    try {
+      const val = {
+        IsActive: "1",
+        IsHomePage: true,
+      };
+      const res = await postWithToken("Puja/GetData_Puja", val);
+      if (res)
+        setPujadata(res.filter((item) => item?.PujaID));
+    }
+    catch (error) {
+      console.error(error);
+    }
+  };
+  // Calculate the visible cards for the slider
+  const getVisibleCards = () => {
+    if (pujadata.length === 0)
+      return [];
+    if (currentIndex + cardsToShow <= pujadata.length) {
+      return pujadata.slice(currentIndex, currentIndex + cardsToShow);
+    }
+    else {
+      // Wrap around for infinite effect
+      return [
+        ...pujadata.slice(currentIndex),
+      ];
+    }
+  };
+  const visibleCards = getVisibleCards();
+  const handlePrev = () => {
+    setCurrentIndex((prev) => prev === 0 ? pujadata.length - cardsToShow : prev - 1);
+  };
+  const handleNext = () => {
+    setCurrentIndex((prev) => prev === pujadata.length - cardsToShow ? 0 : prev + 1);
+  };
+  return (<>
+    <div className="main-container mx-auto  px-0 relative ">
+      <h2 className="text-3xl font-semibold text-center text-orange-600">
+        Book Online Puja & Anusthan
+      </h2>
+      <div className="h-1 w-40 bg-orange-500 mx-auto my-4 rounded-full" />
+      <p className="text-center text-gray-600 max-w-2xl mx-auto px-4">
+        Perform sacred rituals and ceremonies from the comfort of your home. Connect with experienced priests and ensure all Vedic procedures are followed.
+      </p>
+      <div className="flex justify-center items-center w-full mx-auto gap-4 my-8 " onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
+        <button className="hidden lg:block cursor-pointer bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition" onClick={handlePrev} disabled={pujadata.length <= cardsToShow}>
+          <FaChevronLeft size={24} />
+        </button>
+        <div className="flex justify-start items-center gap-6  w-full">
+          {visibleCards.map((card, idx) => (<div key={idx} className="flex-shrink-0 cursor-pointer" style={{ flexBasis: `calc((100% - ${(cardsToShow - 1) * 1.5}rem) / ${cardsToShow})` }}>
+            <div className="bg-white shadow-lg rounded-2xl overflow-hidden flex flex-col justify-between cursor-pointer h-[420px] ">
+              <div className="h-[250px] overflow-hidden flex items-center justify-center">
+                <img src={card?.PujaImage ? `https://${card?.PujaImage.replace(/\\/g, "/")}` : "/images/default-puja.webp"} alt={card?.PujaName} className="w-full h-full object-cover transition-transform duration-500 ease-in-out hover:scale-105" width={300} height={250} />
+              </div>
+              <div className="px-5">
+                <h3 className="text-lg font-semibold mt-3 text-orange-600 text-center">
+                  {card?.PujaName}
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed text-center">
+                  {card?.ShortDescription || "Perform sacred puja for divine blessings and personal peace."}
+                </p>
 
-                    <div className="flex justify-between items-center text-sm font-semibold">
-                      <div className="my-4 flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-3 text-sm lg:text-xl">
-                        {card.CurrentAmt === card.Amt ? (<span className="text-orange-600 text-base lg:text-xl font-bold">
-                            ₹ {card.Amt}
-                          </span>) : (<>
-                            <span className="text-orange-600 text-base lg:text-xl font-bold">
-                              ₹ {card.Amt}
-                            </span>
-                            <span className="text-gray-500 text-sm lg:text-lg line-through decoration-[2px] decoration-gray-700">
-                              ₹ {card.CurrentAmt}
-                            </span>
-                          </>)}
-                      </div>
-                    </div>
-
-                    <button className="mt-3 mb-5  w-full bg-orange-500 text-white text-sm font-medium py-2 rounded-xl hover:bg-orange-600 transition-all duration-300" onClick={() => router.push(`/online-puja?onlinePuja-to-astrologersOP=${card?.PujaID}`)}>
-                      Book Now
-                    </button>
+                <div className="flex justify-between items-center text-sm font-semibold">
+                  <div className="my-4 flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-3 text-sm lg:text-xl">
+                    {card.CurrentAmt === card.Amt ? (<span className="text-orange-600 text-base lg:text-xl font-bold">
+                      ₹ {card.Amt}
+                    </span>) : (<>
+                      <span className="text-orange-600 text-base lg:text-xl font-bold">
+                        ₹ {card.Amt}
+                      </span>
+                      <span className="text-gray-500  text-sm lg:text-lg line-through decoration-[2px] decoration-gray-700">
+                        ₹ {card.CurrentAmt}
+                      </span>
+                    </>)}
                   </div>
                 </div>
-              </div>))}
-          </div>
-          <button className="hidden lg:block bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition" onClick={handleNext} disabled={pujadata.length <= cardsToShow}>
-            <FaChevronRight size={24}/>
-          </button>
 
+                <button className="mt-3 mb-5 cursor-pointer  w-full bg-orange-500 text-white text-sm font-medium py-2 rounded-xl hover:bg-orange-600 transition-all duration-300" onClick={() => router.push(`/online-puja?onlinePuja-to-astrologersOP=${card?.PujaID}`)}>
+                  Book Now
+                </button>
+              </div>
+            </div>
+          </div>))}
         </div>
-        {/* Dots for mobile/tablet only */}
-        {pujadata.length > cardsToShow && (<div className="flex justify-center items-center mt-2 lg:hidden">
-            {Array.from({ length: Math.ceil(pujadata.length / cardsToShow) }).map((_, dotIdx) => {
-                // Calculate the index for each dot
-                const dotIndex = dotIdx * cardsToShow;
-                // Determine if this dot is active
-                const isActive = (currentIndex >= dotIndex && currentIndex < dotIndex + cardsToShow) ||
-                    (dotIdx === 0 && currentIndex + cardsToShow > pujadata.length);
-                return (<button key={dotIdx} onClick={() => setCurrentIndex(dotIndex)} className={`mx-1 w-3 h-3 rounded-full border border-orange-500 focus:outline-none transition-all duration-200 ${isActive ? "bg-orange-500" : "bg-white"}`} aria-label={`Go to slide ${dotIdx + 1}`}/>);
-            })}
-          </div>)}
-        <div className="mt-14 text-center">
-          <button className="bg-white text-orange-600 px-8 py-3 rounded-full font-semibold text-lg shadow-md hover:bg-orange-500 hover:text-white transition" onClick={() => router.push("/online-puja")}>
-            View All Online Puja
-          </button>
-        </div>
+        <button className="hidden lg:block cursor-pointer bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition" onClick={handleNext} disabled={pujadata.length <= cardsToShow}>
+          <FaChevronRight size={24} />
+        </button>
+
       </div>
-    </>);
+      {/* Dots for mobile/tablet only */}
+      {pujadata.length > cardsToShow && (<div className="flex justify-center items-center mt-2 lg:hidden">
+        {Array.from({ length: Math.ceil(pujadata.length / cardsToShow) }).map((_, dotIdx) => {
+          // Calculate the index for each dot
+          const dotIndex = dotIdx * cardsToShow;
+          // Determine if this dot is active
+          const isActive = (currentIndex >= dotIndex && currentIndex < dotIndex + cardsToShow) ||
+            (dotIdx === 0 && currentIndex + cardsToShow > pujadata.length);
+          return (<button key={dotIdx} onClick={() => setCurrentIndex(dotIndex)} className={`mx-1 w-3 h-3 rounded-full border border-orange-500 focus:outline-none transition-all duration-200 ${isActive ? "bg-orange-500" : "bg-white"}`} aria-label={`Go to slide ${dotIdx + 1}`} />);
+        })}
+      </div>)}
+      <div className="mt-14 text-center">
+        <button className="bg-white cursor-pointer text-orange-600 px-8 py-3 rounded-full font-medium text-lg shadow-md hover:bg-orange-500 hover:text-white transition" onClick={() => router.push("/online-puja")}>
+          View All Online Puja
+        </button>
+      </div>
+    </div>
+  </>);
 };
 export default HomeOnlinepuja;

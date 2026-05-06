@@ -146,8 +146,8 @@ const Blog = () => {
           }}
         />
 
-        <div className="bg-[#F973160D] pt-20 lg:pt-24">
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 main-container rounded-lg sm:rounded-xl text-white text-center py-8 sm:py-10 md:py-12 px-3 sm:px-4 mt-4 sm:mt-6 shadow-lg">
+        <div className="bg-[#F973160D] pt-10 lg:pt-22">
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 main-container rounded-lg sm:rounded-xl text-white text-center py-8 sm:py-10 md:py-12 px-3 sm:px-4 mt-2 sm:mt-3 shadow-lg">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold px-2 text-white drop-shadow-lg">AstroCall Blog</h1>
             <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mt-2 px-2 text-white/95 drop-shadow-md">
               Vedic Guidance, Festival Tips, Astrological Remedies
@@ -220,7 +220,7 @@ const Blog = () => {
                               alt={card?.Title || "Featured"}
                               fill
                               sizes="(max-width: 768px) 100vw, 33vw"
-                              className="object-fit transition-transform duration-300 group-hover:scale-105"
+                              className="object-fit-cover object-center transition-transform duration-300 group-hover:scale-105"
                             />
 
                             <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 text-[10px] sm:text-xs rounded-md flex items-center gap-1 shadow-md">
@@ -245,7 +245,7 @@ const Blog = () => {
                             />
 
                             <button
-                              className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-sm sm:text-base hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 w-full sm:w-auto"
+                              className="bg-gradient-to-r cursor-pointer from-orange-500 to-orange-600 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-sm sm:text-base hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 w-full sm:w-auto"
                             >
                               Read More
                             </button>

@@ -18,6 +18,7 @@ import Footer from '../../components/Footer/page';
 import Header from '../../components/Header/page';
 import { MenuContext } from '../../context/MenuContext';
 import SEO from '../../components/SEO/page';
+import Image from "next/image";
 
 const BlogDetails = () => {
 
@@ -121,7 +122,7 @@ const BlogDetails = () => {
                 />
             )}
 
-            <div className="bg-[#F973160D] pt-20 lg:pt-24">
+            <div className="bg-[#F973160D] pt-20 lg:pt-22">
                 <div className="bg-gradient-to-br from-orange-500 to-orange-600 main-container rounded-lg sm:rounded-xl text-white text-center py-8 sm:py-10 md:py-12 px-3 sm:px-4 mt-4 sm:mt-6 shadow-lg">
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 px-2 drop-shadow-lg">AstroCall Blog</h1>
                     <p className="max-w-2xl mx-auto mb-4 sm:mb-6 text-white/90 text-xs sm:text-sm md:text-base px-2 leading-relaxed">
@@ -130,10 +131,10 @@ const BlogDetails = () => {
                     </p>
                 </div>
 
-                <div className='bg-[#FFF9F1]'>
-                    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 p-3 sm:p-4 md:p-5 max-w-screen-xl mx-auto">
+                <div className='bg-[#FFF9F1] main-container mx-auto blog-details-container'>
+                    <div className="flex flex-col lg:flex-row gap-4 mt-8">
                         {/* Sidebar */}
-                        <aside className="lg:w-1/4 w-full bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl shadow-lg order-2 lg:order-1">
+                        <aside className="lg:w-[20%] w-full bg-white p-4 rounded-xl shadow-lg order-2 lg:order-1">
                             <div className="mb-6 sm:mb-8">
                                 <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
                                     Trending Now
@@ -144,7 +145,7 @@ const BlogDetails = () => {
 
                                             <li
                                                 key={index}
-                                                className="border-b border-dashed border-gray-300 pb-2 sm:pb-3"
+                                                className="border-b border-dashed border-gray-300 pb-2 sm:pb-3 "
                                             >
                                                 <div
                                                     onClick={() => {
@@ -177,7 +178,7 @@ const BlogDetails = () => {
                                     <li>
                                         <Link href="/astrology-blog">
                                             <button
-                                                className={`w-full text-left px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition ${activeIndex === null
+                                                className={`w-full text-left px-3 py-2 cursor-pointer rounded-lg text-xs sm:text-sm font-medium transition ${activeIndex === null
                                                     ? "bg-orange-600 text-white"
                                                     : "hover:bg-gray-100 hover:text-orange-600 text-gray-700"
                                                     }`}
@@ -194,7 +195,7 @@ const BlogDetails = () => {
                                         <li key={index}>
                                             <Link href={`/astrology-blog?category=${category?.Description?.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]+/g, "")}`}>
                                                 <button
-                                                    className={`w-full text-left px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition ${activeIndex === index
+                                                    className={`w-full text-left px-3 py-2 cursor-pointer rounded-lg text-xs sm:text-sm font-medium transition ${activeIndex === index
                                                         ? "bg-orange-600 text-white"
                                                         : "hover:bg-gray-100 hover:text-orange-600 text-gray-700"
                                                         }`}
@@ -212,9 +213,7 @@ const BlogDetails = () => {
                             </div>
                         </aside>
 
-                        <main className="lg:w-3/4 w-full space-y-6 sm:space-y-8 order-1 lg:order-2">
-
-
+                        <main className="flex-1 w-full space-y-6 order-1 lg:order-2">
                             {loading ? (
                                 <div className="flex justify-center items-center h-60">
                                     <CommonLoader color="orange" size="medium" message="Loading blog..." />
@@ -236,22 +235,22 @@ const BlogDetails = () => {
                                         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2 sm:mb-3">
                                             {card?.MetaTitle || card?.Title}
                                         </h1>
-                                        <img
-                                            src={
-                                                card?.Imageurl
-                                                    ? `https://${card?.Imageurl?.replace(/\\/g, "/")}`
-                                                    : card?.Photo
-                                                        ? `https://${card?.Photo?.replace(/\\/g, "/")}`
-                                                        : 'default-image-url.jpg'
-                                            }
-                                            alt={card?.MetaTitle || card?.Title || "Blog Image"}
-                                            loading="lazy"
-                                            className="w-full h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] object-cover rounded-lg sm:rounded-xl"
-                                            onError={(e) => {
-                                                e.target.src = 'default-image-url.jpg';
-                                            }}
-                                        />
 
+                                        <div className="relative w-full h-[500px]  overflow-hidden rounded-lg sm:rounded-xl bg-gray-100 flex items-center justify-center">
+                                            <Image
+                                                src={
+                                                    card?.Imageurl
+                                                        ? `https://${card.Imageurl.replace(/\\/g, "/")}`
+                                                        : card?.Photo
+                                                            ? `https://${card.Photo.replace(/\\/g, "/")}`
+                                                            : "/default-image.jpg"
+                                                }
+                                                alt={card?.MetaTitle || card?.Title || "Blog Image"}
+                                                fill
+                                                sizes="100vw"
+                                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                            />
+                                        </div>
                                         <div
                                             className="prose prose-sm sm:prose-base max-w-none text-xs sm:text-sm md:text-base leading-relaxed"
                                             dangerouslySetInnerHTML={{ __html: cleanHtml }}
@@ -259,10 +258,11 @@ const BlogDetails = () => {
 
                                         <div className="flex justify-center gap-4 sm:gap-5 mt-4 sm:mt-6">
                                             <a href="https://www.facebook.com/share/1AZyAfVdjE/" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
-                                                <img src={fbLogo} alt="Facebook" className="w-6 h-6 sm:w-7 sm:h-7" />
+                                                <Image src={fbLogo} alt="Facebook" width={28} height={28} className="w-6 h-6 sm:w-7 sm:h-7" />
                                             </a>
                                             <a href="https://www.instagram.com/astrocall.live?igsh=MXFrNnpoNnY3ZmVsMA==" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition">
-                                                <img src={igLogo} alt="Instagram" className="w-6 h-6 sm:w-7 sm:h-7" />
+                                                {/* <img src={igLogo} alt="Instagram" className="w-6 h-6 sm:w-7 sm:h-7" /> */}
+                                                <Image src={igLogo} alt="Instagram" width={28} height={28} className="w-6 h-6 sm:w-7 sm:h-7" />
                                             </a>
                                         </div>
 
@@ -287,19 +287,19 @@ const BlogDetails = () => {
                         </main>
                     </div>
 
-                    <div className="bg-orange-500 mb-8 sm:mb-10 main-container rounded-xl sm:rounded-2xl text-white text-center py-4 sm:py-5 md:py-6 mt-6 sm:mt-8 md:mt-10 w-full px-3 sm:px-4">
+                    <div className="bg-orange-500 mb-8 sm:mb-10 mb-5 rounded-xl sm:rounded-2xl text-white text-center py-4 sm:py-5 md:py-6 mt-6 sm:mt-8 md:mt-10 w-full px-3 sm:px-4">
                         <h3 className="text-sm sm:text-base md:text-lg px-2">
                             Connect with an Astrologer on Call or Chat for more personalized predictions.
                         </h3>
-                        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 md:gap-5 mt-4 sm:mt-5">
+                        <div className="flex flex-col sm:flex-row  justify-center gap-3 sm:gap-4 md:gap-5 mt-4 sm:mt-5">
                             <button
-                                className="bg-white text-orange-500 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition shadow-md hover:shadow-lg text-sm sm:text-base font-medium"
+                                className="bg-white text-orange-500 px-4 cursor-pointer sm:px-6 py-2.5 sm:py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition shadow-md hover:shadow-lg text-sm sm:text-base font-medium"
                                 onClick={() => router.push('/talk-to-astrologers')}
                             >
-                                Talk to Astrologers <MdPhoneInTalk className="text-lg sm:text-xl" />
+                                Talk to Astrologers  <MdPhoneInTalk className="text-lg sm:text-xl" />
                             </button>
                             <button
-                                className="bg-white text-orange-500 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition shadow-md hover:shadow-lg text-sm sm:text-base font-medium"
+                                className="bg-white text-orange-500 px-4 cursor-pointer sm:px-6 py-2.5 sm:py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition shadow-md hover:shadow-lg text-sm sm:text-base font-medium"
                                 onClick={() => router.push('/chat-to-astrologers')}
                             >
                                 Chat with Astrologers <IoMdChatboxes className="text-lg sm:text-xl" />

@@ -122,7 +122,7 @@ export default function CommonAstrologicalServices() {
           {/* Left Arrow */}
           <button
             onClick={handlePrev}
-            className="hidden lg:block bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition"
+            className="hidden lg:block cursor-pointer bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition"
           >
             <FaChevronLeft size={24} />
           </button>
@@ -175,7 +175,7 @@ export default function CommonAstrologicalServices() {
           {/* Right Arrow */}
           <button
             onClick={handleNext}
-            className="hidden lg:block bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition"
+            className="hidden lg:block cursor-pointer bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition"
           >
             <FaChevronRight size={24} />
           </button>

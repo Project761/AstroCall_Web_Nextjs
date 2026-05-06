@@ -82,7 +82,7 @@ const BlogSection = () => {
                 <div className="relative w-full my-8">
                     <div className="flex justify-between items-center gap-5">
                         <button
-                            className="hidden lg:block bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition"
+                            className="hidden lg:block bg-white border cursor-pointer border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition"
                             onClick={handlePrev}
                             disabled={blogData.length <= cardsToShow}
                         >
@@ -129,7 +129,7 @@ const BlogSection = () => {
                             ))}
                         </div>
                         <button
-                            className="hidden lg:block bg-white border border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition"
+                            className="hidden lg:block bg-white border cursor-pointer border-orange-500 text-orange-500 rounded-full p-2 shadow hover:bg-orange-500 hover:text-white transition"
                             onClick={handleNext}
                             disabled={blogData.length <= cardsToShow}
                         >
@@ -159,7 +159,7 @@ const BlogSection = () => {
                 <div className="flex justify-center text-center mt-8">
                     <button
                         onClick={() => router.push("/astrology-blog")}
-                        className="border border-orange-500 text-orange-500 rounded-md px-6 py-2 font-semibold hover:bg-orange-500 hover:text-white transition-all duration-200"
+                        className="border border-orange-500 text-orange-500 rounded-md px-6 py-2 font-medium cursor-pointer hover:bg-orange-500 hover:text-white transition-all duration-200"
                     >
                         View All Articles
                     </button>
