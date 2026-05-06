@@ -24,13 +24,13 @@ class AgoraRTMService {
       }
       this.isInitializing = true;
 
-      console.log("🟡 INIT START");
-      console.log("UID:", uid);
-      console.log("CHANNEL:", channelName);
+      // console.log("🟡 INIT START");
+      // console.log("UID:", uid);
+      // console.log("CHANNEL:", channelName);
 
       // ✅ STEP 1: CLEAN OLD SESSION
       if (this.client) {
-        console.log("♻️ Cleaning old session...");
+        // console.log("♻️ Cleaning old session...");
         try {
           await this.channel?.leave();
           await this.client.logout();
@@ -57,18 +57,18 @@ class AgoraRTMService {
       this.client = AgoraRTM.createInstance(appId);
 
       // ✅ STEP 4: LOGIN
-      console.log("👉 LOGIN START");
+      // console.log("👉 LOGIN START");
       await this.client.login({ uid, token });
 
       this.isLoggedIn = true;
-      console.log("✅ LOGIN SUCCESS");
+      // console.log("✅ LOGIN SUCCESS");
 
       // ✅ EVENTS
       this.client.on("ConnectionStateChanged", (state, reason) => {
-        console.log("🔄 RTM STATE:", state, reason);
+        // console.log("🔄 RTM STATE:", state, reason);
 
         if (state === "DISCONNECTED" || state === "ABORTED") {
-          console.warn("🔴 Disconnected");
+          // console.warn("🔴 Disconnected");
           this.isLoggedIn = false;
           this.isChannelJoined = false;
         }
@@ -79,22 +79,22 @@ class AgoraRTMService {
       });
 
       // ✅ STEP 5: CREATE CHANNEL
-      console.log("👉 CREATE CHANNEL");
+      // console.log("👉 CREATE CHANNEL");
       this.channel = this.client.createChannel(channelName);
 
       // ✅ STEP 6: JOIN CHANNEL
-      console.log("👉 JOIN CHANNEL");
+      // console.log("👉 JOIN CHANNEL");
       await this.channel.join();
 
       this.isChannelJoined = true;
-      console.log("✅ CHANNEL JOIN SUCCESS");
+      // console.log("✅ CHANNEL JOIN SUCCESS");
 
       // ✅ READY
       onReady && onReady();
 
       // ✅ FLUSH QUEUE
       if (this.messageQueue.length > 0) {
-        console.log("📤 Sending queued messages:", this.messageQueue.length);
+        // console.log("📤 Sending queued messages:", this.messageQueue.length);
 
         this.messageQueue.forEach((msg) => {
           this.channel.sendMessage({
@@ -118,7 +118,7 @@ class AgoraRTMService {
       });
 
     } catch (err) {
-      console.error("❌ RTM INIT ERROR:", err);
+      // console.error("❌ RTM INIT ERROR:", err);
 
       this.client = null;
       this.channel = null;
@@ -132,7 +132,7 @@ class AgoraRTMService {
   // ✅ SEND MESSAGE
   sendMessage(data) {
     if (!this.isChannelJoined || !this.channel) {
-      console.warn("⏳ Queueing message (RTM not ready)");
+      // console.warn("⏳ Queueing message (RTM not ready)");
       this.messageQueue.push(data);
       return;
     }
@@ -142,7 +142,7 @@ class AgoraRTMService {
         text: JSON.stringify(data),
       });
     } catch (err) {
-      console.error("❌ Send failed, queueing:", err);
+      // console.error("❌ Send failed, queueing:", err);
       this.messageQueue.push(data);
     }
   }
@@ -153,7 +153,7 @@ class AgoraRTMService {
       await this.channel?.leave();
       await this.client?.logout();
     } catch (e) {
-      console.warn("Leave error:", e);
+      // console.warn("Leave error:", e);
     }
 
     this.client = null;
@@ -163,7 +163,7 @@ class AgoraRTMService {
     this.messageQueue = [];
     this.isInitializing = false;
 
-    console.log("👋 RTM CLEANED");
+    // console.log("👋 RTM CLEANED");
   }
 }
 

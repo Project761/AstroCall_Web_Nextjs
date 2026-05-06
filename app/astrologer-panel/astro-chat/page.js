@@ -10,7 +10,7 @@ export default function AstroChat() {
   const AstroId = typeof window !== "undefined" ? localStorage.getItem("AstroLoginId") : "";
   const router = useRouter();
 
-  const { loginAstrologerData, astroParsedData, setAstroParsedData, setAstrologerToggleStatus ,astroCheckEndedChat, setAstroCheckEndedChat} = useMenuContext();
+  const { loginAstrologerData, astroParsedData, setAstroParsedData, setAstrologerToggleStatus, astroCheckEndedChat, setAstroCheckEndedChat } = useMenuContext();
 
   const [playSound, setPlaySound] = useState(false);
   const [isPopUPOpen, setIsPopupOpen] = useState(false);
@@ -72,15 +72,15 @@ export default function AstroChat() {
       case "User Chat is Live.":
       case "User Chat is Live":
         setAstroParsedData(messageData);
-        setShowChatPopup(false);
+        setShowChatPopup(true);
         setCurrentChannel(messageData?.ChannelName);
-        localStorage.setItem("AstroChatTokenId", messageData?.AstroChatTokenId);
-        sessionStorage.removeItem("AstroChatCompleted");
+
+
 
         // Update URL with channel ID
-        if (messageData?.ChannelName) {
-          router.push(`/astrologer-panel/astro-chat/chat?channel=${messageData.ChannelName}&AstroChatTokenId=${encodeURIComponent(messageData?.AstroChatTokenId || '')}&WaitingListId=${encodeURIComponent(messageData?.WaitingListId || '')}`);
-        }
+        // if (messageData?.ChannelName) {
+        //   router.push(`/astrologer-panel/astro-chat/chat?channel=${messageData.ChannelName}&AstroChatTokenId=${encodeURIComponent(messageData?.AstroChatTokenId || '')}&WaitingListId=${encodeURIComponent(messageData?.WaitingListId || '')}&AstroId=${encodeURIComponent(messageData?.AstroId || '')}&UserId=${encodeURIComponent(messageData?.UserId)}`);
+        // }
         break;
 
 
@@ -94,12 +94,12 @@ export default function AstroChat() {
         setAstroParsedData(messageData);
         setShowChatPopup(false);
         setCurrentChannel(messageData?.ChannelName);
-        localStorage.setItem("AstroChatTokenId", messageData?.AstroChatTokenId);
-        sessionStorage.removeItem("AstroChatCompleted");
+
+
 
         // Update URL with channel ID
         if (messageData?.ChannelName) {
-          router.push(`/astrologer-panel/astro-chat/chat?channel=${messageData.ChannelName}&AstroChatTokenId=${encodeURIComponent(messageData?.AstroChatTokenId || '')}&WaitingListId=${encodeURIComponent(messageData?.WaitingListId || '')}`);
+          router.push(`/astrologer-panel/astro-chat/chat?channel=${messageData.ChannelName}&AstroChatTokenId=${encodeURIComponent(messageData?.AstroChatTokenId || '')}&WaitingListId=${encodeURIComponent(messageData?.WaitingListId || '')}&AstroId=${encodeURIComponent(messageData?.AstroId || '')}&UserId=${encodeURIComponent(messageData?.UserId)}`);
         }
         break;
 
@@ -242,6 +242,13 @@ export default function AstroChat() {
       messageId: "NewRequest"
     });
   };
+
+
+  const HandleJoinChatUser = () => {
+    if (astroParsedData?.Message === "User Chat is Live" || astroParsedData?.Message === "User Chat is Live.") {
+      router.push(`/astrologer-panel/astro-chat/chat?channel=${astroParsedData.ChannelName}&AstroChatTokenId=${encodeURIComponent(astroParsedData?.AstroChatTokenId || '')}&WaitingListId=${encodeURIComponent(astroParsedData?.WaitingListId || '')}&AstroId=${encodeURIComponent(astroParsedData?.AstroId || '')}&UserId=${encodeURIComponent(astroParsedData?.UserId)}`);
+    }
+  }
 
   return (
     <>

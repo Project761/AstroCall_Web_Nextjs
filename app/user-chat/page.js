@@ -82,7 +82,7 @@ export default function UserChat() {
         setUsermessage(ChatStartUser);
         setPopupData(data);
         setChatPopUpStatus(true);
-        router.push(`/user-chat/chat?channel=${encodeURIComponent(data?.ChannelName || '')}&UserChatTokenId=${encodeURIComponent(data?.UserChatTokenId || '')}&WaitingListId=${encodeURIComponent(data?.WaitingListId || '')}`);
+        router.push(`/user-chat/chat?channel=${encodeURIComponent(data?.ChannelName || '')}&UserChatTokenId=${encodeURIComponent(data?.UserChatTokenId || '')}&WaitingListId=${encodeURIComponent(data?.WaitingListId || '')}&UserId=${encodeURIComponent(data?.UserId)}&AstroId=${encodeURIComponent(data?.AstroId || '')}`);
         break;
 
       case "CancelRequest":
@@ -294,7 +294,7 @@ export default function UserChat() {
     // setShowChatOverlay(true);
     console.log(popupData, 'popupDatasdfsd')
     if (popupData?.Message === "User Chat is Start" || popupData?.Message === "User Chat is Live.") {
-      router.push(`/user-chat/chat?channel=${encodeURIComponent(popupData?.ChannelName || '')}&UserChatTokenId=${encodeURIComponent(popupData?.UserChatTokenId || '')}&WaitingListId=${encodeURIComponent(popupData?.WaitingListId || '')}`);
+      router.push(`/user-chat/chat?channel=${encodeURIComponent(popupData?.ChannelName || '')}&UserChatTokenId=${encodeURIComponent(popupData?.UserChatTokenId || '')}&WaitingListId=${encodeURIComponent(popupData?.WaitingListId || '')}&UserId=${encodeURIComponent(popupData?.UserId || '')}&AstroId=${encodeURIComponent(popupData?.AstroId || '')}`);
     }
 
   }
