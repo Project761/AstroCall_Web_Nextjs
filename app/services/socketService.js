@@ -6,7 +6,7 @@ class SocketService {
       typeof window !== "undefined" &&
       window.location.origin === "https://astrocall.live"
         ? "wss://websocket.astrocall.live/api/Chat"
-        : "wss://astrocallapi.com/api/Chat";
+        : "ws://astrocallapi.com/api/Chat";
 
     this.userSocket = null;
     this.astroSocket = null;
