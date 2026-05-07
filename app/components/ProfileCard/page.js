@@ -1,5 +1,4 @@
 "use client";
-
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { FaWallet, FaHeart, FaGem, FaPray, FaComments, FaPhone, FaUser, FaHandsHelping, FaChevronRight, FaStar } from "react-icons/fa";
@@ -10,10 +9,10 @@ import Image from "next/image";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
 
 
-export default function ProfileCard({onClose, isOpen, onLogout }) {
+export default function ProfileCard({ onClose, isOpen, onLogout }) {
 
   const { loginUserData, loadingUserData, Get_SingleData_User } = useMenuContext();
-  
+
 
   // console.log(loginUserData ,'sdf')
   const router = useRouter();
@@ -59,166 +58,110 @@ export default function ProfileCard({onClose, isOpen, onLogout }) {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute right-0 top-12 z-50 bg-white rounded-lg shadow-xl border border-gray-200 min-w-[260px] max-w-[90vw]">
+    <div
+      ref={profileRef}
+      className="absolute right-0 top-1 z-50 bg-white rounded-[20px] shadow-2xl border border-gray-200 overflow-hidden"
+    >
       {/* Profile Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-        <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-orange-300">
-          {/* <Image
-            src={loginUserData?.ProfilePic || "/images/profile pic.webp"}
-            alt="Profile"
-            width={48}
-            height={48}
-            className="object-cover"
-          /> */}
+      <div className="bg-[#F6E6CF] px-6 pt-2 pb-2 text-center cursor-pointer">
+        <div className="relative mx-auto h-[80px] w-[80px] rounded-full overflow-hidden border-[5px] border-orange-400 bg-slate-500">
           <Image
-            src={loginUserData?.ProfilePic ? `https://${loginUserData?.ProfilePic?.replace(/\\/g, "/")}` : "/images/profile pic.webp"}
+            src={
+              loginUserData?.ProfilePic
+                ? `https://${loginUserData?.ProfilePic?.replace(/\\/g, "/")}`
+                : "/images/profile pic.webp"
+            }
             alt="Profile"
-            width={48}
-            height={48}
+            fill
             className="object-cover"
           />
         </div>
-        <div>
-          <h3 className="font-semibold text-gray-800">{loginUserData?.FirstName || 'User'}</h3>
-          <p className="text-sm text-gray-600">{loginUserData?.MobileNo}</p>
-        </div>
-      </div>
 
-      {/* Wallet Balance */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <FaWallet className="text-orange-500" />
-          <span className="font-semibold text-gray-800">Balance:</span>
-        </div>
-        <span className="font-bold text-orange-600">₹{loginUserData?.WalletAmt || 0}</span>
-      </div>
+        <h3 className="mt-2 text-[18px] font-bold text-slate-800 leading-tight">
+          {loginUserData?.FirstName || "User"}
+        </h3>
 
-      {/* Menu Items */}
-      <div className="py-2">
-        {/* My Account */}
-        <div className="px-4 py-2">
-          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">My Account</h4>
+        <p className="mt-1 text-[14px] font-normal text-slate-500">
+          {loginUserData?.MobileNo}
+        </p>
 
-          <button
-            onClick={() => handleNavigation("/my-account")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
-          >
-            <FaUser className="text-orange-500" />
-            <span>Edit Profile</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
-          </button>
+        {/* Balance */}
+        <div className="mt-2 cursor-pointer flex items-center justify-between rounded-2xl bg-white px-4 py-1 shadow-sm border border-orange-100">
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100">
+              <FaWallet className="text-orange-500 text-[16px]" />
+            </span>
 
-          {/* My Wallet */}
+            <div className="text-left">
+              <p className="text-[12px] text-nowrap text-slate-500 font-medium">
+                Wallet Balance
+              </p>
+              <h4 className="text-[17px] font-bold text-slate-800">
+                ₹{loginUserData?.WalletAmt || 0}
+              </h4>
+            </div>
+          </div>
+
           <button
             onClick={() => handleNavigation("/my-wallet")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
+            className="rounded-xl bg-orange-500 px-4 py-1 cursor-pointer text-[12px] font-semibold text-white hover:bg-orange-600 transition"
           >
-            <FaWallet className="text-orange-500" />
-            <span>My Wallet</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
-          </button>
-
-          {/* My Favorites */}
-          <button
-            onClick={() => handleNavigation("/my-favorites")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
-          >
-            <FaHeart className="text-orange-500" />
-            <span>My Favorites</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
-          </button>
-
-          {/* My Following */}
-          <button
-            onClick={() => handleNavigation("/my-following")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
-          >
-            <SlUserFollowing className="text-orange-500" />
-            <span>My Following</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
-          </button>
-
-          {/* My GemStone */}
-          <button
-            onClick={() => handleNavigation("/my-gemstone")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
-          >
-            <FaGem className="text-orange-500" />
-            <span>My GemStone</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
-          </button>
-
-          {/* Suggested */}
-          <button
-            onClick={() => handleNavigation("/my-account/suggested")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
-          >
-            <FaStar className="text-orange-500" />
-            <span>Suggested</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
-          </button>
-
-          {/* Wait List */}
-          <button
-            onClick={() => handleNavigation("/wait-list")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
-          >
-            <MdAccessTime className="text-orange-500" />
-            <span>Wait List</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
-          </button>
-
-          {/* My Online Puja */}
-          <button
-            onClick={() => handleNavigation("/my-online-puja")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
-          >
-            <FaPray className="text-orange-500" />
-            <span>My Online Puja</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
-          </button>
-
-          {/* My Chats */}
-          <button
-            onClick={() => handleNavigation("/my-chats")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
-          >
-            <FaComments className="text-orange-500" />
-            <span>My Chats</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
-          </button>
-
-          {/* My Calls */}
-          <button
-            onClick={() => handleNavigation("/my-calls")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
-          >
-            <FaPhone className="text-orange-500" />
-            <span>My Calls</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
-          </button>
-
-          {/* Support */}
-          <button
-            onClick={() => handleNavigation("/support")}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
-          >
-            <FaHandsHelping className="text-orange-500" />
-            <span>Support</span>
-            <FaChevronRight className="ml-auto text-gray-400" />
+            Add
           </button>
         </div>
+      </div>
 
-        {/* Logout */}
-        <div className="px-4 py-2 border-t border-gray-200 mt-2">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-2 py-2 text-left text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <FaUser className="text-red-500" />
-            <span className="font-semibold">Logout</span>
-          </button>
-        </div>
+      {/* Menu */}
+      <div className="bg-[#FAFAFA]">
+        <button
+          onClick={() => handleNavigation("/my-account")}
+          className="flex w-full items-center gap-5 border-b border-gray-200 px-7 py-3 text-left cursor-pointer hover:bg-orange-50 transition"
+        >
+          <FaUser className="text-orange-500 text-[15px]" />
+          <span className="text-[14px] font-medium text-slate-800">
+            My Account
+          </span>
+        </button>
+
+        <button
+          onClick={() => handleNavigation("/my-wallet")}
+          className="flex w-full items-center gap-5 border-b border-gray-200 px-7 py-3 text-left cursor-pointer hover:bg-orange-50 transition"
+        >
+          <FaWallet className="text-orange-500 text-[15px]" />
+          <span className="text-[14px] font-medium text-slate-800">
+            Recharge
+          </span>
+        </button>
+
+        <button
+          onClick={() => handleNavigation("/notifications")}
+          className="flex w-full items-center gap-5 border-b border-gray-200 px-7 py-3 text-left cursor-pointer hover:bg-orange-50 transition"
+        >
+          <FaStar className="text-orange-500 text-[15px]" />
+          <span className="text-[14px] font-medium text-slate-800">
+            Notification
+          </span>
+        </button>
+
+        <button
+          onClick={() => handleNavigation("/support")}
+          className="flex w-full items-center gap-5 border-b border-gray-200 px-7 py-3 text-left cursor-pointer hover:bg-orange-50 transition"
+        >
+          <FaHandsHelping className="text-orange-500 text-[15px]" />
+          <span className="text-[14px] font-medium text-slate-800">
+            Help
+          </span>
+        </button>
+
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-5 px-7 py-3 text-left cursor-pointer hover:bg-red-50 transition"
+        >
+          <FaUser className="text-red-500 text-[15px]" />
+          <span className="text-[14px] font-medium text-red-500 hover:text-red-600">
+            Logout
+          </span>
+        </button>
       </div>
     </div>
   );

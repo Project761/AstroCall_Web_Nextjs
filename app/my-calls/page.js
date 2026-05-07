@@ -23,6 +23,7 @@ export default function MyCalls() {
     if (loginData) {
       try {
         const parsedData = JSON.parse(loginData);
+        console.log("User data:", parsedData);
         setUserData(parsedData);
         fetchCalls();
       }
@@ -43,6 +44,7 @@ export default function MyCalls() {
         Type: "call",
         IsActive: "1",
       });
+      console.log("Calls response:", response);
       if (response) setCalls(response);
     } catch (err) {
       console.error("Fetch error:", err);
@@ -71,7 +73,7 @@ export default function MyCalls() {
   return (<>
     <SEO title="My Calls - AstroCall" description="View your call history with astrologers" />
 
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -140,7 +142,7 @@ export default function MyCalls() {
           <FaPhone className="text-gray-300 text-6xl mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">No call history yet</h3>
           <p className="text-gray-600 mb-6">Start calling astrologers to see your call history</p>
-          <button onClick={() => router.push("/talk-to-astrologers")} className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+          <button onClick={() => router.push("/talk-to-astrologers")} className="bg-green-500 cursor-pointer text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
             Start Calling
           </button>
         </div>) : (<div className="space-y-4">
