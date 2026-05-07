@@ -229,7 +229,7 @@ const Gemstone = () => {
                 }
             ]
         }}/>
-      <Header />
+      {/* <Header /> */}
       <div>
 
         <div className="bg-[#F973160D] pt-20 lg:pt-24">

@@ -2,7 +2,6 @@
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { FaWallet, FaHeart, FaGem, FaPray, FaComments, FaPhone, FaUser, FaHandsHelping, FaChevronRight, FaStar } from "react-icons/fa";
-import { SlUserFollowing } from "react-icons/sl";
 import { MdAccessTime } from "react-icons/md";
 
 import Image from "next/image";
