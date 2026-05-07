@@ -1716,3 +1716,10 @@ table tr:last-child td {
 
 
 }
+
+
+/* #nextjs__container_build_error,
+#nextjs__container,
+nextjs-portal {
+  display: none !important;
+} */

@@ -84,8 +84,8 @@ export default function Footer({ footers }) {
             <div className="line-3 h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500"></div>
           </div>
           <p className="text-sm sm:text-base md:text-lg leading-relaxed">
-            AstroCall is your trusted destination for authentic astrological guidance. 
-            Connect with experienced astrologers for personalized consultations, 
+            AstroCall is your trusted destination for authentic astrological guidance.
+            Connect with experienced astrologers for personalized consultations,
             accurate predictions, and spiritual solutions to life's challenges.
           </p>
         </div>
@@ -303,11 +303,11 @@ export default function Footer({ footers }) {
               {isTenHOpen ? null : (
                 <li>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Privacy Policy</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Terms of Use</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Refund & Cancellation</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Disclaimer</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Cookie Policy</Link></li>
+                    <li><Link href="/privacy-policy" scroll={true} className="text-sm sm:text-base hover:underline transition">Privacy Policy</Link></li>
+                    <li><Link href="/TermsOfUse" scroll={true} className="text-sm sm:text-base hover:underline transition">Terms of Use</Link></li>
+                    <li><Link href="/RefundCancellation" scroll={true} className="text-sm sm:text-base hover:underline transition">Refund & Cancellation</Link></li>
+                    <li><Link href="/" scroll={true} className="text-sm sm:text-base hover:underline transition">Disclaimer</Link></li>
+                    <li><Link href="/" scroll={true} className="text-sm sm:text-base hover:underline transition">Cookie Policy</Link></li>
                   </ul>
                 </li>
               )}
@@ -353,16 +353,16 @@ export default function Footer({ footers }) {
                   <ul>
                     <div className="w-full max-w-[200px]">
                       <div className="my-2 sm:my-3 md:my-4">
-                        <GooglePlayButton 
-                          url={APKUrl} 
-                          theme="dark" 
+                        <GooglePlayButton
+                          url={APKUrl}
+                          theme="dark"
                           className="custom-style transition-all duration-300 hover:scale-105 hover:shadow-lg w-full text-xs"
                         />
                       </div>
                       <div className="my-2">
-                        <AppStoreButton 
-                          url={IOSUrl} 
-                          theme="dark" 
+                        <AppStoreButton
+                          url={IOSUrl}
+                          theme="dark"
                           className="custom-style transition-all duration-300 hover:scale-105 hover:shadow-lg w-full"
                         />
                       </div>
