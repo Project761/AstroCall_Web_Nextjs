@@ -12,7 +12,9 @@ const nextConfig = {
             },
         ],
     },
-    serverExternalPackages: ['react-icons'],
+    // devIndicators: {
+    //     buildActivity: false
+    // }
 };
 
 module.exports = nextConfig;

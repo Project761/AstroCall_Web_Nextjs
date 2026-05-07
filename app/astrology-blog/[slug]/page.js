@@ -96,7 +96,7 @@ const BlogDetails = () => {
                 <SEO
                     title={blogData?.MetaTitle}
                     description={blogData?.MetaDescription}
-                    canonical={`https://astrocall.live/astrology-blog/${slug}`}
+                    canonical={`https://astrocall.live/ -blog/${slug}`}
                     keywords={blogData?.MetaKeywords}
                     type="article"
                     schema={{
