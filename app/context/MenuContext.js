@@ -38,7 +38,7 @@ export const MenuProvider = ({ children }) => {
     const [Gemstonereviewstatus, setGemstonereviewstatus] = useState(false);
     const [PlanSuccessPopup, setPlanSuccessPopup] = useState(false);
     const [FAQData, setFAQData] = useState([]);
-    const [isLogin, setisLogin] = useState(false);
+    const [isLogin, setisLogin] = useState(typeof window !== 'undefined' ? localStorage.getItem("IsLogin") === "true" : false);
     const [loadingAstroData, setloadingAstroData] = useState(false);
     const [loadingUserData, setloadingUserData] = useState(false);
     const [MuhuratData, setMuhuratData] = useState();

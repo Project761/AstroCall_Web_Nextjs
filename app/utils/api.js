@@ -71,7 +71,7 @@ const refreshAuthToken = async () => {
     const parseData = JSON.parse(data?.data);
     const Resdata = parseData?.Table;
 
-    if (Resdata?.length > 0) {
+    if (Array.isArray(Resdata) && Resdata.length > 0) {
       localStorage.setItem('LoginTokenData', JSON.stringify(Resdata[0]));
       return Resdata[0];
     } else {
@@ -488,7 +488,7 @@ export const Get_SingleData_User = async (id) => {
 
   try {
     const res = await postWithToken("User/GetSingleData_User", { UserID: id });
-    if (res && res.length > 0) {
+    if (Array.isArray(res) && res.length > 0) {
       return res[0];
     }
     return null;
@@ -560,7 +560,9 @@ export const getCurrentAstrologerId = () => {
 export const fetchDataTesting = async (URL) => {
   if (typeof window === 'undefined') return null;
 
-  const auth = JSON.parse(sessionStorage.getItem('auth'));
+  const authData = sessionStorage.getItem('auth');
+  const auth = authData ? JSON.parse(authData) : null;
+  if (!auth?.token) return null;
   const config = { headers: { Authorization: `Bearer ${auth.token}` } };
 
   try {

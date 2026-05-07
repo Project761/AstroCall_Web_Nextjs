@@ -164,7 +164,7 @@ const TalkToAstrologers = () => {
         catch (error) {
             console.error("Navigation error in loginOrChatModal:", error);
             if (typeof window !== 'undefined' && localStorage.getItem("UserLoginId") && card?.ID) {
-                window.location.href = `/UserChatHome?page=chat-to-astro&AstroId=${card?.ID}&Type=chat&IsChat=${card?.IsChat}`;
+                window.location.href = `/chat-to-astrologers/user-chat-home?page=chat-to-astro&AstroId=${card?.ID}&Type=chat&IsChat=${card?.IsChat}`;
             }
         }
     };

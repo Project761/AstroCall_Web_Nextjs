@@ -10,7 +10,7 @@ import Image from "next/image";
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
 
-  const { loginUserData, loadingUserData, Get_SingleData_User } = useMenuContext();
+  const { loginUserData, loadingUserData, Get_SingleData_User, setisLogin } = useMenuContext();
 
 
   const [phone, setPhone] = useState("");
@@ -199,12 +199,15 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             localStorage.setItem("IsLogin", true);
             localStorage.setItem("access_token", userData?.access_token);
             localStorage.setItem("refresh_token", userData?.refresh_token);
+            
+            // Set global login state
+            setisLogin(true);
 
             if (onLoginSuccess) {
               onLoginSuccess(userData);
             }
 
-            toastifySuccess("Successfully Logged In!");
+            toastifySuccess("Login successful! Welcome to AstroCall.");
             onClose();
           } else if (userData?.Astro === "1") {
             setErrorMessage("Number is not Registered with User Account.");

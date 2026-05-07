@@ -20,12 +20,11 @@ import UserChat from "@/app/user-chat/page";
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const { loginUserData, loadingUserData, Get_SingleData_User, isMenuOpen, setisMenuOpen } = useMenuContext();
+  const { loginUserData, loadingUserData, Get_SingleData_User, isMenuOpen, setisMenuOpen, isLogin, setisLogin } = useMenuContext();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [showProfileCard, setShowProfileCard] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLogin, setIsLogin] = useState(false);
 
 
   const menuRef = useRef(null);
@@ -37,7 +36,7 @@ export default function Header() {
     const userId = localStorage.getItem("UserLoginId");
 
     if (loginData && userId) {
-      setIsLogin(true);
+      setisLogin(true);
       try {
         const parsedData = JSON.parse(loginData);
 
@@ -45,7 +44,7 @@ export default function Header() {
         console.error("Error parsing login data:", error);
       }
     }
-  }, []);
+  }, [setisLogin]);
 
 
 
@@ -103,11 +102,11 @@ export default function Header() {
 
 
   const handleLoginSuccess = (data) => {
-    setIsLogin(true);
+    setisLogin(true);
     setIsAuthModalOpen(false);
     setMobileMenuOpen(false);
     setShowProfileCard(false);
-    toastifySuccess("Successfully Logged In!");
+    toastifySuccess("Welcome back! You have successfully logged in.");
 
   };
 
@@ -119,7 +118,7 @@ export default function Header() {
     sessionStorage.clear();
 
     // Update state immediately
-    setIsLogin(false);
+    setisLogin(false);
     setShowProfileCard(false);
     setMobileMenuOpen(false);
 
@@ -127,7 +126,7 @@ export default function Header() {
 
     // Navigate to home and show success message
     router.push("/");
-    toastifySuccess("Logged Out Successfully!");
+    toastifySuccess("You have been successfully logged out. Thank you for using AstroCall!");
 
 
 
@@ -277,15 +276,16 @@ export default function Header() {
 
                   <div className="flex items-center gap-4 text-gray-700">
 
-                    {/* 🔹 Login Icon */}
+                    {/* 🔹 Login Button */}
                     <div
                       onClick={() => setIsAuthModalOpen("login")}
                       className="flex items-center gap-1 cursor-pointer hover:text-orange-500 transition"
                     >
                       <CgProfile className="text-2xl" />
+                      <span className="text-sm font-medium">Login</span>
                     </div>
 
-                    {/* 🔹 Signup Icon */}
+                    {/* 🔹 Signup Button */}
                     <div
                       onClick={() => setIsAuthModalOpen("register")}
                       className="flex items-center gap-1 cursor-pointer hover:text-orange-500 transition"
@@ -486,17 +486,31 @@ export default function Header() {
 
                 /* Login/Signup for non-logged users */
 
-                <button
-                  className="flex items-center gap-3 px-4 py-3.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition w-full text-left font-semibold shadow-md mt-2"
-                  onClick={() => {
-                    setIsAuthModalOpen(true);
-                    setMobileMenuOpen(false);
-                  }}
-                >
+                <>
+                  <button
+                    className="flex items-center gap-3 px-4 py-3.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition w-full text-left font-semibold shadow-md mt-2"
+                    onClick={() => {
+                      setIsAuthModalOpen("login");
+                      setMobileMenuOpen(false);
+                    }}
+                  >
 
-                  <RiUserShared2Fill className="text-xl" />
-                  <span className="text-base">Sign Up</span>
-                </button>
+                    <CgProfile className="text-xl" />
+                    <span className="text-base">Login</span>
+                  </button>
+
+                  <button
+                    className="flex items-center gap-3 px-4 py-3.5 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition w-full text-left font-semibold shadow-md mt-2"
+                    onClick={() => {
+                      setIsAuthModalOpen("register");
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+
+                    <RiUserShared2Fill className="text-xl" />
+                    <span className="text-base">Sign Up</span>
+                  </button>
+                </>
 
               )}
 
