@@ -1,3 +1,4 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
         remotePatterns: [
@@ -11,5 +12,7 @@ const nextConfig = {
             },
         ],
     },
+    serverExternalPackages: ['react-icons'],
 };
+
 module.exports = nextConfig;

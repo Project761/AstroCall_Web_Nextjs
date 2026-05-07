@@ -206,7 +206,7 @@ const OnlinepujaPlansDetails = () => {
       }
     }} />
 
-    <Header />
+    {/* <Header /> */}
 
     <div className="bg-[#F973160D] pt-20 lg:pt-24">
       <div className="bg-gradient-to-br from-orange-500 to-orange-600 main-container rounded-lg sm:rounded-xl text-white text-center py-8 sm:py-10 md:py-12 px-3 sm:px-4 mt-4 sm:mt-6 shadow-lg">

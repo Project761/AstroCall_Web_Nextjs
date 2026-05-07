@@ -95,7 +95,7 @@ export default function MyFavorites() {
     return (<>
       <SEO title="My Favorites - AstroCall" description="View and manage your favorite astrologers"/>
       
-      <div className="min-h-screen bg-gray-50 pt-20">
+      <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Page Header */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">

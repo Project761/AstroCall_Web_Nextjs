@@ -10,7 +10,6 @@ import { CgProfile } from "react-icons/cg";
 import { ImCross } from "react-icons/im";
 import { RiUserShared2Fill } from "react-icons/ri";
 import { FaWallet, FaHeart, FaGem, FaPray, FaComments, FaPhone, FaUser, FaHandsHelping, FaChevronRight, FaUserCircle } from "react-icons/fa";
-import { SlUserFollowing } from "react-icons/sl";
 import { MdAccessTime } from "react-icons/md";
 import { MdPhoneInTalk } from "react-icons/md";
 import { IoMdChatboxes } from "react-icons/io";
@@ -231,84 +230,7 @@ export default function Header() {
                 </div>
               </button>
 
-              {/* Additional Navigation Items */}
-              <button
-                onClick={(e) => {
-                  console.log('Love Calculator button clicked');
-                  e.stopPropagation();
-                  handleNavigation("/love-calculator");
-                }}
-                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/love-calculator" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
-              >
-                Love Calculator
-              </button>
-
-              <button
-                onClick={(e) => {
-                  console.log('Free Kundali button clicked');
-                  e.stopPropagation();
-                  handleNavigation("/freekundli");
-                }}
-                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/freekundli" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
-              >
-                Free Kundali
-              </button>
-
-              <button
-                onClick={(e) => {
-                  console.log('Kundali Matching button clicked');
-                  e.stopPropagation();
-                  handleNavigation("/kundali-matching");
-                }}
-                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/kundali-matching" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
-              >
-                Kundali Matching
-              </button>
-
-              <button
-                onClick={(e) => {
-                  console.log('Daily Horoscope button clicked');
-                  e.stopPropagation();
-                  handleNavigation("/daily-horoscope");
-                }}
-                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/daily-horoscope" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
-              >
-                Daily Horoscope
-              </button>
-
-              <button
-                onClick={(e) => {
-                  console.log('Gemstone button clicked');
-                  e.stopPropagation();
-                  handleNavigation("/gemstone");
-                }}
-                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/gemstone" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
-              >
-                Gemstone
-              </button>
-
-              <button
-                onClick={(e) => {
-                  console.log('Online Puja button clicked');
-                  e.stopPropagation();
-                  handleNavigation("/online-puja");
-                }}
-                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/online-puja" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
-              >
-                Online Puja
-              </button>
-
-              <button
-                onClick={(e) => {
-                  console.log('Astrology Blog button clicked');
-                  e.stopPropagation();
-                  handleNavigation("/astrology-blog");
-                }}
-                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/astrology-blog" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
-              >
-                Astrology Blog
-              </button>
-
+              
             </div>
 
 
@@ -320,7 +242,8 @@ export default function Header() {
               {/* Wallet Balance */}
 
               {isLogin && loginUserData && (
-                <div className="hidden md:flex items-center gap-2 border border-orange-200 rounded-md px-3 py-1 bg-orange-50">
+                <div className="hidden md:flex items-center gap-2 border border-orange-200 rounded-md px-3 py-1
+                 bg-orange-50">
                   <FaWallet className="text-orange-600" />
                   <span className="text-black font-medium">₹{amount}</span>
                 </div>
@@ -509,76 +432,7 @@ export default function Header() {
                     <span className="text-base font-medium">Chat with Astrologers</span>
                   </button>
 
-                  {/* Love Calculator */}
-                  <button
-                    onClick={() => handleNavigation("/love-calculator")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/love-calculator" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-                  >
-                    <FaHeart className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">Love Calculator</span>
-                  </button>
-
-                  {/* Free Kundali */}
-                  <button
-                    onClick={() => handleNavigation("/freekundli")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/freekundli" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-                  >
-                    <FaUserCircle className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">Free Kundali</span>
-                  </button>
-
-                  {/* Kundali Matching */}
-                  <button
-                    onClick={() => handleNavigation("/kundali-matching")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/kundali-matching" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-                  >
-                    <FaHeart className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">Kundali Matching</span>
-                  </button>
-
-                  {/* Daily Horoscope */}
-                  <button
-                    onClick={() => handleNavigation("/daily-horoscope")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/daily-horoscope" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-                  >
-                    <FaUserCircle className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">Daily Horoscope</span>
-                  </button>
-
-                  {/* Gemstone */}
-                  <button
-                    onClick={() => handleNavigation("/gemstone")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/gemstone" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-                  >
-                    <FaGem className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">Gemstone</span>
-                  </button>
-
-                  {/* Online Puja */}
-                  <button
-                    onClick={() => handleNavigation("/online-puja")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/online-puja" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-                  >
-                    <FaPray className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">Online Puja</span>
-                  </button>
-
-                  {/* Astrology Blog */}
-                  <button
-                    onClick={() => handleNavigation("/astrology-blog")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/astrology-blog" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-                  >
-                    <FaComments className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">Astrology Blog</span>
-                  </button>
-
+                  
                   {/* My Account */}
 
                   <button

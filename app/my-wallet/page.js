@@ -72,7 +72,7 @@ export default function MyWallet() {
   return (
     <>
       <div className="min-h-screen p-4">
-        <div className=" main-container mx-auto">
+        <div className="max-w-6xl mx-auto px-4 py-8">
           <h1 className="text-2xl  text-orange-500 font-semibold mb-1">My Wallet</h1>
           <p className="text-gray-600 text-sm mb-6">
             View your wallet balance and transaction history. Add funds or make withdrawals.
@@ -84,14 +84,14 @@ export default function MyWallet() {
             <div className="text-white text-sm mb-2">Available Balance</div>
             <div className="text-4xl font-bold text-white mb-6">₹{loginUserData?.WalletAmt ? loginUserData?.WalletAmt : 0}</div>
             <div className="flex justify-center gap-4">
-              <button className="bg-white text-orange-600 font-semibold px-6 py-2 rounded shadow hover:bg-orange-50 transition">Add Money</button>
+              <button className="bg-white text-orange-600 cursor-pointer font-semibold px-6 py-2 rounded shadow hover:bg-orange-50 transition">Add Money</button>
             </div>
           </div>
 
           <div>
             <div className="flex space-x-4 mb-4">
               <button
-                className={`px-4 py-2 rounded ${activeButton === 'Wallet Transactions' ? 'bg-orange-500 text-white' : 'bg-gray-300 text-black'}`}
+                className={`px-4 py-2 rounded cursor-pointer ${activeButton === 'Wallet Transactions' ? 'bg-orange-500 text-white' : 'bg-gray-300 text-black'}`}
                 onClick={() => {
                   setActiveButton('Wallet Transactions');
                   setuserstatus(true);
@@ -100,7 +100,7 @@ export default function MyWallet() {
                 Wallet Transactions
               </button>
               <button
-                className={`px-4 py-2 rounded ${activeButton === 'Payment Logs' ? 'bg-orange-500 text-white' : 'bg-gray-300 text-black'}`}
+                className={`px-4 py-2 rounded cursor-pointer ${activeButton === 'Payment Logs' ? 'bg-orange-500 text-white' : 'bg-gray-300 text-black'}`}
                 onClick={() => {
                   setActiveButton('Payment Logs');
                   setuserstatus(false);
