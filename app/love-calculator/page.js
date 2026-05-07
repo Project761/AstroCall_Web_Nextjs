@@ -13,13 +13,13 @@ console.log("AddDeleteUpadate function:", typeof AddDeleteUpadate);
 const postData = async (url, requestData) => {
   try {
     const visitorId = typeof window !== 'undefined' ? localStorage.getItem("visitor_Id") || '' : '';
-    const baseUrl = typeof window !== 'undefined' 
-      ? (window.location.origin === 'https://astrocall.live' 
-          ? 'https://api.astrocall.live/api/' 
-          : 'https://liveapi.astrocall.live/api/')
+    const baseUrl = typeof window !== 'undefined'
+      ? (window.location.origin === 'https://astrocall.live'
+        ? 'https://api.astrocall.live/api/'
+        : 'https://liveapi.astrocall.live/api/')
       : 'https://liveapi.astrocall.live/api/';
     const fullUrl = baseUrl.endsWith('/') ? baseUrl + url.replace(/^\/+/, '') : baseUrl + '/' + url.replace(/^\/+/, '');
-    
+
     console.log("Inline postData URL:", fullUrl);
     console.log("Inline postData Request:", requestData);
 
@@ -33,7 +33,7 @@ const postData = async (url, requestData) => {
     });
 
     console.log("Inline postData Response status:", response.status);
-    
+
     if (!response.ok) {
       console.error("HTTP error:", response.status, response.statusText);
       return null;
@@ -116,10 +116,6 @@ const LoveCalculator = () => {
   ]
 
   const validateForm = () => {
-    console.log("validateForm called");
-    console.log("formData:", formData);
-    console.log("UserLoginId:", UserLoginId);
-    
     const newErrors = {};
     if (!formData.UserName.trim()) newErrors.UserName = "Required";
     if (!formData.PartnerName.trim()) newErrors.PartnerName = "Required";
@@ -132,22 +128,16 @@ const LoveCalculator = () => {
       if (!formData.PartnerGender) newErrors.PartnerGender = "Required";
     }
 
-    console.log("newErrors:", newErrors);
     setErrors(newErrors);
-    
     if (Object.keys(newErrors).length === 0) {
-      console.log("No validation errors, checking login status");
       if (UserLoginId) {
-        console.log("User is logged in, calling handleCalculate");
         handleCalculate();
       } else {
-        console.log("User not logged in, opening auth modal");
         setIsModalOpen(true);
       }
-    } else {
-      console.log("Validation errors found, not proceeding");
     }
   };
+
 
   const handleCalculate = async () => {
 

@@ -13,7 +13,7 @@ export default function Support() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [tickets, setTickets] = useState([]);
     useEffect(() => {
-        const loginData = localStorage.getItem("LoginTokenData");
+        const loginData = typeof window !== "undefined" ? localStorage.getItem("LoginTokenData") : null;
         if (loginData) {
             try {
                 const parsedData = JSON.parse(loginData);
