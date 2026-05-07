@@ -178,7 +178,7 @@ export default function Header() {
 
       {/* Main Header */}
 
-      <div className="bg-white shadow-customn  fixed top-0 z-10" style={{ width: '100vw', maxWidth: '100%' }}>
+      <div className="bg-white shadow-customn  fixed top-0 z-50" style={{ width: '100vw', maxWidth: '100%' }}>
         <div className="flex justify-between m-auto items-center main-container max-h-[90px] px-2 sm:px-4 py-2">
           {/* Logo */}
           <div
@@ -224,7 +224,8 @@ export default function Header() {
               {/* Wallet Balance */}
 
               {isLogin && loginUserData && (
-                <div className="hidden md:flex items-center gap-2 border border-orange-200 rounded-md px-3 py-1 bg-orange-50">
+                <div className="hidden md:flex items-center gap-2 border border-orange-200 rounded-md px-3 py-1
+                 bg-orange-50">
                   <FaWallet className="text-orange-600" />
                   <span className="text-black font-medium">₹{amount}</span>
                 </div>

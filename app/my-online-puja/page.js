@@ -67,7 +67,7 @@ export default function MyOnlinePuja() {
     return (<>
       <SEO title="My Online Puja - AstroCall" description="View your online puja bookings and spiritual services"/>
       
-      <div className="min-h-screen bg-gray-50 pt-20">
+      <div className="min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export default function MyOnlinePuja() {
               <FaPray className="text-gray-300 text-6xl mx-auto mb-4"/>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">No pujas booked yet</h3>
               <p className="text-gray-600 mb-6">Book online pujas for spiritual blessings</p>
-              <button onClick={() => router.push("/online-puja")} className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors">
+              <button onClick={() => router.push("/online-puja")} className="bg-orange-500 cursor-pointer text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors">
                 Browse Pujas
               </button>
             </div>) : (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

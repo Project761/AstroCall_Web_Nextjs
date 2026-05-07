@@ -12,13 +12,18 @@ export default function AppShell({ children }) {
   const hideLayout =
     pathname.startsWith("/astrologer-login") ||
     pathname.startsWith("/astrologer-panel");
+  
+  const hideFooter =
+    pathname.startsWith("/astrologer-login") ||
+    pathname.startsWith("/astrologer-panel") ||
+    pathname.startsWith("/my-");
 
   return (
     <MenuProvider>
       <SocketProvider>
         {!hideLayout && <Header />}
         {children}
-        {!hideLayout && <Footer footers={[]} />}
+        {!hideFooter && <Footer footers={[]} />}
        
       </SocketProvider>
     </MenuProvider>
