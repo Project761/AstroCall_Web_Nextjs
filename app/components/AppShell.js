@@ -16,7 +16,7 @@ export default function AppShell({ children }) {
   return (
     <MenuProvider>
       <SocketProvider>
-        {!hideLayout && <Header />}
+        {!hideLayout}
         {children}
         {!hideLayout && <Footer footers={[]} />}
        

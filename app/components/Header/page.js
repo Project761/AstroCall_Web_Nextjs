@@ -9,7 +9,7 @@ import { toastifySuccess } from "../../utils/utility";
 import { CgProfile } from "react-icons/cg";
 import { ImCross } from "react-icons/im";
 import { RiUserShared2Fill } from "react-icons/ri";
-import { FaWallet, FaHeart, FaGem, FaPray, FaComments, FaPhone, FaUser, FaHandsHelping, FaChevronRight, FaPersonCircleQuestion } from "react-icons/fa";
+import { FaWallet, FaHeart, FaGem, FaPray, FaComments, FaPhone, FaUser, FaHandsHelping, FaChevronRight, FaUserCircle } from "react-icons/fa";
 import { SlUserFollowing } from "react-icons/sl";
 import { MdAccessTime } from "react-icons/md";
 import { MdPhoneInTalk } from "react-icons/md";
@@ -21,7 +21,7 @@ import UserChat from "@/app/user-chat/page";
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const { loginUserData, loadingUserData, Get_SingleData_User } = useMenuContext();
+  const { loginUserData, loadingUserData, Get_SingleData_User, isMenuOpen, setisMenuOpen } = useMenuContext();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [showProfileCard, setShowProfileCard] = useState(false);
@@ -32,10 +32,7 @@ export default function Header() {
   const menuRef = useRef(null);
   const profileRef = useRef(null);
 
-
-
   // Check login status on mount
-
   useEffect(() => {
     const loginData = localStorage.getItem("LoginTokenData");
     const userId = localStorage.getItem("UserLoginId");
@@ -59,6 +56,7 @@ export default function Header() {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target) && mobileMenuOpen) {
         setMobileMenuOpen(false);
+        setisMenuOpen(false); // Sync with global state
       }
       if (profileRef.current && !profileRef.current.contains(event.target) && showProfileCard) {
         setShowProfileCard(false);
@@ -145,13 +143,25 @@ export default function Header() {
 
 
   const handleNavigation = (path) => {
-    router.push(path);
-    setMobileMenuOpen(false);
+    console.log('Navigating to:', path);
+    console.log('Current pathname:', pathname);
+    console.log('Mobile menu open:', mobileMenuOpen);
+    console.log('Global menu open:', isMenuOpen);
+
+    // Prevent any potential event issues
+    try {
+      router.push(path);
+      setMobileMenuOpen(false);
+      setisMenuOpen(false); // Also close global menu
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   };
 
 
 
   const handleTalkClick = () => {
+    console.log('Talk button clicked, isLogin:', isLogin);
     if (isLogin) {
       handleNavigation("/talk-to-astrologers");
     } else {
@@ -163,6 +173,7 @@ export default function Header() {
 
 
   const handleChatClick = () => {
+    console.log('Chat button clicked, isLogin:', isLogin);
     if (isLogin) {
       handleNavigation("/chat-to-astrologers");
     } else {
@@ -178,13 +189,20 @@ export default function Header() {
 
       {/* Main Header */}
 
-      <div className="bg-white shadow-customn  fixed top-0 z-10" style={{ width: '100vw', maxWidth: '100%' }}>
+      <div className="bg-white shadow-customn fixed top-0 z-20 pointer-events-auto" style={{ width: '100vw', maxWidth: '100%' }}>
         <div className="flex justify-between m-auto items-center main-container max-h-[90px] px-2 sm:px-4 py-2">
           {/* Logo */}
           <div
             className="flex items-center space-x-3 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => router.push("/")} >
-            <Image src="/images/logo1.webp" alt="AstroCall" width={40} height={40} className="w-[35px] sm:w-[50px] h-[35px] sm:h-[50px] aspect-[1/1] object-contain flex-shrink-0" />
+            <Image
+              src="/images/logo1.webp"
+              alt="AstroCall"
+              width={40}
+              height={40}
+              priority={true}
+              className="w-[35px] sm:w-[50px] h-[35px] sm:h-[50px] aspect-[1/1] object-contain flex-shrink-0"
+            />
             <span className="text-2xl font-bold">AstroCall</span>
           </div>
 
@@ -195,7 +213,7 @@ export default function Header() {
             <div className="hidden lg:flex items-center space-x-3 flex-shrink-0">
               <button
                 onClick={handleTalkClick}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm cursor-pointer hover:bg-orange-600 transition-all duration-300 whitespace-nowrap flex items-center gap-2 chat-button">
+                className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm cursor-pointer hover:bg-orange-600 transition-all duration-300 whitespace-nowrap flex items-center gap-2 chat-button pointer-events-auto">
                 Talk to an Astrologer
                 <div className="text-xl icon">
                   <MdPhoneInTalk />
@@ -204,13 +222,91 @@ export default function Header() {
 
               <button
                 onClick={handleChatClick}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm cursor-pointer hover:bg-orange-600 transition-all duration-300 whitespace-nowrap flex items-center gap-2 chat-button"
+                className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm cursor-pointer hover:bg-orange-600 transition-all duration-300 whitespace-nowrap flex items-center gap-2 chat-button pointer-events-auto"
                 name="Chat-to-Astrologers"
               >
                 Chat with an Astrologer
                 <div className="text-xl icon">
                   <IoMdChatboxes />
                 </div>
+              </button>
+
+              {/* Additional Navigation Items */}
+              <button
+                onClick={(e) => {
+                  console.log('Love Calculator button clicked');
+                  e.stopPropagation();
+                  handleNavigation("/love-calculator");
+                }}
+                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/love-calculator" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
+              >
+                Love Calculator
+              </button>
+
+              <button
+                onClick={(e) => {
+                  console.log('Free Kundali button clicked');
+                  e.stopPropagation();
+                  handleNavigation("/freekundli");
+                }}
+                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/freekundli" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
+              >
+                Free Kundali
+              </button>
+
+              <button
+                onClick={(e) => {
+                  console.log('Kundali Matching button clicked');
+                  e.stopPropagation();
+                  handleNavigation("/kundali-matching");
+                }}
+                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/kundali-matching" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
+              >
+                Kundali Matching
+              </button>
+
+              <button
+                onClick={(e) => {
+                  console.log('Daily Horoscope button clicked');
+                  e.stopPropagation();
+                  handleNavigation("/daily-horoscope");
+                }}
+                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/daily-horoscope" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
+              >
+                Daily Horoscope
+              </button>
+
+              <button
+                onClick={(e) => {
+                  console.log('Gemstone button clicked');
+                  e.stopPropagation();
+                  handleNavigation("/gemstone");
+                }}
+                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/gemstone" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
+              >
+                Gemstone
+              </button>
+
+              <button
+                onClick={(e) => {
+                  console.log('Online Puja button clicked');
+                  e.stopPropagation();
+                  handleNavigation("/online-puja");
+                }}
+                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/online-puja" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
+              >
+                Online Puja
+              </button>
+
+              <button
+                onClick={(e) => {
+                  console.log('Astrology Blog button clicked');
+                  e.stopPropagation();
+                  handleNavigation("/astrology-blog");
+                }}
+                className={`px-4 py-2 rounded-lg text-sm cursor-pointer transition-all duration-300 whitespace-nowrap pointer-events-auto ${pathname === "/astrology-blog" ? "bg-orange-600 text-white" : "text-gray-700 hover:bg-orange-100"}`}
+              >
+                Astrology Blog
               </button>
 
             </div>
@@ -297,7 +393,11 @@ export default function Header() {
 
               <button
                 className="lg:hidden text-orange-500 p-2 rounded-full hover:bg-orange-50 transition-colors"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                onClick={() => {
+                  const newState = !mobileMenuOpen;
+                  setMobileMenuOpen(newState);
+                  setisMenuOpen(newState); // Sync with global state
+                }}
               >
 
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -319,7 +419,10 @@ export default function Header() {
           mobileMenuOpen && (
             <div
               className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setisMenuOpen(false); // Sync with global state
+              }}
             />
 
           )
@@ -336,7 +439,10 @@ export default function Header() {
 
           <button
             className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition-colors"
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setisMenuOpen(false); // Sync with global state
+            }}
           >
             <ImCross className="text-lg" />
           </button>
@@ -403,7 +509,75 @@ export default function Header() {
                     <span className="text-base font-medium">Chat with Astrologers</span>
                   </button>
 
+                  {/* Love Calculator */}
+                  <button
+                    onClick={() => handleNavigation("/love-calculator")}
+                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/love-calculator" ? "bg-orange-500 text-white font-semibold" : "text-white"
+                      }`}
+                  >
+                    <FaHeart className="text-xl flex-shrink-0" />
+                    <span className="text-base font-medium">Love Calculator</span>
+                  </button>
 
+                  {/* Free Kundali */}
+                  <button
+                    onClick={() => handleNavigation("/freekundli")}
+                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/freekundli" ? "bg-orange-500 text-white font-semibold" : "text-white"
+                      }`}
+                  >
+                    <FaUserCircle className="text-xl flex-shrink-0" />
+                    <span className="text-base font-medium">Free Kundali</span>
+                  </button>
+
+                  {/* Kundali Matching */}
+                  <button
+                    onClick={() => handleNavigation("/kundali-matching")}
+                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/kundali-matching" ? "bg-orange-500 text-white font-semibold" : "text-white"
+                      }`}
+                  >
+                    <FaHeart className="text-xl flex-shrink-0" />
+                    <span className="text-base font-medium">Kundali Matching</span>
+                  </button>
+
+                  {/* Daily Horoscope */}
+                  <button
+                    onClick={() => handleNavigation("/daily-horoscope")}
+                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/daily-horoscope" ? "bg-orange-500 text-white font-semibold" : "text-white"
+                      }`}
+                  >
+                    <FaUserCircle className="text-xl flex-shrink-0" />
+                    <span className="text-base font-medium">Daily Horoscope</span>
+                  </button>
+
+                  {/* Gemstone */}
+                  <button
+                    onClick={() => handleNavigation("/gemstone")}
+                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/gemstone" ? "bg-orange-500 text-white font-semibold" : "text-white"
+                      }`}
+                  >
+                    <FaGem className="text-xl flex-shrink-0" />
+                    <span className="text-base font-medium">Gemstone</span>
+                  </button>
+
+                  {/* Online Puja */}
+                  <button
+                    onClick={() => handleNavigation("/online-puja")}
+                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/online-puja" ? "bg-orange-500 text-white font-semibold" : "text-white"
+                      }`}
+                  >
+                    <FaPray className="text-xl flex-shrink-0" />
+                    <span className="text-base font-medium">Online Puja</span>
+                  </button>
+
+                  {/* Astrology Blog */}
+                  <button
+                    onClick={() => handleNavigation("/astrology-blog")}
+                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/astrology-blog" ? "bg-orange-500 text-white font-semibold" : "text-white"
+                      }`}
+                  >
+                    <FaComments className="text-xl flex-shrink-0" />
+                    <span className="text-base font-medium">Astrology Blog</span>
+                  </button>
 
                   {/* My Account */}
 
