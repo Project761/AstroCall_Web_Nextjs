@@ -9,21 +9,25 @@ import "react-datepicker/dist/react-datepicker.css";
 import SEO from "@/app/components/SEO/page.js";
 import { TokenWithDeleteUpadateAdd, postWithToken } from "@/app/utils/api";
 // Custom Modal Component
+
+
 const CustomModal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen)
     return null;
-  return (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg max-w-md w-full">
-      <div className="flex justify-between items-center mb-4">
-        <h5 className="text-lg sm:text-xl font-semibold">{title}</h5>
-        <button onClick={onClose} className="text-gray-500 hover:text-red-500 text-xl font-bold">
-          ✕
-        </button>
+  return (<div className="fixed inset-0 bg-gradient-to-br from-orange-900/90 via-orange-800/70 to-orange-900/90 backdrop-blur-md flex items-center justify-center z-50 px-4 animate-fadeIn">
+    <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-2xl border border-orange-100/50 max-w-lg w-full transform transition-all duration-500 scale-100 animate-slideUp hover:shadow-3xl">
+      <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
+        <h5 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">{title}</h5>
+        <button onClick={onClose} className="text-gray-400 hover:text-orange-500 text-3xl font-light transition-all duration-300 hover:rotate-90 hover:scale-110">✕</button>
       </div>
-      {children}
+      <div className="min-h-[100px]">
+        {children}
+      </div>
     </div>
   </div>);
 };
+
+
 const FreeKundli = () => {
   const router = useRouter();
   const UserLoginId = typeof window !== 'undefined' ? localStorage.getItem("UserLoginId") || "" : "";
@@ -591,27 +595,58 @@ const FreeKundli = () => {
 
           <div>
             <CustomModal isOpen={isPopUPOpen} onClose={closeModal} title="Confirm Delete Kundli">
-              <h5 className="text-lg sm:text-xl mb-4 sm:mb-5 text-center">Are you sure you want to delete this Kundli?</h5>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-                <button className="flex items-center justify-center gap-1 w-full py-2 sm:py-2.5 px-6 sm:px-8 text-white rounded-lg sm:rounded-xl bg-orange-500 hover:bg-orange-600 transition font-[600] text-sm sm:text-base" onClick={closeModal}>
-                  Cancel
-                </button>
-                <button className="flex items-center justify-center gap-1 w-full py-2 sm:py-2.5 px-6 sm:px-8 text-white rounded-lg sm:rounded-xl bg-gray-600 hover:bg-gray-700 transition font-[600] text-sm sm:text-base" onClick={() => {
-                  Delete_Kundli_Data();
-                }}>
-                  Delete
-                </button>
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 mb-6 shadow-lg border border-orange-200">
+                  <svg className="h-10 w-10 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </div>
+                <h5 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">Delete Kundli?</h5>
+                <p className="text-base text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">This action cannot be undone. This will permanently delete your Kundli data and all associated information.</p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <button 
+                    onClick={closeModal}
+                    className="px-8 py-4 text-gray-700 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 border border-gray-200 order-2 sm:order-1"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => {
+                      Delete_Kundli_Data();
+                    }}
+                    className="px-8 py-4 text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl font-semibold transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border border-orange-400 order-1 sm:order-2 flex items-center justify-center gap-3"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Delete Kundli
+                  </button>
+                </div>
               </div>
             </CustomModal>
 
             <CustomModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Login Required">
-              <h5 className="text-lg sm:text-xl mb-4 sm:mb-5 text-center">Please login to generate your Kundli</h5>
-              <div className="flex justify-center">
-                <button className="bg-orange-500 text-white font-medium px-6 sm:px-8 py-2.5 sm:py-3 rounded-full shadow hover:shadow-lg transition duration-300 text-sm sm:text-base" onClick={() => {
-                  router.push('/login');
-                }}>
-                  Go to Login
-                </button>
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-orange-100 mb-4">
+                  <svg className="h-8 w-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                  </svg>
+                </div>
+                <h5 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Login Required</h5>
+                <p className="text-sm text-gray-600 mb-6 max-w-sm mx-auto">Please login to generate your Kundli and access all features.</p>
+                <div className="flex justify-center">
+                  <button 
+                    onClick={() => {
+                      router.push('/login');
+                    }}
+                    className="px-8 py-3 text-white bg-orange-500 hover:bg-orange-600 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                    </svg>
+                    Go to Login
+                  </button>
+                </div>
               </div>
             </CustomModal>
           </div>

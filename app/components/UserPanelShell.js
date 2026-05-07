@@ -4,7 +4,6 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import PanelGuard from "@/app/components/PanelGuard";
 import { FaBars, FaUser, FaWallet, FaPhone, FaComments, FaHeart, FaGem, FaPray } from "react-icons/fa";
-import { SlUserFollowing } from "react-icons/sl";
 
 const navItems = [
   { name: "My Account", path: "/my-account", icon: <FaUser /> },
@@ -12,7 +11,7 @@ const navItems = [
   { name: "My Calls", path: "/my-calls", icon: <FaPhone /> },
   { name: "My Chats", path: "/my-chats", icon: <FaComments /> },
   { name: "My Favorites", path: "/my-favorites", icon: <FaHeart /> },
-  { name: "My Following", path: "/my-following", icon: <SlUserFollowing /> },
+  { name: "My Following", path: "/my-following", icon: <FaUser /> },
   { name: "My Gemstone", path: "/my-gemstone", icon: <FaGem /> },
   { name: "My Online Puja", path: "/my-online-puja", icon: <FaPray /> },
 ];

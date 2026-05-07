@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { FaCalendar, FaUser, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { postWithToken } from "../../utils/api.js";
 import { useRouter } from "next/navigation.js";
 import { format } from "date-fns";
+import Image from "next/image";
 
 const BlogSection = () => {
     const [blogData, setBlogData] = useState([]);
@@ -34,7 +35,7 @@ const BlogSection = () => {
         Get_Data_Blogs();
     }, []);
 
-    const Get_Data_Blogs = async () => {
+    const Get_Data_Blogs = useCallback(async () => {
         try {
             const val = {
                 IsActive: "1",
@@ -45,10 +46,10 @@ const BlogSection = () => {
         } catch (error) {
             console.log(error);
         }
-    };
+    }, []);
 
-    // Slider logic
-    const getVisibleCards = () => {
+    // Memoized slider logic for performance
+    const visibleCards = useMemo(() => {
         if (blogData.length === 0) return [];
         if (currentIndex + cardsToShow <= blogData.length) {
             return blogData.slice(currentIndex, currentIndex + cardsToShow);
@@ -58,19 +59,19 @@ const BlogSection = () => {
                 ...blogData.slice(0, (currentIndex + cardsToShow) % blogData.length),
             ];
         }
-    };
-    const visibleCards = getVisibleCards();
+    }, [blogData, currentIndex, cardsToShow]);
 
-    const handlePrev = () => {
+    const handlePrev = useCallback(() => {
         setCurrentIndex((prev) =>
             prev === 0 ? blogData.length - cardsToShow : prev - 1
         );
-    };
-    const handleNext = () => {
+    }, [blogData.length, cardsToShow]);
+    
+    const handleNext = useCallback(() => {
         setCurrentIndex((prev) =>
             prev === blogData.length - cardsToShow ? 0 : prev + 1
         );
-    };
+    }, [blogData.length, cardsToShow]);
 
     return (
         <section className="bg-white py-16">
@@ -96,8 +97,8 @@ const BlogSection = () => {
                                             <img
                                                 src={
                                                     article?.Imageurl
-                                                        ? `https://${article?.Imageurl?.replace(/\\/g, "/")}` 
-                                                        : "https://via.placeholder.com/400x200?text=No+Image"
+                                                        ? `https://${article?.Imageurl?.replace(/\\/g, "/")}`
+                                                        : "/images/placeholder-blog.jpg"
                                                 }
                                                 alt={article.Title}
                                                 className="w-full h-full object-cover"
@@ -117,8 +118,15 @@ const BlogSection = () => {
                                             />
                                             <div className="mt-auto flex justify-center">
                                                 <button
-                                                    onClick={() => router.push("/astrology-blog")}
-                                                    className="text-orange-500 font-medium hover:underline"
+                                                    onClick={() => {
+                                                        const slug = article?.MetaKeywords
+                                                            ?.toLowerCase()
+                                                            .trim()
+                                                            .replace(/\s+/g, "-")
+                                                            .replace(/[^\w-]+/g, "");
+                                                        router.push(`/astrology-blog/${slug}`);
+                                                    }}
+                                                    className="text-orange-500 font-medium hover:underline transition-colors duration-200"
                                                 >
                                                     Read More →
                                                 </button>

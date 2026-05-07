@@ -24,7 +24,7 @@ const getApiUrl = () => {
   const urlSet = window.location.origin;
   const base = urlSet === 'https://astrocall.live'
     ? 'https://api.astrocall.live/api/'  // Live domain
-    : 'https://liveapi.astrocall.live/api/';  // Local development domain
+    : 'https://liveapi.astrocall.live/api/';  // Local development domain (uses Next.js API proxy)
   return normalizeBaseUrl(base);
 };
 
@@ -89,10 +89,17 @@ const refreshAuthToken = async () => {
   }
 };
 
-// Basic GET request
+// Basic GET request with headers
 export const fetchData = async (URL) => {
   try {
-    const response = await fetch(URL);
+    const visitorId = getVisitorId();
+    const response = await fetch(URL, {
+      method: 'GET',
+      headers: {
+        'FingerPrintJsKey': visitorId,
+        'Content-Type': 'application/json',
+      },
+    });
     const data = await response.json();
     return data;
   } catch (error) {
@@ -363,7 +370,8 @@ export const getPostTicketData = async (url, postData) => {
 export const AddDeleteUpadate = async (url, postData) => {
   try {
     const visitorId = getVisitorId();
-    const response = await fetch(url, {
+    const apiUrl = buildUrl(getApiUrl(), url);
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'FingerPrintJsKey': visitorId,
@@ -399,6 +407,63 @@ export const getData = async (url, postData) => {
   }
 };
 
+// Simple POST with data parsing
+export const postData = async (url, requestData) => {
+  try {
+    const visitorId = getVisitorId();
+    const fullUrl = buildUrl(getApiUrl(), url);
+    console.log("postData URL:", fullUrl);
+    console.log("postData Request:", requestData);
+
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      headers: {
+        'FingerPrintJsKey': visitorId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    console.log("postData Response status:", response.status);
+    
+    if (!response.ok) {
+      console.error("HTTP error:", response.status, response.statusText);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log("postData Raw response:", data);
+
+    // Handle different response formats
+    let parseData;
+    try {
+      if (data?.data) {
+        // If data is a string, parse it
+        if (typeof data.data === 'string') {
+          parseData = JSON.parse(data.data);
+        } else {
+          // If data is already an object, use it directly
+          parseData = data.data;
+        }
+      } else {
+        // If no data property, use the response directly
+        parseData = data;
+      }
+      console.log("postData Parsed data:", parseData);
+    } catch (parseError) {
+      console.error("JSON parsing error:", parseError);
+      // If parsing fails, return the raw data
+      parseData = data;
+    }
+
+    // Return parsed data directly (not Table) since LoveCalculator returns direct object
+    return parseData;
+  } catch (error) {
+    console.error('Post data error:', error);
+    return null;
+  }
+};
+
 // Utility function to format array data
 export const Comman_changeArrayFormat = (data, Id, Code, type, col3, col4) => {
   if (type === 'PretendToBeID') {
@@ -420,7 +485,7 @@ export const Comman_changeArrayFormat = (data, Id, Code, type, col3, col4) => {
 // Get single user data by ID
 export const Get_SingleData_User = async (id) => {
   if (!id) return null;
-  
+
   try {
     const res = await postWithToken("User/GetSingleData_User", { UserID: id });
     if (res && res.length > 0) {
@@ -431,6 +496,64 @@ export const Get_SingleData_User = async (id) => {
     console.error("Error fetching single user data:", err);
     return null;
   }
+};
+
+// Login API function
+export const loginApi = async (loginData) => {
+  try {
+    const visitorId = getVisitorId();
+    const loginUrl = buildUrl(getApiUrl(), 'Astrologer/Astrologer_Login');
+
+    const response = await fetch(loginUrl, {
+      method: 'POST',
+      headers: {
+        'FingerPrintJsKey': visitorId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(loginData),
+    });
+
+    const data = await response.json();
+    const parseData = JSON.parse(data?.data);
+    const Resdata = parseData?.Table;
+
+    return Resdata;
+  } catch (error) {
+    console.error('Login API error:', error);
+    throw error;
+  }
+};
+
+// Save token to localStorage
+export const saveAuthToken = (tokenData) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('LoginTokenData', JSON.stringify(tokenData));
+    if (tokenData?.Astro) {
+      localStorage.setItem('AstroLoginId', tokenData.Astro);
+    }
+  }
+};
+
+// Clear auth data
+export const clearAuthData = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('LoginTokenData');
+    localStorage.removeItem('AstroLoginId');
+    sessionStorage.clear();
+  }
+};
+
+// Check if user is authenticated
+export const isAuthenticated = () => {
+  if (typeof window === 'undefined') return false;
+  const auth = getAuthToken();
+  return auth && auth.access_token;
+};
+
+// Get current astrologer ID
+export const getCurrentAstrologerId = () => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('AstroLoginId') || null;
 };
 
 // Testing function (kept for compatibility)

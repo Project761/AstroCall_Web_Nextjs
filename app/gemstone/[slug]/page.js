@@ -107,7 +107,7 @@ const GemstoneDetails = () => {
             description: seoData.description,
             url: seoData.canonical
         }}/>
-            <Header />
+            {/* <Header /> */}
             <div>
                 <div className="bg-[#F973160D] py-8 sm:py-12 md:py-16 lg:py-20 relative">
                     <div className="absolute bottom-[0] left-[30%] right-image">
