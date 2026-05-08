@@ -16,7 +16,7 @@ export default function AppShell({ children }) {
   }, [pathname]);
 
   const hideLayout =
-    pathname.startsWith("/astrologer-login") ||
+    pathname.startsWith("/astrologer-login") || 
     pathname.startsWith("/astrologer-panel");
 
   const hideFooter =
