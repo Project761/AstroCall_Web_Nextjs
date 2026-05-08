@@ -180,7 +180,6 @@ export const MenuProvider = ({ children }) => {
                 localStorage.setItem("muhurat_time", now.toString());
                 localStorage.setItem("muhurat_called", "true");
             }
-            console.log("Fresh Muhurat data fetched");
         }
         catch (err) {
             console.error(err);
@@ -188,7 +187,6 @@ export const MenuProvider = ({ children }) => {
             const cachedData = typeof window !== 'undefined' ? localStorage.getItem("muhurat_data") : null;
             if (cachedData) {
                 setMuhuratData(JSON.parse(cachedData));
-                console.log("Using cached data due to error");
             }
         }
     };
@@ -215,7 +213,6 @@ export const MenuProvider = ({ children }) => {
                     localStorage.setItem("vratupvaas_time", now.toString());
                     localStorage.setItem("VratUpvaas_called", "true");
                 }
-                console.log("Fresh VratUpvaas data fetched");
             }
         }
         catch (err) {
@@ -224,7 +221,6 @@ export const MenuProvider = ({ children }) => {
             const cachedData = typeof window !== 'undefined' ? localStorage.getItem("vratupvaas_data") : null;
             if (cachedData) {
                 setVratUpvaasData(JSON.parse(cachedData));
-                console.log("Using cached VratUpvaas data due to error");
             }
         }
     };

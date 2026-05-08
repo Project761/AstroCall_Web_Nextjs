@@ -33,8 +33,6 @@ export default function AstroChat() {
       socketService.connectAstro(AstroId);
     }
     socketService.setAstroListener((messageData) => {
-      console.log("📩 ASTRO MSG:", messageData);
-
       // Handle chat messages when chat interface is open
       if (messageData?.Type === "chat" && messageData?.Message) {
         setChatMessages(prev => [...prev, {
