@@ -21,7 +21,6 @@ const AssignPuja = () => {
                 UserID: '0',
             };
             const res = await postWithToken("BookingPuja/GetData_BookingPuja", val);
-            console.log(res, 'Assign Puja Data');
         }
         catch (error) {
             console.log(error);

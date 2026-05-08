@@ -316,7 +316,6 @@ const Profile = () => {
             PINCode: PINCode,
         };
         // Mock API call
-        console.log("Update_Astrologer_Data:", val);
         toastifySuccess("Successfully Update");
     };
     const Aboutme_CheckValidationErrors = () => {
@@ -378,7 +377,6 @@ const Profile = () => {
                 ModifiedByUser: "1",
             };
             // Mock API call
-            console.log("AboutMe_Update_Astrologer_Data:", val);
             toastifySuccess("Successfully Updated");
         }
         catch (error) {
@@ -402,7 +400,6 @@ const Profile = () => {
             ModifiedByUser: "1",
         };
         // Mock API call
-        console.log("Qualification_Update_Astrologer_Data:", val);
         toastifySuccess("Successfully Updated");
     };
     const [formDataAt, setFormDataAt] = useState({
@@ -440,7 +437,6 @@ const Profile = () => {
     };
     const updateAttachment = async (e) => {
         // Mock API call
-        console.log("updateAttachment:", formDataAt);
         toastifySuccess("Successfully Update");
         setFormDataAt({
             AstrologerID: GetAstroLoginId,
@@ -451,7 +447,6 @@ const Profile = () => {
     const handleUpdatePhoto = async () => {
         try {
             // Mock API call
-            console.log("handleUpdatePhoto:", file);
             toastifySuccess("Successfully Upload");
         }
         catch (error) {

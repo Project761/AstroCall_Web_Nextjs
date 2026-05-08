@@ -157,11 +157,9 @@ const ChatHistory = () => {
         };
         try {
             // Note: TokenWithDeleteUpadateAdd needs to be implemented or imported
-            console.log('Insert functionality needs TokenWithDeleteUpadateAdd API');
             // const res = await TokenWithDeleteUpadateAdd("Suggestions/Insert_Suggestions", val);
             const res = { success: true }; // Placeholder
             if (res) {
-                console.log("Successfully Suggest"); // Replace with toastifySuccess
                 // toastifySuccess("Successfully Suggest")
                 setSuggestStatus(false);
                 setProductId(null);

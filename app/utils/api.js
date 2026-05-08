@@ -412,9 +412,6 @@ export const postData = async (url, requestData) => {
   try {
     const visitorId = getVisitorId();
     const fullUrl = buildUrl(getApiUrl(), url);
-    console.log("postData URL:", fullUrl);
-    console.log("postData Request:", requestData);
-
     const response = await fetch(fullUrl, {
       method: 'POST',
       headers: {
@@ -422,18 +419,13 @@ export const postData = async (url, requestData) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestData),
-    });
-
-    console.log("postData Response status:", response.status);
-    
+    });    
     if (!response.ok) {
       console.error("HTTP error:", response.status, response.statusText);
       return null;
     }
 
     const data = await response.json();
-    console.log("postData Raw response:", data);
-
     // Handle different response formats
     let parseData;
     try {
@@ -449,7 +441,6 @@ export const postData = async (url, requestData) => {
         // If no data property, use the response directly
         parseData = data;
       }
-      console.log("postData Parsed data:", parseData);
     } catch (parseError) {
       console.error("JSON parsing error:", parseError);
       // If parsing fails, return the raw data

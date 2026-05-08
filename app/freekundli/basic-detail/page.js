@@ -36,7 +36,7 @@ const FreeKundliDetails = () => {
   const { LanguageDropdown, setLanguageDropdown, GetData_ActivityLog } = useContext(MenuContext);
 
   // Get ID from URL params or localStorage
-  const id = searchParams.get('id') || BasicDetailID;
+  const id = searchParams.get('FreekundliID') || searchParams.get('id') || BasicDetailID;
   const isFetchingRef = useRef(false);
   const [activeTab, setActiveTab] = useState("Basic");
   const [onclickdata, setonclickdata] = useState();
@@ -119,12 +119,19 @@ const FreeKundliDetails = () => {
   }, [UserLoginId]);
 
   useEffect(() => {
+    console.log('ID changed:', id);
+    console.log('UserLoginId:', UserLoginId);
     if (id) {
       Get_Data_Details(id)
     }
   }, [id])
 
-  const Get_Data_Details = async () => {
+  useEffect(() => {
+    console.log('onclickdata changed:', onclickdata);
+  }, [onclickdata])
+
+  const Get_Data_Details = async (kundliId) => {
+    console.log('Get_Data_Details called with kundliId:', kundliId);
     const val = {
       UserId: UserLoginId,
     };
@@ -133,9 +140,13 @@ const FreeKundliDetails = () => {
       const { data } = res;
       const parseData = JSON.parse(data);
       const Data = parseData?.Table;
-      const FilterData = Data?.filter((item) => item?.Id == id);
-      if (FilterData) {
+      console.log('All Kundli Data:', Data);
+      const FilterData = Data?.filter((item) => item?.Id == kundliId);
+      console.log('Filtered Data:', FilterData);
+      if (FilterData && FilterData.length > 0) {
         Get_Data_Kundli(FilterData[0])
+      } else {
+        console.log('No matching kundli found for ID:', kundliId);
       }
     } catch (error) {
       console.log(error, "error");
@@ -143,8 +154,23 @@ const FreeKundliDetails = () => {
   };
 
   const Get_Data_Kundli = async (detailsData) => {
+    if (!detailsData?.PlaceOfBirth || !detailsData?.Latitude || !detailsData?.Longitude) {
+      setonclickdata({
+        full_name: detailsData?.Name,
+        day: detailsData?.Day,
+        month: detailsData?.Month,
+        year: detailsData?.Year,
+        hour: detailsData?.Hours,
+        minute: detailsData?.Minute,
+        place: 'Not available',
+        latitude: 'Not available',
+        longitude: 'Not available',
+        gender: detailsData?.Gender
+      });
+      return;
+    }
+    
     const val = {
-      // "p1_Date": detailsData?.p1_Date,"1998-05-24T14:40:43",
       "p1_Date": `${detailsData?.Year}-${String(detailsData?.Month).padStart(2, "0")
         }-${String(detailsData?.Day).padStart(2, "0")
         }T${String(detailsData?.Hours).padStart(2, "0")
@@ -159,20 +185,39 @@ const FreeKundliDetails = () => {
       "p1_tzone": "5.5",
       "lan": "en"
     }
+    console.log('API call with val:', val);
     try {
       const res = await TokenWithDeleteUpadateAdd('KundaliMatchMaking/Basic_Astrologer_Details', val);
       const { data } = res;
       const parseData = JSON.parse(data);
-      if (parseData) {
-        setonclickdata(parseData?.data);
-        setlonData(parseData?.data.longitude);
-        setlatData(parseData?.data.latitude);
-        // setdatetimeData(parseData?.Datetime);
-        setdatetimeData(`${parseData?.data?.year}-${String(parseData?.data?.month).padStart(2, "0")}-${String(parseData?.data?.day).padStart(2, "0")}T${String(parseData?.data?.hour).padStart(2, "0")}:${String(parseData?.data?.minute).padStart(2, "0")}:00`,);
-        setp1_place(parseData?.data.place)
-        setp1_gender(parseData?.data.gender)
-        setp1_full_name(parseData?.data.full_name)
-
+      console.log('API response parseData:', parseData);
+      console.log('parseData.msg:', parseData?.msg);
+      console.log('parseData.data:', parseData?.data);
+      console.log('parseData structure:', Object.keys(parseData));
+      
+      if (parseData?.msg && parseData.msg.length > 0) {
+        const apiData = parseData.msg[0];
+        console.log('apiData from msg[0]:', apiData);
+        setonclickdata(apiData);
+        setlonData(apiData.longitude);
+        setlatData(apiData.latitude);
+        setdatetimeData(`${apiData.year}-${String(apiData.month).padStart(2, "0")}-${String(apiData.day).padStart(2, "0")}T${String(apiData.hour).padStart(2, "0")}:${String(apiData.minute).padStart(2, "0")}:00`);
+        setp1_place(apiData.place);
+        setp1_gender(apiData.gender);
+        setp1_full_name(apiData.full_name);
+        console.log('Data set successfully');
+      } else if (parseData?.data) {
+        console.log('Using parseData.data instead');
+        setonclickdata(parseData.data);
+        setlonData(parseData.data.longitude);
+        setlatData(parseData.data.latitude);
+        setdatetimeData(`${parseData.data.year}-${String(parseData.data.month).padStart(2, "0")}-${String(parseData.data.day).padStart(2, "0")}T${String(parseData.data.hour).padStart(2, "0")}:${String(parseData.data.minute).padStart(2, "0")}:00`);
+        setp1_place(parseData.data.place);
+        setp1_gender(parseData.data.gender);
+        setp1_full_name(parseData.data.full_name);
+        console.log('Data set successfully using data field');
+      } else {
+        console.log('No data found in API response');
       }
     } catch (error) {
       console.error('Error fetching data for Kundli Matching:', error);
@@ -709,6 +754,11 @@ const FreeKundliDetails = () => {
                       {/* Left Section: Basic Details */}
                       <div className="flex-1 border rounded-lg shadow-md bg-white overflow-x-auto">
                         <h2 className="text-base sm:text-lg font-semibold mb-2 text-center p-2 sm:p-3">Basic Details</h2>
+                        {/* {onclickdata ? (
+                          <div className="mb-4 p-2 bg-gray-100 text-xs">
+                            <strong>Debug - Raw Data:</strong> {JSON.stringify(onclickdata, null, 2)}
+                          </div>
+                        ) : null} */}
                         {onclickdata ? (
                           <table className="table-auto w-full border-collapse border-y border-gray-200 text-xs sm:text-sm">
                             <tbody>

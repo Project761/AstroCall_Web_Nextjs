@@ -42,7 +42,6 @@ const AstroGallery = () => {
         formData.append('file', file);
         try {
             // Note: TokenImageUpload needs to be implemented or imported
-            console.log('Upload functionality needs TokenImageUpload API');
             // const res = await TokenImageUpload('AstrologerGallery/Insert_AstrologerGallery', formData);
             const res = { success: true }; // Placeholder
             if (res) {
