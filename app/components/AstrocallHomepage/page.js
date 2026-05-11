@@ -4,10 +4,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { FaSun, FaMoon, FaRegCalendarAlt, FaStar, FaVideo, FaPlay } from "react-icons/fa";
 import { GiSunPriest, GiCrystalBall } from "react-icons/gi";
 import Link from "next/link";
-
 import { useRouter } from "next/navigation";
 import { getPostData, postWithToken, TokenWithDeleteUpadateAdd } from "@/app/utils/api";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
+import AuthModal from "../AuthModal/page";
 
 export default function AstrocallHomepage() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function AstrocallHomepage() {
     Get_find_sun_moon,
     sunmoonData,
     FindTithiData,
-    Get_find_Nakshatra,
+    Get_find_Nakshatra,setIsModalOpen,isModalOpen,
     nakshatraData,
     Get_find_yoga,
     Get_find_tithi,
@@ -183,9 +183,12 @@ export default function AstrocallHomepage() {
     if (!dob) newErrors.dob = "Required";
     if (!tob) newErrors.tob = "Required";
     setErrors(newErrors);
-
     if (Object.keys(newErrors).length === 0) {
-      Insert_Free_Fundli();
+      if (UserLoginId) {
+        Insert_Free_Fundli();
+      } else {
+        setIsModalOpen(true);
+      }
     }
   };
 
@@ -456,6 +459,17 @@ export default function AstrocallHomepage() {
           </div>
         </div>
       </div>
+
+       <AuthModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onLoginSuccess={(userData) => {
+                console.log("Login successful:", userData);
+                // After successful login, trigger calculation
+                Insert_Free_Fundli();
+              }}
+            />
+      
     </div>
   );
 }

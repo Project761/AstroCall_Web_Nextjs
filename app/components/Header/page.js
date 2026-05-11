@@ -1,497 +1,345 @@
 "use client";
+
 import { useState, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
+
 import AuthModal from "../AuthModal/page";
 import ProfileCard from "../ProfileCard/page";
 import LanguageDropdown from "../LanguageDropdown/page";
+
 import { toastifySuccess } from "../../utils/utility";
+import { useMenuContext } from "@/app/hooks/useMenuContext";
+
 import { CgProfile } from "react-icons/cg";
 import { ImCross } from "react-icons/im";
 import { RiUserShared2Fill } from "react-icons/ri";
-import { FaWallet, FaHeart, FaGem, FaPray, FaComments, FaPhone, FaUser, FaHandsHelping, FaChevronRight, FaPersonCircleQuestion } from "react-icons/fa";
-import { SlUserFollowing } from "react-icons/sl";
-import { MdAccessTime } from "react-icons/md";
+import { FaWallet, FaHeart } from "react-icons/fa";
 import { MdPhoneInTalk } from "react-icons/md";
 import { IoMdChatboxes } from "react-icons/io";
-import { useMenuContext } from "@/app/hooks/useMenuContext";
-import UserChat from "@/app/user-chat/page";
 
+// ✅ Hydration fix
+const UserChat = dynamic(() => import("@/app/user-chat/page"), {
+  ssr: false,
+});
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const { loginUserData, loadingUserData, Get_SingleData_User } = useMenuContext();
 
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const {
+    loginUserData,
+    isMenuOpen,
+    setisMenuOpen,
+    isLogin,
+    setisLogin,
+  } = useMenuContext();
+
+  // ✅ Changed false -> null
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(null);
+
   const [showProfileCard, setShowProfileCard] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLogin, setIsLogin] = useState(false);
 
+  // ✅ Mounted state hydration fix
+  const [mounted, setMounted] = useState(false);
 
   const menuRef = useRef(null);
   const profileRef = useRef(null);
 
-
-
-  // Check login status on mount
-
+  // ✅ Prevent hydration mismatch
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Login check
+  useEffect(() => {
+    if (!mounted) return;
+
     const loginData = localStorage.getItem("LoginTokenData");
     const userId = localStorage.getItem("UserLoginId");
 
     if (loginData && userId) {
-      setIsLogin(true);
-      try {
-        const parsedData = JSON.parse(loginData);
-
-      } catch (error) {
-        console.error("Error parsing login data:", error);
-      }
+      setisLogin(true);
     }
-  }, []);
+  }, [mounted, setisLogin]);
 
-
-
-  // Click outside handlers
-
+  // Click outside
   useEffect(() => {
+    if (!mounted) return;
+
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target) && mobileMenuOpen) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target) &&
+        mobileMenuOpen
+      ) {
         setMobileMenuOpen(false);
+        setisMenuOpen(false);
       }
-      if (profileRef.current && !profileRef.current.contains(event.target) && showProfileCard) {
+
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target) &&
+        showProfileCard
+      ) {
         setShowProfileCard(false);
       }
-
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("touchstart", handleClickOutside);
 
-
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
     };
+  }, [mounted, mobileMenuOpen, showProfileCard, setisMenuOpen]);
 
-  }, [mobileMenuOpen, showProfileCard]);
-
-
-
-  // Handle body scroll lock for mobile menu
-
+  // Body scroll lock
   useEffect(() => {
+    if (!mounted) return;
+
     if (mobileMenuOpen) {
       const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
+
+      document.body.style.position = "fixed";
       document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-
-
+      document.body.style.width = "100%";
+      document.body.style.overflow = "hidden";
 
       return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        window.scrollTo(0, scrollY);
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
 
+        window.scrollTo(0, scrollY);
       };
     }
-  }, [mobileMenuOpen]);
+  }, [mounted, mobileMenuOpen]);
 
-
-
-  const handleLoginSuccess = (data) => {
-    setIsLogin(true);
-    setIsAuthModalOpen(false);
+  const handleLoginSuccess = () => {
+    setisLogin(true);
+    setIsAuthModalOpen(null);
     setMobileMenuOpen(false);
     setShowProfileCard(false);
-    toastifySuccess("Successfully Logged In!");
 
+    toastifySuccess(
+      "Welcome back! You have successfully logged in."
+    );
   };
 
-
-
   const handleLogout = () => {
-    // Clear all storage
     localStorage.clear();
     sessionStorage.clear();
 
-    // Update state immediately
-    setIsLogin(false);
+    setisLogin(false);
     setShowProfileCard(false);
     setMobileMenuOpen(false);
 
+    toastifySuccess(
+      "You have been successfully logged out."
+    );
 
-
-    // Navigate to home and show success message
-    router.push("/");
-    toastifySuccess("Logged Out Successfully!");
-
-
-
-    // Force re-render by triggering a state update
-
+    // Force redirect to dashboard
     setTimeout(() => {
-      window.location.reload();
-    }, 100);
-
+      window.location.href = "/";
+    }, 500);
   };
-
-
 
   const handleNavigation = (path) => {
     router.push(path);
+
     setMobileMenuOpen(false);
+    setisMenuOpen(false);
   };
-
-
 
   const handleTalkClick = () => {
     if (isLogin) {
       handleNavigation("/talk-to-astrologers");
     } else {
-      setIsAuthModalOpen(true);
+      setIsAuthModalOpen("login");
     }
-
   };
-
-
 
   const handleChatClick = () => {
     if (isLogin) {
       handleNavigation("/chat-to-astrologers");
     } else {
-      setIsAuthModalOpen(true);
+      setIsAuthModalOpen("login");
     }
-
   };
+
+  // ✅ Prevent hydration mismatch
+  if (!mounted) return null;
+
   const amount = loginUserData?.WalletAmt || 0;
 
   return (
-
     <>
-
-      {/* Main Header */}
-
-      <div className="bg-white shadow-customn  fixed top-0 z-10" style={{ width: '100vw', maxWidth: '100%' }}>
-        <div className="flex justify-between m-auto items-center main-container max-h-[90px] px-2 sm:px-4 py-2">
+      <div className="bg-white shadow-customn fixed top-0 z-20 w-full">
+        <div className="flex justify-between items-center main-container px-4 py-2">
+          
           {/* Logo */}
           <div
-            className="flex items-center space-x-3 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => router.push("/")} >
-            <Image src="/images/logo1.webp" alt="AstroCall" width={40} height={40} className="w-[35px] sm:w-[50px] h-[35px] sm:h-[50px] aspect-[1/1] object-contain flex-shrink-0" />
-            <span className="text-2xl font-bold">AstroCall</span>
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => router.push("/")}
+          >
+            <img
+              src="/images/logo1.webp"
+              alt="AstroCall"
+              width={50}
+              height={50}
+              // style={{ borderRadius: '50%' }}
+            />
+
+            <span className="text-2xl font-bold">
+              AstroCall
+            </span>
           </div>
 
+          {/* Right Side */}
+          <div className="flex items-center gap-4">
 
-
-          {/* Desktop Navigation */}
-          <div className="flex items-center gap-5">
-            <div className="hidden lg:flex items-center space-x-3 flex-shrink-0">
+            {/* Desktop Buttons */}
+            <div className="hidden lg:flex items-center gap-3">
+              
               <button
                 onClick={handleTalkClick}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm cursor-pointer hover:bg-orange-600 transition-all duration-300 whitespace-nowrap flex items-center gap-2 chat-button">
-                Talk to an Astrologer
-                <div className="text-xl icon">
-                  <MdPhoneInTalk />
-                </div>
+                className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              >
+                Talk to Astrologer
+                <MdPhoneInTalk />
               </button>
 
               <button
                 onClick={handleChatClick}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm cursor-pointer hover:bg-orange-600 transition-all duration-300 whitespace-nowrap flex items-center gap-2 chat-button"
-                name="Chat-to-Astrologers"
+                className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
               >
-                Chat with an Astrologer
-                <div className="text-xl icon">
-                  <IoMdChatboxes />
-                </div>
+                Chat with Astrologer
+                <IoMdChatboxes />
               </button>
-
             </div>
 
+            {/* Language */}
+            <LanguageDropdown />
 
+            {/* Wallet */}
+            {isLogin && loginUserData && (
+              <div className="hidden md:flex items-center gap-2 border border-orange-200 rounded-md px-3 py-1 bg-orange-50">
+                <FaWallet className="text-orange-600" />
 
-            {/* Right Section */}
-            <div className="flex items-center space-x-4 flex-shrink-0">
-              {/* Language Dropdown */}
-              <LanguageDropdown />
-              {/* Wallet Balance */}
+                <span className="font-medium">
+                  ₹{amount}
+                </span>
+              </div>
+            )}
 
-              {isLogin && loginUserData && (
-                <div className="hidden md:flex items-center gap-2 border border-orange-200 rounded-md px-3 py-1 bg-orange-50">
-                  <FaWallet className="text-orange-600" />
-                  <span className="text-black font-medium">₹{amount}</span>
+            {/* Profile */}
+            <div className="relative" ref={profileRef}>
+              {isLogin && loginUserData ? (
+                <div
+                  onClick={() =>
+                    setShowProfileCard(!showProfileCard)
+                  }
+                  className="h-8 w-8 rounded-full overflow-hidden border-2 border-orange-300 cursor-pointer"
+                >
+                  <Image
+                    src={
+                      loginUserData?.ProfilePic
+                        ? `https://${loginUserData.ProfilePic.replace(
+                            /\\/g,
+                            "/"
+                          )}`
+                        : "/images/profile pic.webp"
+                    }
+                    alt="Profile"
+                    width={32}
+                    height={32}
+                    className="object-cover"
+                  />
                 </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  
+                  {/* <div
+                    onClick={() =>
+                      setIsAuthModalOpen("login")
+                    }
+                    className="flex items-center gap-1 cursor-pointer"
+                  >
+                    <CgProfile className="text-2xl" />
+                    <span>Login</span>
+                  </div> */}
 
+                  <div
+                    onClick={() =>
+                      setIsAuthModalOpen("register")
+                    }
+                    className="flex items-center gap-1 cursor-pointer"
+                  >
+                    <RiUserShared2Fill className="text-xl" />
+                    <span>Signup</span>
+                  </div>
+                </div>
               )}
 
-
-
-              {/* Profile */}
-
-              <div className="relative" ref={profileRef}>
-
-                {isLogin && loginUserData ? (
-                  <div
-                    onClick={() => setShowProfileCard(!showProfileCard)}
-                    className="h-8 w-8 rounded-full overflow-hidden border-2 border-orange-300 cursor-pointer"
-                  >
-                    <Image
-                      src={
-                        loginUserData?.ProfilePic
-                          ? `https://${loginUserData.ProfilePic.replace(/\\/g, "/")}`
-                          : "/images/profile pic.webp"
-                      }
-                      alt="Profile"
-                      width={32}
-                      height={32}
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-
-                  <div className="flex items-center gap-4 text-gray-700">
-
-                    {/* 🔹 Login Icon */}
-                    <div
-                      onClick={() => setIsAuthModalOpen("login")}
-                      className="flex items-center gap-1 cursor-pointer hover:text-orange-500 transition"
-                    >
-                      <CgProfile className="text-2xl" />
-                    </div>
-
-                    {/* 🔹 Signup Icon */}
-                    <div
-                      onClick={() => setIsAuthModalOpen("register")}
-                      className="flex items-center gap-1 cursor-pointer hover:text-orange-500 transition"
-                    >
-                      <RiUserShared2Fill className="text-xl" />
-                      <span className="text-sm font-medium">Signup</span>
-                    </div>
-
-                  </div>
-                )}
-
-                {/* Profile Card */}
-                {showProfileCard && isLogin && loginUserData && (
+              {/* Profile Card */}
+              {showProfileCard &&
+                isLogin &&
+                loginUserData && (
                   <div className="absolute right-0 top-12 z-50">
                     <ProfileCard
                       userData={loginUserData}
-                      onClose={() => setShowProfileCard(false)}
+                      onClose={() =>
+                        setShowProfileCard(false)
+                      }
                       isOpen={showProfileCard}
                       onLogout={handleLogout}
                     />
                   </div>
                 )}
-              </div>
+            </div>
 
+            {/* Mobile Menu Button */}
+            <button
+              className="lg:hidden text-orange-500"
+              onClick={() => {
+                const newState = !mobileMenuOpen;
 
-
-              {/* Mobile Menu Toggle */}
-
-              <button
-                className="lg:hidden text-orange-500 p-2 rounded-full hover:bg-orange-50 transition-colors"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                setMobileMenuOpen(newState);
+                setisMenuOpen(newState);
+              }}
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-
-            </div>
-
-          </div>
-
-        </div >
-
-
-
-        {/* Mobile Menu Overlay */}
-
-        {
-          mobileMenuOpen && (
-            <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-
-          )
-        }
-
-
-
-        {/* Mobile Menu Sidebar */}
-
-        <div className={`fixed top-0 right-0 h-full w-3/4 max-w-sm bg-gray-800 shadow-2xl z-50 transform transition-transform duration-300 lg:hidden ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"
-          }`}>
-
-          {/* Close Button */}
-
-          <button
-            className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition-colors"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <ImCross className="text-lg" />
-          </button>
-
-
-
-          {/* Mobile Menu Content */}
-
-          <div className="flex flex-col h-full overflow-y-auto pt-4 pb-6">
-            {/* Profile Section */}
-            {isLogin && loginUserData && (
-              <div className="w-full bg-gray-700 p-5 mb-4">
-                <div className="flex flex-col items-center">
-                  <div className="h-20 w-20 rounded-full overflow-hidden border-4 border-orange-500 mb-3">
-                    <Image
-                      src={loginUserData?.ProfilePic ? `https://${loginUserData?.ProfilePic?.replace(/\\/g, "/")}` : "/images/profile pic.webp"}
-                      alt="Profile"
-                      width={80}
-                      height={80}
-                      className="object-cover"
-
-                    />
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-1">{loginUserData?.FirstName || 'User'}</h3>
-                  <p className="text-sm text-gray-300 mb-3">{loginUserData?.MobileNo}</p>
-                  <div className="flex items-center gap-2 bg-gray-900 px-3 py-2 rounded-full border border-orange-500">
-                    <span className="font-semibold text-white">Balance: ₹{amount}</span>
-                  </div>
-
-                </div>
-
-              </div>
-
-            )}
-
-
-
-            {/* Menu Items */}
-
-            <div className="flex flex-col gap-3 w-full px-4">
-
-              {isLogin ? (
-                <>
-                  {/* Talk to Astrologers */}
-                  <button
-                    onClick={() => handleNavigation("/talk-to-astrologers")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/talk-to-astrologers" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-
-                  >
-                    <MdPhoneInTalk className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">Talk to Astrologers</span>
-                  </button>
-
-                  {/* Chat with Astrologers */}
-
-                  <button
-                    onClick={() => handleNavigation("/chat-to-astrologers")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/chat-to-astrologers" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-
-                  >
-                    <IoMdChatboxes className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">Chat with Astrologers</span>
-                  </button>
-
-
-
-                  {/* My Account */}
-
-                  <button
-                    onClick={() => handleNavigation("/my-account")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/my-account" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-
-                  >
-                    {/* <FaUser className="text-xl flex-shrink-0" /> */}
-                    <span className="text-base font-medium">My Account</span>
-                  </button>
-
-
-
-                  {/* My Wallet */}
-
-                  <button
-                    onClick={() => handleNavigation("/my-wallet")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/my-wallet" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-                  >
-                    <FaWallet className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">My Wallet</span>
-                  </button>
-
-
-
-                  {/* My Favorites */}
-
-                  <button
-                    onClick={() => handleNavigation("/my-favorites")}
-                    className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-700 transition w-full text-left rounded-lg ${pathname === "/my-favorites" ? "bg-orange-500 text-white font-semibold" : "text-white"
-                      }`}
-                  >
-                    <FaHeart className="text-xl flex-shrink-0" />
-                    <span className="text-base font-medium">My Favorites</span>
-                  </button>
-
-                  {/* Logout */}
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-3 px-4 py-3.5 text-red-400 hover:bg-red-900 hover:bg-opacity-20 active:bg-red-900 active:bg-opacity-30 transition w-full text-left rounded-lg mt-4"
-                  >
-                    {/* <FaPersonCircleQuestion className="text-xl flex-shrink-0" /> */}
-                    <span className="text-base font-semibold">Logout</span>
-                  </button>
-
-                </>
-
-              ) : (
-
-                /* Login/Signup for non-logged users */
-
-                <button
-                  className="flex items-center gap-3 px-4 py-3.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition w-full text-left font-semibold shadow-md mt-2"
-                  onClick={() => {
-                    setIsAuthModalOpen(true);
-                    setMobileMenuOpen(false);
-                  }}
-                >
-
-                  <RiUserShared2Fill className="text-xl" />
-                  <span className="text-base">Sign Up</span>
-                </button>
-
-              )}
-
-            </div>
-
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
           </div>
         </div>
-
       </div>
 
-
-
-      {/* Authentication Modal */}
-
+      {/* Auth Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        onClose={() => setIsAuthModalOpen(null)}
         onLoginSuccess={handleLoginSuccess}
       />
+
+      {/* User Chat */}
       <UserChat />
-
     </>
-
   );
-
 }

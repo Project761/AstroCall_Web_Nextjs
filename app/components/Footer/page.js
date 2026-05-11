@@ -1,12 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useContext } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { IoIosArrowDown } from "../Icons/ArrowDown";
 import { GooglePlayButton, AppStoreButton } from "../AppButtons/AppStoreButtons";
+import { MenuContext } from "@/app/context/MenuContext";
 
 export default function Footer({ footers }) {
+
+  const { MuhuratData, setMuhuratData, loginUserData, Get_Data_Muhurat, setVratUpvaasData, VratUpvaasData, Get_Data_VratandUpvaas, LanguageDropdown, HandleAstro, setIsModalOpen } = useContext(MenuContext);
+  // console.log(MuhuratData, "MuhuratData")
+
+  // const GetAstroLoginId = localStorage.getItem("AstroLoginId") ? localStorage.getItem("AstroLoginId") : "";
+  // const UserLoginId = localStorage.getItem("UserLoginId") ? localStorage.getItem("UserLoginId") : '';
+
+
+
   const [isFirstHOpen, setIsFirstHOpen] = useState(false);
   const [isSecHOpen, setIsSecHOpen] = useState(false);
   const [isThirdHOpen, setIsThirdHOpen] = useState(false);
@@ -84,8 +94,8 @@ export default function Footer({ footers }) {
             <div className="line-3 h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500"></div>
           </div>
           <p className="text-sm sm:text-base md:text-lg leading-relaxed">
-            AstroCall is your trusted destination for authentic astrological guidance. 
-            Connect with experienced astrologers for personalized consultations, 
+            AstroCall is your trusted destination for authentic astrological guidance.
+            Connect with experienced astrologers for personalized consultations,
             accurate predictions, and spiritual solutions to life's challenges.
           </p>
         </div>
@@ -99,28 +109,30 @@ export default function Footer({ footers }) {
               <li className="hover:drop-shadow-2xl">
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500"></div>
                 <h2
-                  className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
+                  className="font-[800] text-base sm:text-lg md:text-xl my-1 flex items-center justify-between cursor-pointer"
                   onClick={toggleFirstHeading}
                 >
-                  Online Astrology Services <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Online Astrology Services</span>
+
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500"></div>
               </li>
               {isFirstHOpen ? null : (
                 <li>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Talk to Astrologer</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Chat with Astrologer</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Marital Life</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Love and Relationships</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Career and Jobs</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Cheating and Affairs</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Numerology</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Break Up and Divorce</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Vedic Astrology</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Kids and Education</Link></li>
+                    <li><Link href="/talk-to-astrologers" className="text-sm sm:text-base hover:underline transition">Talk to Astrologer</Link></li>
+                    <li><Link href="/chat-with-astrologer" className="text-sm sm:text-base hover:underline transition">Chat with Astrologer</Link></li>
+                    <li><Link href="/MaritalLife" className="text-sm sm:text-base hover:underline transition">Marital Life</Link></li>
+                    <li><Link href="/LoveAndRelation" className="text-sm sm:text-base hover:underline transition">Love and Relationships</Link></li>
+                    <li><Link href="/CareersAndJob" className="text-sm sm:text-base hover:underline transition">Career and Jobs</Link></li>
+                    <li><Link href="/Cheating" className="text-sm sm:text-base hover:underline transition">Cheating and Affairs</Link></li>
+                    <li><Link href="/Numerology" className="text-sm sm:text-base hover:underline transition">Numerology</Link></li>
+                    <li><Link href="/BreakupAndDivorce" className="text-sm sm:text-base hover:underline transition">Break Up and Divorce</Link></li>
+                    <li><Link href="/VedicAstrology" className="text-sm sm:text-base hover:underline transition">Vedic Astrology</Link></li>
+                    <li><Link href="/KidsAndEducation" className="text-sm sm:text-base hover:underline transition">Kids and Education</Link></li>
                     <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Tarot Reading</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Relationship Counseling</Link></li>
+                    <li><Link href="/RelationCounceling" className="text-sm sm:text-base hover:underline transition">Relationship Counseling</Link></li>
                   </ul>
                 </li>
               )}
@@ -133,15 +145,16 @@ export default function Footer({ footers }) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleForthHeading}
                 >
-                  Astrology <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Astrology</span>
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500 drop-shadow-md"></div>
               </li>
               {isForthHOpen ? null : (
                 <li>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Kundali Matching</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Free Janam Kundali</Link></li>
+                    <li><Link href="/kundali-matching" className="text-sm sm:text-base hover:underline transition">Kundali Matching</Link></li>
+                    <li><Link href="/freekundli" className="text-sm sm:text-base hover:underline transition">Free Janam Kundali</Link></li>
                   </ul>
                 </li>
               )}
@@ -157,16 +170,27 @@ export default function Footer({ footers }) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleSecHeading}
                 >
-                  Muharat <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Muharat</span>
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500"></div>
               </li>
               {isSecHOpen ? null : (
                 <li>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Today's Muhurat</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Tomorrow's Muhurat</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Weekly Muhurat</Link></li>
+                    {MuhuratData?.map((item, index) => (
+                      <li key={item?.MuhuratID || index}>
+                        <Link
+                          href="/Muhurat"
+                          onClick={() => {
+                            sessionStorage.setItem("MuhuratID", item?.MuhuratID);
+                          }}
+                          className="text-sm sm:text-base hover:underline transition"
+                        >
+                          {LanguageDropdown === "en" ? item?.Description : item?.DescriptionHi}
+                        </Link>
+                      </li>
+                    ))}
                   </ul>
                 </li>
               )}
@@ -179,14 +203,15 @@ export default function Footer({ footers }) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleThirdHeading}
                 >
-                  Online Puja <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Online Puja </span>
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500 drop-shadow-md"></div>
               </li>
               {isThirdHOpen ? null : (
                 <li>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Online Puja Services</Link></li>
+                    <li><Link href="/online-puja-services" className="text-sm sm:text-base hover:underline transition">Online Puja Services</Link></li>
                   </ul>
                 </li>
               )}
@@ -202,19 +227,20 @@ export default function Footer({ footers }) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleFifthHeading}
                 >
-                  Horoscope <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Horoscope</span>
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500 drop-shadow-md"></div>
               </li>
               {isFifthHOpen ? null : (
                 <li>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Daily Horoscope</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Today's Horoscope</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Yesterday's Horoscope</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Tomorrow's Horoscope</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Weekly Horoscope</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Monthly Horoscope</Link></li>
+                    <li><Link href="/daily-horoscope" className="text-sm sm:text-base hover:underline transition">Daily Horoscope</Link></li>
+                    <li><Link href="/todays-horoscope" className="text-sm sm:text-base hover:underline transition">Today's Horoscope</Link></li>
+                    <li><Link href="/yesterdays-horoscope" className="text-sm sm:text-base hover:underline transition">Yesterday's Horoscope</Link></li>
+                    <li><Link href="/tomorrows-horoscope" className="text-sm sm:text-base hover:underline transition">Tomorrow's Horoscope</Link></li>
+                    <li><Link href="/weekly-horoscope" className="text-sm sm:text-base hover:underline transition">Weekly Horoscope</Link></li>
+                    <li><Link href="/monthly-horoscope" className="text-sm sm:text-base hover:underline transition">Monthly Horoscope</Link></li>
                     <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Yearly Horoscope</Link></li>
                   </ul>
                 </li>
@@ -228,14 +254,15 @@ export default function Footer({ footers }) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleSixthHeading}
                 >
-                  Panchang <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Panchang </span>
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500 drop-shadow-md"></div>
               </li>
               {isSixthHOpen ? null : (
                 <li>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Today's Panchang</Link></li>
+                    <li><Link href="/todays-panchang" className="text-sm sm:text-base hover:underline transition">Today's Panchang</Link></li>
                   </ul>
                 </li>
               )}
@@ -251,7 +278,8 @@ export default function Footer({ footers }) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleSevenHeading}
                 >
-                  Vrat and Upvaas <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Vrat and Upvaas </span>
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500 drop-shadow-md"></div>
               </li>
@@ -269,7 +297,9 @@ export default function Footer({ footers }) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleelevenHeading}
                 >
-                  Useful Links <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Useful Links </span>
+
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500 drop-shadow-md"></div>
               </li>
@@ -296,18 +326,21 @@ export default function Footer({ footers }) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleTenHeading}
                 >
-                  Policy <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Policy</span>
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500 drop-shadow-md"></div>
               </li>
               {isTenHOpen ? null : (
                 <li>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Privacy Policy</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Terms of Use</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Refund & Cancellation</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Disclaimer</Link></li>
-                    <li><Link href="/" className="text-sm sm:text-base hover:underline transition">Cookie Policy</Link></li>
+                    <li><Link href="/privacy-policy" scroll={true} className="text-sm sm:text-base hover:underline transition">Privacy Policy</Link></li>
+                    <li><Link href="/TermsOfUse" scroll={true} className="text-sm sm:text-base hover:underline transition">Terms of Use</Link></li>
+                    <li><Link href="/RefundCancellation" scroll={true} className="text-sm sm:text-base hover:underline transition">Refund & Cancellation</Link></li>
+                    <li><Link href="/disclaimer" scroll={true} className="text-sm sm:text-base hover:underline transition">Disclaimer</Link></li>
+                    <li><Link href="/CookiePolicy" scroll={true} className="text-sm sm:text-base hover:underline transition">Cookie Policy</Link></li>
+                    <li><Link href="/StoreRefundPolicy" scroll={true} className="text-sm sm:text-base hover:underline transition">Store Refund Policy</Link></li>
+                    <li><Link href="/ShippingDeliveryPolicy" scroll={true} className="text-sm sm:text-base hover:underline transition">Shipping & Delivery Policy</Link></li>
                   </ul>
                 </li>
               )}
@@ -320,7 +353,9 @@ export default function Footer({ footers }) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleiseleven2Heading}
                 >
-                  Astrologer <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Astrologer </span>
+
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500 drop-shadow-md"></div>
               </li>
@@ -333,10 +368,6 @@ export default function Footer({ footers }) {
                 </li>
               )}
             </ul>
-          </div>
-
-          {/* Column 6: Download Our Apps */}
-          <div className="w-full sm:w-auto">
             <ul className="main-container flex flex-col gap-2 mt-2 text-white">
               <li className="hover:drop-shadow-2xl">
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500"></div>
@@ -344,7 +375,8 @@ export default function Footer({ footers }) {
                   className="font-[800] text-base sm:text-lg md:text-xl my-1 text-shadow-xl hover:cursor-pointer flex items-center gap-2 transition"
                   onClick={toggleNineHeading}
                 >
-                  Download Our Apps <IoIosArrowDown className="text-sm sm:text-base" />
+                  <span>Download Our Apps </span>
+                  <IoIosArrowDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 </h2>
                 <div className="line h-[1.5px] w-full sm:w-[150px] md:w-[200px] bg-orange-500 drop-shadow-md"></div>
               </li>
@@ -352,18 +384,17 @@ export default function Footer({ footers }) {
                 <li>
                   <ul>
                     <div className="w-full max-w-[200px]">
-                      <div className="my-2 sm:my-3 md:my-4">
-                        <GooglePlayButton 
-                          url={APKUrl} 
-                          theme="dark" 
-                          className="custom-style transition-all duration-300 hover:scale-105 hover:shadow-lg w-full text-xs"
+                      <div className="">
+                        <GooglePlayButton
+                          url={APKUrl || "#"}
+                          className="transition-all duration-300 hover:scale-105 hover:shadow-lg w-full h-fit"
                         />
                       </div>
-                      <div className="my-2">
-                        <AppStoreButton 
-                          url={IOSUrl} 
-                          theme="dark" 
-                          className="custom-style transition-all duration-300 hover:scale-105 hover:shadow-lg w-full"
+
+                      <div className="">
+                        <AppStoreButton
+                          url={IOSUrl || "#"}
+                          className="transition-all duration-300 hover:scale-105 hover:shadow-lg w-full"
                         />
                       </div>
                     </div>

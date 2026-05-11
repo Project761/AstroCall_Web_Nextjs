@@ -1,3 +1,4 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
         remotePatterns: [
@@ -11,5 +12,9 @@ const nextConfig = {
             },
         ],
     },
+    // devIndicators: {
+    //     buildActivity: false
+    // }
 };
+
 module.exports = nextConfig;

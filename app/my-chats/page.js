@@ -115,7 +115,7 @@ export default function MyChats() {
     return (<>
       <SEO title="My Chats - AstroCall" description="View your chat history with astrologers"/>
       
-      <div className="min-h-screen bg-gray-50 pt-20">
+      <div className="min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 py-8">
           {/* Page Header */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">

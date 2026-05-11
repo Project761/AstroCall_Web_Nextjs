@@ -325,6 +325,20 @@ export default function AstrologerDashboard() {
 
   return (
     <>
+      <SEO 
+        title="Astrologer Dashboard - AstroCall" 
+        description="Manage your astrology consultations, track earnings, and monitor your online status on AstroCall dashboard" 
+        canonical="https://astrocall.live/astrologer-panel/dashboard" 
+        type="website" 
+        noindex={true}
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "Astrologer Dashboard - AstroCall",
+          "description": "Manage your astrology consultations, track earnings, and monitor your online status on AstroCall dashboard",
+          "url": "https://astrocall.live/astrologer-panel/dashboard"
+        }}
+      />
       {/* Dashboard Content */}
       <div className={`p-6 relative transition-all duration-300}`}>
         <div className="main-container px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">

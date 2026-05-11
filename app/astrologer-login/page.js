@@ -2,10 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OTPInput from "react-otp-input";
-import axios from "axios";
+import { postWithToken, loginApi, saveAuthToken, clearAuthData } from "@/app/utils/api";
 import SEO from "@/app/components/SEO/page.js";
-import { postWithToken } from "@/app/utils/api";
-import { toastifyError, toastifySuccess } from "../utils/utility";
 // Custom Modal Component
 const CustomModal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen)
@@ -130,8 +128,8 @@ const AstrologerLogin = () => {
         try {
             const { phoneNumber } = value;
             const val = { MobileNo: phoneNumber };
-            const res = await axios.post(`${url === 'https://astrocall.live' ? 'https://api.astrocall.live' : 'https://liveapi.astrocall.live'}/api/SMS/GetData_SMS`, val);
-            if (res?.data?.success === true) {
+            const res = await postWithToken("SMS/GetData_SMS", val);
+            if (res?.success === true) {
                 setExpireOtp(true);
                 setTimerOn(true);
                 setnumstatus(false);
@@ -173,31 +171,17 @@ const AstrologerLogin = () => {
             "Medium": "Web"
         };
         try {
-            const visitor_Id = typeof window !== 'undefined' ? localStorage.getItem("visitor_Id") : '';
-            const res = await axios.post(url === 'https://astrocall.live' ? 'https://api.astrocall.live/api/Astrologer/Astrologer_Login' : 'https://liveapi.astrocall.live/api/Astrologer/Astrologer_Login', val, {
-                headers: {
-                    "FingerPrintJsKey": visitor_Id,
-                    "Content-Type": "application/json"
-                }
-            });
-            const { data } = res;
-            const parseData = JSON.parse(data?.data);
-            const Resdata = parseData?.Table;
+            const Resdata = await loginApi(val);
+
             if (Resdata?.[0]?.FullName === "") {
                 router.push("/astrologer-register");
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem("LoginTokenData", JSON.stringify(Resdata[0]));
-                    localStorage.setItem("AstroLoginId", Resdata[0]?.Astro);
-                    setAddAstroId(Resdata[0]?.Astro);
-                }
+                saveAuthToken(Resdata[0]);
+                setAddAstroId(Resdata[0]?.Astro);
             }
             else if (Resdata?.[0]?.FullName?.length > 0 && Resdata?.[0]?.IsVerified === "1") {
                 // Logout User if logged in - to be implemented
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem("LoginTokenData", JSON.stringify(Resdata[0]));
-                    localStorage.setItem("AstroLoginId", Resdata[0]?.Astro);
-                    setAddAstroId(Resdata[0]?.Astro);
-                }
+                saveAuthToken(Resdata[0]);
+                setAddAstroId(Resdata[0]?.Astro);
                 setSendOtp(false);
                 toastifySuccess("Successfully LogIn");
                 router.push('/astrologer-panel/dashboard');
@@ -206,11 +190,8 @@ const AstrologerLogin = () => {
             }
             else if (Resdata?.[0]?.IsVerified === "0") {
                 // Logout User if logged in - to be implemented
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem("LoginTokenData", JSON.stringify(Resdata[0]));
-                    localStorage.setItem("AstroLoginId", Resdata[0]?.Astro);
-                    setAddAstroId(Resdata[0]?.Astro);
-                }
+                saveAuthToken(Resdata[0]);
+                setAddAstroId(Resdata[0]?.Astro);
                 router.push('/astrologer-panel/dashboard');
                 // requestForToken(Resdata[0]?.Astro) - to be implemented
 
@@ -263,9 +244,7 @@ const AstrologerLogin = () => {
             CurrentAstrologerId: Id,
         };
         try {
-            await axios.post(url === "https://astrocall.live"
-                ? "https://api.astrocall.live/api/Users/UpdateWebFCMToken"
-                : "https://liveapi.astrocall.live/api/Users/UpdateWebFCMToken", payload);
+            await postWithToken("Users/UpdateWebFCMToken", payload);
         }
         catch (error) {
             console.error("❌ Token save failed:", error);

@@ -73,7 +73,7 @@ const UserFollowing = () => {
 
     return (
         <div className="min-h-screen p-4">
-            <div className=" main-container mx-auto">
+            <div className=" max-w-6xl mx-auto px-4 py-8">
                 <h1 className="text-2xl  text-orange-500 font-semibold mb-1">My Following</h1>
                 <p className="text-gray-600 text-sm mb-6">Your Following astrologers are saved here for quick access to consultations.</p>
 

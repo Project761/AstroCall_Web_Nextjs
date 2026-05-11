@@ -239,7 +239,7 @@ export default function UserChat() {
           // setreviewstatus(true);
           setChatPopUpStatus(false);
           setUsermessage("");
-          sessionStorage.removeItem("CheckEndedChat")
+          if (typeof window !== "undefined") sessionStorage.removeItem("CheckEndedChat")
         }
 
         break;
@@ -250,21 +250,21 @@ export default function UserChat() {
         setChatPopUpStatus(false);
         setPopupData(null);
         setUsermessage("");
-        sessionStorage.removeItem("requestSentTime");
+        if (typeof window !== "undefined") sessionStorage.removeItem("requestSentTime");
         break;
 
       case "Astro Cancel Request":
         setChatPopUpStatus(true);
         setUsermessage(data?.Message);
         setPopupData(data);
-        sessionStorage.removeItem("UserChatCompleted")
+        if (typeof window !== "undefined") sessionStorage.removeItem("UserChatCompleted")
 
         break;
 
 
       case "Please Disconnect the Chat User Balance is Over":
         const ChatCompleted = 'Chat Completed';
-        sessionStorage.setItem("UserChatCompleted", ChatCompleted);
+        if (typeof window !== "undefined") sessionStorage.setItem("UserChatCompleted", ChatCompleted);
         // setAstroChatCompleted(ChatCompleted);
         setPopupData(data);
         setUsermessage("")

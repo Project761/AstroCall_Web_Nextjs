@@ -158,8 +158,8 @@ const KundliMatchingDetailsContent = () => {
             ]
         }}/>
 
-      <div className="bg-orange-50">
-        <div className="main-container text-left py-3 sm:py-4 md:py-5 mt-16 px-3 sm:px-4">
+      <div className="bg-orange-50 ">
+        <div className="main-container text-left py-3 sm:py-4 md:py-5 mt-16 px-3 sm:px-4 mt-16">
           <div className="bg-orange-500 rounded-md w-full text-white text-center py-6 sm:py-8 md:py-10 px-3 sm:px-4">
             <div className="flex flex-col items-center justify-center">
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">

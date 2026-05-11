@@ -13,7 +13,7 @@ export default function Support() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [tickets, setTickets] = useState([]);
     useEffect(() => {
-        const loginData = localStorage.getItem("LoginTokenData");
+        const loginData = typeof window !== "undefined" ? localStorage.getItem("LoginTokenData") : null;
         if (loginData) {
             try {
                 const parsedData = JSON.parse(loginData);
@@ -91,7 +91,7 @@ export default function Support() {
     }
     return (<>
       <SEO title="Support - AstroCall" description="Get help and support for your AstroCall account"/>
-      <Header />
+      {/* <Header /> */}
       
       <div className="min-h-screen bg-gray-50 pt-20">
         <div className="max-w-6xl mx-auto px-4 py-8">

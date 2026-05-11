@@ -9,7 +9,7 @@ export default function IconsBar() {
     <div className="main-container cards-bar flex flex-nowrap overflow-x-auto lg:overflow-x-hidden overflow-y-hidden lg:items-center items-center lg:justify-around justify-start gap-3 sm:gap-4 lg:gap-5 px-3 sm:px-4 lg:px-6 xl:px-8 py-3 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch', width: '100%' }}>
 
       {/* Talk to Astrologers */}
-      <Link href="/talk-to-astrologers" className="flex-shrink-0 lg:flex-shrink">
+      <Link href="/talk-to-astrologers" prefetch={true} className="flex-shrink-0 lg:flex-shrink">
         <div className="flex flex-col items-center min-w-[90px] sm:min-w-[100px] md:min-w-[110px] lg:min-w-0">
           <div className="card3 bg-white rounded-full w-[65px] h-[65px] sm:w-[70px] sm:h-[70px] lg:w-[60px] lg:h-[60px] flex justify-center items-center icon_bar border-2 border-orange-500 shadow-sm hover:shadow-md transition-shadow duration-300">
             <MdPhoneInTalk className="text-orange-500 text-2xl sm:text-3xl lg:text-2xl transition-colors duration-300" />
@@ -21,7 +21,7 @@ export default function IconsBar() {
       </Link >
 
       {/* Chat with Astrologers */}
-      <Link href="/chat-to-astrologers" className="flex-shrink-0 lg:flex-shrink">
+      <Link href="/chat-to-astrologers" prefetch={true} className="flex-shrink-0 lg:flex-shrink">
         <div className="flex flex-col items-center min-w-[90px] sm:min-w-[100px] md:min-w-[110px] lg:min-w-0">
           <div className="card3 bg-white rounded-full w-[65px] h-[65px] sm:w-[70px] sm:h-[70px] lg:w-[60px] lg:h-[60px] flex justify-center items-center icon_bar border-2 border-orange-500 shadow-sm hover:shadow-md transition-shadow duration-300">
             <IoMdChatboxes className="text-orange-500 text-2xl sm:text-3xl lg:text-2xl transition-colors duration-300" />
@@ -32,7 +32,7 @@ export default function IconsBar() {
         </div>
       </Link >
 
-      <Link href="/love-calculator" className="flex-shrink-0 lg:flex-shrink">
+      <Link href="/love-calculator" prefetch={true} className="flex-shrink-0 lg:flex-shrink">
         <div className="flex flex-col items-center min-w-[75px] sm:min-w-[80px] lg:min-w-0">
           <div className="card3 bg-white rounded-full w-[65px] h-[65px] sm:w-[70px] sm:h-[70px] lg:w-[60px] lg:h-[60px] flex justify-center items-center icon_bar border-2 border-orange-500 shadow-sm hover:shadow-md transition-shadow duration-300">
             {/* <img src={icon8} className="w-[55%] sm:w-[50%] hover:w-[65%] sm:hover:w-[60%] aspect-[1/1] object-contain duration-300" alt="Love Calculator" /> */}
@@ -45,7 +45,7 @@ export default function IconsBar() {
       </Link>
 
       {/* <!-- Card 2 --> */}
-      <Link href="/freekundli" className="flex-shrink-0 lg:flex-shrink">
+      <Link href="/freekundli" prefetch={true} className="flex-shrink-0 lg:flex-shrink">
         <div className="flex flex-col items-center min-w-[75px] sm:min-w-[80px] lg:min-w-0">
           <div className="card3 bg-white rounded-full w-[65px] h-[65px] sm:w-[70px] sm:h-[70px] lg:w-[60px] lg:h-[60px] flex justify-center items-center icon_bar border-2 border-orange-500 shadow-sm hover:shadow-md transition-shadow duration-300">
             <img src="/images/iconbar-2.webp" className="w-[55%] sm:w-[50%] hover:w-[65%] sm:hover:w-[60%] aspect-[1/1] object-contain duration-300" alt="Free Kundali" />
@@ -58,7 +58,7 @@ export default function IconsBar() {
 
 
       {/* <!-- Card 3 --> */}
-      <Link href="/kundali-matching" className="flex-shrink-0 lg:flex-shrink">
+      <Link href="/kundali-matching" prefetch={true} className="flex-shrink-0 lg:flex-shrink">
         <div className="flex flex-col items-center min-w-[75px] sm:min-w-[80px] lg:min-w-0">
           <div className="card3 bg-white rounded-full w-[65px] h-[65px] sm:w-[70px] sm:h-[70px] lg:w-[60px] lg:h-[60px] flex justify-center items-center icon_bar border-2 border-orange-500 shadow-sm hover:shadow-md transition-shadow duration-300">
             <img src="/images/iconbar-2.webp" className="w-[55%] sm:w-[50%] hover:w-[65%] sm:hover:w-[60%] aspect-[1/1] object-contain duration-300" alt="Kundali Matching" />
@@ -70,7 +70,7 @@ export default function IconsBar() {
       </Link>
 
       {/* <!-- Card 4 --> */}
-      <Link href="/daily-horoscope" className="flex-shrink-0 lg:flex-shrink">
+      <Link href="/daily-horoscope" prefetch={true} className="flex-shrink-0 lg:flex-shrink">
         <div className="flex flex-col items-center min-w-[75px] sm:min-w-[80px] lg:min-w-0">
           <div className="card3 bg-white rounded-full w-[65px] h-[65px] sm:w-[70px] sm:h-[70px] lg:w-[60px] lg:h-[60px] flex justify-center items-center icon_bar border-2 border-orange-500 shadow-sm hover:shadow-md transition-shadow duration-300">
             <img src="/images/iconbar-4.webp" className="w-[55%] sm:w-[50%] hover:w-[65%] sm:hover:w-[60%] aspect-[1/1] object-contain duration-300" alt="Daily Horoscope" />
@@ -82,7 +82,7 @@ export default function IconsBar() {
       </Link>
 
       {/* <!-- Card 5 --> */}
-      <Link href="/gemstone" className="flex-shrink-0 lg:flex-shrink">
+      <Link href="/gemstone" prefetch={true} className="flex-shrink-0 lg:flex-shrink">
         <div className="flex flex-col items-center min-w-[75px] sm:min-w-[80px] lg:min-w-0">
           <div className="card3 bg-white rounded-full w-[65px] h-[65px] sm:w-[70px] sm:h-[70px] lg:w-[60px] lg:h-[60px] flex justify-center items-center icon_bar border-2 border-orange-500 shadow-sm hover:shadow-md transition-shadow duration-300">
             <img src="/images/iconbar-3.webp" className="w-[55%] sm:w-[50%] hover:w-[65%] sm:hover:w-[60%] aspect-[1/1] object-contain duration-300" alt="Gemstone" />
@@ -95,7 +95,7 @@ export default function IconsBar() {
 
 
       {/* <!-- Card 6 --> */}
-      <Link href="/online-puja" className="flex-shrink-0 lg:flex-shrink">
+      <Link href="/online-puja" prefetch={true} className="flex-shrink-0 lg:flex-shrink">
         <div className="flex flex-col items-center min-w-[75px] sm:min-w-[80px] lg:min-w-0">
           <div className="card3 bg-white rounded-full w-[65px] h-[65px] sm:w-[70px] sm:h-[70px] lg:w-[60px] lg:h-[60px] flex justify-center items-center icon_bar border-2 border-orange-500 shadow-sm hover:shadow-md transition-shadow duration-300">
             <img src="/images/iconbar-5.webp" className="w-[55%] sm:w-[50%] hover:w-[65%] sm:hover:w-[60%] aspect-[1/1] object-contain duration-300" alt="Online Puja" />
@@ -105,7 +105,7 @@ export default function IconsBar() {
           </p>
         </div>
       </Link>
-         <Link href="/astrology-blog" className="flex-shrink-0 lg:flex-shrink">
+         <Link href="/astrology-blog" prefetch={true} className="flex-shrink-0 lg:flex-shrink">
         <div className="flex flex-col items-center min-w-[75px] sm:min-w-[80px] lg:min-w-0">
           <div className="card3 bg-white rounded-full w-[65px] h-[65px] sm:w-[70px] sm:h-[70px] lg:w-[60px] lg:h-[60px] flex justify-center items-center icon_bar border-2 border-orange-500 shadow-sm hover:shadow-md transition-shadow duration-300">
             <img src="/images/iconbar-7.webp" className="w-[55%] sm:w-[50%] hover:w-[65%] sm:hover:w-[60%] aspect-[1/1] object-contain duration-300" alt="Online Puja" />

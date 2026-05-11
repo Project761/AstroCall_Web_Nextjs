@@ -41,7 +41,7 @@ export const MenuProvider = ({ children }) => {
     const [Gemstonereviewstatus, setGemstonereviewstatus] = useState(false);
     const [PlanSuccessPopup, setPlanSuccessPopup] = useState(false);
     const [FAQData, setFAQData] = useState([]);
-    const [isLogin, setisLogin] = useState(false);
+    const [isLogin, setisLogin] = useState(typeof window !== 'undefined' ? localStorage.getItem("IsLogin") === "true" : false);
     const [loadingAstroData, setloadingAstroData] = useState(false);
     const [loadingUserData, setloadingUserData] = useState(false);
     const [MuhuratData, setMuhuratData] = useState();
@@ -176,6 +176,7 @@ export const MenuProvider = ({ children }) => {
             }
             // Fetch fresh data
             const res = await getPostData("Muhurat/GetData_Muhurat", { IsActive: "1" });
+            console.log(res, "res")
             setMuhuratData(res);
             // Cache for 1 hour
             if (typeof window !== 'undefined') {
@@ -183,7 +184,6 @@ export const MenuProvider = ({ children }) => {
                 localStorage.setItem("muhurat_time", now.toString());
                 localStorage.setItem("muhurat_called", "true");
             }
-            console.log("Fresh Muhurat data fetched");
         }
         catch (err) {
             console.error(err);
@@ -191,7 +191,6 @@ export const MenuProvider = ({ children }) => {
             const cachedData = typeof window !== 'undefined' ? localStorage.getItem("muhurat_data") : null;
             if (cachedData) {
                 setMuhuratData(JSON.parse(cachedData));
-                console.log("Using cached data due to error");
             }
         }
     };
@@ -218,7 +217,6 @@ export const MenuProvider = ({ children }) => {
                     localStorage.setItem("vratupvaas_time", now.toString());
                     localStorage.setItem("VratUpvaas_called", "true");
                 }
-                console.log("Fresh VratUpvaas data fetched");
             }
         }
         catch (err) {
@@ -227,7 +225,6 @@ export const MenuProvider = ({ children }) => {
             const cachedData = typeof window !== 'undefined' ? localStorage.getItem("vratupvaas_data") : null;
             if (cachedData) {
                 setVratUpvaasData(JSON.parse(cachedData));
-                console.log("Using cached VratUpvaas data due to error");
             }
         }
     };
