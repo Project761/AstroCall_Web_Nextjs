@@ -14,6 +14,7 @@ import { IoMdCall } from "react-icons/io";
 import { LiaAwardSolid } from "react-icons/lia";
 import { TbCurrencyRupee } from "react-icons/tb";
 import SEO from "@/app/components/SEO/page.js";
+import { toastifySuccess } from "@/app/utils/utility";
 // Custom Modal Component
 const CustomModal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen)
@@ -29,10 +30,7 @@ const CustomModal = ({ isOpen, onClose, title, children }) => {
         </div>);
 };
 // Toast notification utility
-const toastifySuccess = (message) => {
-    // Simple alert for now - can be replaced with proper toast library
-    alert(message);
-};
+
 const AstrologerDetailContent = () => {
     const router = useRouter();
     const params = useParams();

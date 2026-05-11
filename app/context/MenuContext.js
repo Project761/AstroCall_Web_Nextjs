@@ -23,8 +23,11 @@ export const MenuProvider = ({ children }) => {
     const [astroCheckEndedChat, setAstroCheckEndedChat] = useState(null)
     const [UserCheckEndedChat, setUserCheckEndedChat] = useState(null)
     const [astroParsedData, setAstroParsedData] = useState(null);
+
+    const [Astropageload, setAstropageload] = useState(false);
     
-    
+    // console.log(Astropageload, "Astropageload in context")
+
 
 
 
@@ -110,7 +113,7 @@ export const MenuProvider = ({ children }) => {
     // Get_SingleData_Astrologer function
 
     useEffect(() => {
-        if (GetAstroLoginId){
+        if (GetAstroLoginId) {
             Get_SingleData_Astrologer(GetAstroLoginId);
         }
     }, [GetAstroLoginId]);
@@ -527,7 +530,9 @@ export const MenuProvider = ({ children }) => {
         // Utility functions
         Get_Data_Muhurat, Get_Data_VratandUpvaas, Get_Data_RazorPayKey, Get_Data_GetDataAgoraKey,
         Get_Data_Astrologer, GetDropDownData_Skills, GetDropDownData_lstLanguages,
-        GetDropDownData_AstrologersCategory, GetData_ActivityLog, visitorId, setVisitorId, astroCheckEndedChat, setAstroCheckEndedChat,astroParsedData, setAstroParsedData,UserCheckEndedChat, setUserCheckEndedChat
+        GetDropDownData_AstrologersCategory, GetData_ActivityLog, visitorId, setVisitorId, astroCheckEndedChat, setAstroCheckEndedChat, astroParsedData, setAstroParsedData, UserCheckEndedChat, setUserCheckEndedChat
+
+        , Astropageload, setAstropageload
 
 
     }}>

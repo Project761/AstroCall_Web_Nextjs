@@ -77,8 +77,6 @@ export default function Support() {
             setMessage("");
             setSelectedCategory("general");
             setIsSubmitting(false);
-            // Show success message
-            alert("Support ticket created successfully!");
         }, 1500);
     };
     if (!userData) {

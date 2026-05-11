@@ -4,7 +4,7 @@ class SocketService {
   constructor() {
     this.WS_URL =
       typeof window !== "undefined" &&
-      window.location.origin === "https://astrocall.live"
+        window.location.origin === "https://astrocall.live"
         ? "wss://websocket.astrocall.live/api/Chat"
         : "ws://astrocallapi.com/api/Chat";
 
@@ -86,7 +86,10 @@ class SocketService {
           this.safeSend(this.userSocket, {
             Type: "ACK",
             messageId: parsed.messageId,
-          });
+          }, console.log({
+            Type: "ACK",
+            messageId: parsed.messageId,
+          }, 'test'));
         }
 
         this.onUserMessage?.(parsed);

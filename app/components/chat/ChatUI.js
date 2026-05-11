@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import socketService from "@/app/services/socketService";
 import agoraRTM from "@/app/services/agoraRTMService";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
+import { IoMdChatboxes } from "react-icons/io";
+import ChatKundliPopUp from "@/app/components/ChatKundliPopUp";
 import { postWithToken, TokenWithDeleteUpadateAdd } from "@/app/utils/api";
 import { FiSend, FiPaperclip, FiSmile, FiMic, FiPhone, FiVideo, FiMoreVertical, FiInfo } from "react-icons/fi";
 import { FaStar, FaStarHalf } from "react-icons/fa6";
@@ -17,7 +19,27 @@ import { IoClose } from "react-icons/io5";
 export default function ChatUI({ role = "user" }) {
   const router = useRouter();
   const params = useSearchParams();
-  const { popupData, setPopupData, UserCheckEndedChat, setUserCheckEndedChat, loginAstrologerData, astroParsedData, astroCheckEndedChat, setAstroCheckEndedChat } = useMenuContext();
+  const { popupData, UserCheckEndedChat, setUserCheckEndedChat, loginAstrologerData, astroParsedData, astroCheckEndedChat, setAstroCheckEndedChat } = useMenuContext();
+
+  const ChatCompletedUser = sessionStorage.getItem("UserChatCompleted") ? sessionStorage.getItem("UserChatCompleted") : '';
+
+  const astroChatCompletedShow = sessionStorage.getItem("AstroChatCompleted") ? sessionStorage.getItem("AstroChatCompleted") : "";
+
+  // Store and retrieve names from sessionStorage
+  const storedUserName = sessionStorage.getItem("ChatUserName") ? sessionStorage.getItem("ChatUserName") : '';
+  const storedAstroName = sessionStorage.getItem("ChatAstroName") ? sessionStorage.getItem("ChatAstroName") : '';
+  const isChatCompletedFromStorage = ChatCompletedUser || astroChatCompletedShow;
+
+  useEffect(() => {
+    if (role === "user" && popupData?.AstroName && !storedAstroName) {
+      sessionStorage.setItem("ChatAstroName", popupData.AstroName);
+    }
+    if (role === "astrologer" && astroParsedData?.UserName && !storedUserName) {
+      sessionStorage.setItem("ChatUserName", astroParsedData.UserName);
+    }
+  }, [popupData?.AstroName, astroParsedData?.UserName, role]);
+
+
 
   const getRoleData = () => {
     if (role === "astrologer") {
@@ -55,7 +77,7 @@ export default function ChatUI({ role = "user" }) {
 
   // States
   const [messages, setMessages] = useState([]);
-  console.log(messages,'message ')
+  // console.log(messages,'message ')
   const [chatHistory, setChatHistory] = useState([]);
   const [isReady, setIsReady] = useState(false);
   const [waitingListCheck, setWaitingListCheck] = useState(null);
@@ -63,10 +85,16 @@ export default function ChatUI({ role = "user" }) {
   const [showEmoji, setShowEmoji] = useState(false);
   const [UserChatData, setUserChatData] = useState();
   const [autoUserMessageSent, setAutoUserMessageSent] = useState(false);
-  const [firstMessageReceived, setFirstMessageReceived] = useState(false);
   const [isChatEnding, setIsChatEnding] = useState(false);
   const [isSendingAutoMessage, setIsSendingAutoMessage] = useState(false);
   const [processedMessageIds, setProcessedMessageIds] = useState(new Set());
+  const [chatStartTime, setChatStartTime] = useState(null);
+  const [remainingTime, setRemainingTime] = useState(null);
+  const [isChatCompleted, setIsChatCompleted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("Basic");
+
+  const [timeLeft, setTimeLeft] = useState(0);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -124,20 +152,40 @@ export default function ChatUI({ role = "user" }) {
         uid: `${roleData.uidPrefix}${roleData.loginId}`,
         channelName: channel,
         token: roleData.token,
+        // onMessage: (msg) => {
+
+        //   // const messageContent = `${msg?.Message}_${msg?.UserName}`;
+        //   const messageContent = msg;
+        //   const messageHash = btoa(messageContent).slice(0, 16);
+        //   if (processedMessageIds.has(messageHash)) {
+        //     console.warn("⚠️ Duplicate message detected and skipped:", messageHash);
+        //     return;
+        //   }
+        //   setProcessedMessageIds(prev => new Set([...prev, messageHash]));
+        //   setMessages(prev => [
+        //     ...prev,
+        //     // formatMessage(
+        //     //   msg,
+        //     //   role === "user" ? msg?.UserName === "User" : false
+        //     // )
+        //     formatMessage(
+        //       { text: msg },
+        //       false
+        //     )
+        //   ]);
+        // },
         onMessage: (msg) => {
 
-          const messageContent = `${msg?.Message}_${msg?.UserName}`;
-          const messageHash = btoa(messageContent).slice(0, 16);
-          if (processedMessageIds.has(messageHash)) {
-            console.warn("⚠️ Duplicate message detected and skipped:", messageHash);
-            return;
-          }
-          setProcessedMessageIds(prev => new Set([...prev, messageHash]));
+          const messageText =
+            typeof msg === "object"
+              ? msg?.text || msg?.Message || ""
+              : msg;
+
           setMessages(prev => [
             ...prev,
             formatMessage(
-              msg,
-              role === "user" ? msg?.UserName === "User" : false
+              { text: messageText },
+              false
             )
           ]);
         },
@@ -169,14 +217,13 @@ export default function ChatUI({ role = "user" }) {
     }
   }, [AstroId, UserId]);
 
-  // Fetch waiting list for user
   useEffect(() => {
     if (role === "user" && roleData.loginId) {
       fetchWaitingList();
     }
   }, [roleData.loginId]);
 
-  // Check if auto message already sent for this channel
+
   const checkChannelMessageSent = () => {
     const channelKey = `autoMessage_${channel}`;
     return localStorage.getItem(channelKey) === 'sent';
@@ -199,15 +246,15 @@ export default function ChatUI({ role = "user" }) {
   useEffect(() => {
     if (role !== "user" || autoUserMessageSent || isSendingAutoMessage || isChatEnding) return;
 
-    console.log("🔍 Auto message trigger check...");
-    console.log("📊 isReady:", isReady);
-    console.log("📊 agoraRTM.isChannelJoined:", agoraRTM.isChannelJoined);
-    console.log("📊 UserChatData:", UserChatData);
-    console.log("📊 popupData:", popupData);
+    // console.log("🔍 Auto message trigger check...");
+    // console.log("📊 isReady:", isReady);
+    // console.log("📊 agoraRTM.isChannelJoined:", agoraRTM.isChannelJoined);
+    // console.log("📊 UserChatData:", UserChatData);
+    // console.log("📊 popupData:", popupData);
 
     // Only trigger if all conditions are met
     if (isReady && agoraRTM.isChannelJoined && UserChatData) {
-      console.log("🚀 All conditions met, triggering auto message...");
+      // console.log("🚀 All conditions met, triggering auto message...");
       sendAutoUserDetailsMessage();
     }
   }, [isReady, agoraRTM.isChannelJoined, UserChatData, popupData, autoUserMessageSent, isSendingAutoMessage, isChatEnding, role]);
@@ -226,7 +273,7 @@ export default function ChatUI({ role = "user" }) {
     }
   };
 
-  // Send message function
+
   const sendMessage = async (text) => {
     if (!agoraRTM.isChannelJoined) {
       console.warn("⏳ RTM not ready");
@@ -236,16 +283,22 @@ export default function ChatUI({ role = "user" }) {
     // UI update
     setMessages((prev) => [
       ...prev,
-      formatMessage({ Message: text }, true)
+      formatMessage(
+        {
+          text: text,
+        },
+        true
+      )
     ]);
 
-    // RTM
-    agoraRTM.sendMessage({
-      message: text,
-      UserName: roleData.userName,
-    });
+    // RTM simple text send
+    agoraRTM.sendMessage(text);
+
+    // DB insert
     await insertChat(text);
   };
+
+
 
   // Insert chat to database
   const insertChat = async (text) => {
@@ -291,10 +344,10 @@ export default function ChatUI({ role = "user" }) {
 
     // Set sending flag to prevent duplicates
     setIsSendingAutoMessage(true);
-    console.log("🚀 Attempting to send auto user details message...");
-    console.log("📊 RTM Status:", agoraRTM.isChannelJoined);
-    console.log("📊 UserChatData:", UserChatData);
-    console.log("📊 Role:", role);
+    // console.log("🚀 Attempting to send auto user details message...");
+    // console.log("📊 RTM Status:", agoraRTM.isChannelJoined);
+    // console.log("📊 UserChatData:", UserChatData);
+    // console.log("📊 Role:", role);
 
     try {
       if (!agoraRTM.isChannelJoined) {
@@ -327,7 +380,7 @@ export default function ChatUI({ role = "user" }) {
 
       // Use the existing formatUserDetailsMessage function
       const userDetails = formatUserDetailsMessage();
-      console.log("📝 Formatted user details:", userDetails);
+      // console.log("📝 Formatted user details:", userDetails);
 
       if (!userDetails || userDetails.trim() === '') {
         console.warn("⏳ No user details available from formatUserDetailsMessage");
@@ -357,10 +410,11 @@ export default function ChatUI({ role = "user" }) {
 
     // RTM
     try {
-      agoraRTM.sendMessage({
-        Message: message,
-        UserName: roleData.userName
-      });
+      // agoraRTM.sendMessage({
+      //   Message: message,
+      //   UserName: roleData.userName
+      // });
+      agoraRTM.sendMessage(JSON.parse(message));
       console.log("✅ RTM message sent");
     } catch (error) {
       console.error("❌ RTM send error:", error);
@@ -397,15 +451,13 @@ export default function ChatUI({ role = "user" }) {
   // Navigation functions
   const handleBack = () => {
     router.push(roleData.backRoute);
-    if (role === "astrologer") {
-      sessionStorage.setItem("UserAccepted", '');
-      sessionStorage.removeItem("AstroChatCompleted");
-      sessionStorage.removeItem("UserAccepted");
-      localStorage.removeItem("AstroChatTokenId");
-    }
+    // if (role === "astrologer") {
+    sessionStorage.removeItem("AstroChatCompleted");
+    sessionStorage.removeItem("UserAccepted");
+    localStorage.removeItem("AstroChatTokenId");
+    sessionStorage.removeItem("UserChatCompleted");
+    // }
   };
-
-
 
   const checkEnded = () => {
     if (!roleData.contextData) return;
@@ -447,7 +499,6 @@ export default function ChatUI({ role = "user" }) {
     }
   };
 
-
   const leaveRtmChannel = async () => {
     try {
       await agoraRTM.leave();
@@ -474,19 +525,19 @@ export default function ChatUI({ role = "user" }) {
 
 
       return {
-        name: roleData.contextData?.UserName || "User",
+        name: roleData.contextData?.UserName || storedUserName,
         avatar: roleData.contextData?.AvatarUrl,
         isOnline: true,
         rate: null,
-        showEndButton: roleData.contextData?.Message !== "Chat Completed",
+        showEndButton: roleData.contextData?.Message || astroChatCompletedShow || ChatCompletedUser !== "Chat Completed",
         chatStatus: roleData.contextData?.Message === "Chat Completed" ? "ended" : "active"
       };
     }
     else {
       return {
-        name: roleData.contextData?.AstroName || "Astrologer",
+        name: roleData.contextData?.AstroName || storedAstroName,
         avatar: roleData.contextData?.AvatarUrl,
-        isOnline: roleData.contextData?.Message !== "Chat Completed",
+        isOnline: roleData.contextData?.Message || astroChatCompletedShow || ChatCompletedUser !== "Chat Completed",
         rate: roleData.contextData?.Rate,
         showEndButton: roleData.contextData?.Message !== "Chat Completed",
         chatStatus: roleData.contextData?.Message === "Chat Completed" ? "ended" : "active"
@@ -533,30 +584,63 @@ export default function ChatUI({ role = "user" }) {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  // Parse message with links
+  // // Parse message with links
+  // const parseMessageWithLinks = (message) => {
+  //   if (!message) return '';
+  //   let parsedMessage = message.replace(/\n/g, "<br />");
+
+  //   // Parse GEMSTONE links
+  //   parsedMessage = parsedMessage.replace(
+  //     /#GEMSTONE:([^:]+):([^:]+):([^:]+):([^:]+)/g,
+  //     (match, id, name, price, image) => {
+  //       return `<span style="color: #2563eb; text-decoration: underline; cursor: pointer; font-weight: 600;" onclick="window.handleGemstoneClick('${id}', '${name}', '${price}', '${image}')">🔮 View Gemstone</span>`;
+  //     }
+  //   );
+
+  //   // Parse PUJA links
+  //   parsedMessage = parsedMessage.replace(
+  //     /#PUJA:([^:]+):([^:]+):([^:]+):([^:]+)/g,
+  //     (match, id, name, price, image) => {
+  //       return `<span style="color: #2563eb; text-decoration: underline; cursor: pointer; font-weight: 600;" onclick="window.handlePujaClick('${id}', '${name}', '${price}', '${image}')">🙏 View Puja</span>`;
+  //     }
+  //   );
+
+  //   return parsedMessage;
+  // };
+
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
   const parseMessageWithLinks = (message) => {
-    if (!message) return '';
-    let parsedMessage = message.replace(/\n/g, "<br />");
+    if (!message) return "";
 
-    // Parse GEMSTONE links
-    parsedMessage = parsedMessage.replace(
-      /#GEMSTONE:([^:]+):([^:]+):([^:]+):([^:]+)/g,
-      (match, id, name, price, image) => {
-        return `<span style="color: #2563eb; text-decoration: underline; cursor: pointer; font-weight: 600;" onclick="window.handleGemstoneClick('${id}', '${name}', '${price}', '${image}')">🔮 View Gemstone</span>`;
-      }
-    );
+    let safeMessage = "";
 
-    // Parse PUJA links
-    parsedMessage = parsedMessage.replace(
-      /#PUJA:([^:]+):([^:]+):([^:]+):([^:]+)/g,
-      (match, id, name, price, image) => {
-        return `<span style="color: #2563eb; text-decoration: underline; cursor: pointer; font-weight: 600;" onclick="window.handlePujaClick('${id}', '${name}', '${price}', '${image}')">🙏 View Puja</span>`;
-      }
-    );
+    // object aaye to text nikalo
+    if (typeof message === "object") {
+      safeMessage = message?.text || message?.Message || "";
+    } else {
+      safeMessage = String(message);
+    }
 
-    return parsedMessage;
+    safeMessage = safeMessage.trim();
+
+    // remove starting & ending quotes
+    safeMessage = safeMessage.replace(/^"+|"+$/g, "");
+
+    // remove escaped quotes
+    safeMessage = safeMessage.replace(/\\"/g, '"');
+
+    // remove starting stars
+    safeMessage = safeMessage.replace(/^\*+/, "");
+
+    return safeMessage
+      .replace(/\n/g, "<br/>")
+      .replace(
+        urlRegex,
+        (url) =>
+          `<a href="${url}" target="_blank" class="text-blue-300 underline">${url}</a>`
+      );
   };
-
   // Setup global click handlers
   useEffect(() => {
     window.handleGemstoneClick = async (id, name, price, image) => {
@@ -604,9 +688,9 @@ export default function ChatUI({ role = "user" }) {
   }
 
   const formatUserDetailsMessage = () => {
-    console.log("🔍 Formatting user details message...");
-    console.log("📊 UserChatData:", UserChatData);
-    console.log("📊 popupData:", popupData);
+    // console.log("🔍 Formatting user details message...");
+    // console.log("📊 UserChatData:", UserChatData);
+    // console.log("📊 popupData:", popupData);
 
     if (!UserChatData || UserChatData?.length === 0) {
       console.warn("⚠️ No UserChatData available, using fallback");
@@ -625,7 +709,7 @@ I'm ready for the consultation.`;
     }
 
     const item = UserChatData[0];
-    console.log("👤 User data item:", item);
+    // console.log("👤 User data item:", item);
 
     const message = `Hi ${popupData?.AstroName || 'Astrologer'},
 Below are my details:
@@ -639,9 +723,84 @@ TopicofConcern: ${item?.TopicofConcern || 'General'}
 Occupation: ${item?.Occupation || 'N/A'}
 I'm ready for the consultation.`;
 
-    console.log("📝 Formatted message:", message);
+    // console.log("📝 Formatted message:", message);
     return message;
   };
+
+
+  function convertToSeconds(time) {
+    if (!time || typeof time !== "string") return 0;
+    const [hours, minutes, seconds] = time.split(":").map(Number);
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
+  function formatTimeCalculateTime(seconds) {
+    const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
+    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+    const s = String(seconds % 60).padStart(2, "0");
+    return `${h}:${m}:${s}`;
+  }
+
+  useEffect(() => {
+    if (role === "user") {
+      if (popupData) {
+        const seconds = convertToSeconds(popupData?.CalculateTime);
+        setTimeLeft(seconds);
+      }
+    } else if (role === "astrologer") {
+      if (astroParsedData) {
+        const seconds = convertToSeconds(astroParsedData?.CalculateTime);
+        setTimeLeft(seconds);
+      }
+    }
+  }, [role, popupData, astroParsedData]);
+
+  useEffect(() => {
+    if (role === "user") {
+      if (ChatCompletedUser === "Chat Completed") {
+        // setIsRunning(false);
+        return;
+      }
+
+      if (!popupData?.CalculateTime) return;
+
+      const totalSeconds = convertToSeconds(popupData?.CalculateTime);
+      const endTime = Date.now() + totalSeconds * 1000;
+
+      const timer = setInterval(() => {
+        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        setTimeLeft(remaining);
+
+        if (remaining <= totalSeconds - 60) {
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+
+    else if (role === "astrologer") {
+      if (ChatCompletedUser === "Chat Completed") {
+        // setIsRunning(false);
+        return;
+      }
+
+      if (!astroParsedData?.CalculateTime) return;
+
+      const totalSeconds = convertToSeconds(astroParsedData?.CalculateTime);
+      const endTime = Date.now() + totalSeconds * 1000;
+
+      const timer = setInterval(() => {
+        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        setTimeLeft(remaining);
+
+        if (remaining <= totalSeconds - 60) {
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [role, popupData, astroParsedData, ChatCompletedUser]);
+
 
 
 
@@ -677,27 +836,37 @@ I'm ready for the consultation.`;
               )}
             </div>
 
-            <div>
-              <h2 className="text-xl font-bold">
-                {headerInfo?.name || (role === "astrologer" ? (astroParsedData?.UserName || "User") : (popupData?.AstroName || "Astrologer"))}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-bold text-white truncate">
+                {headerInfo?.name || (role === "user" ? (storedAstroName || popupData?.AstroName || "Astrologer") : (storedUserName || astroParsedData?.UserName || "User"))}
               </h2>
-              <div className="flex items-center gap-2 text-sm text-white/90">
-                <span className={`w-2.5 h-2.5 rounded-full ${headerInfo?.isOnline ? "bg-green-400 animate-pulse" : "bg-gray-400"
-                  }`}></span>
-                <span className="font-medium">
-                  {headerInfo?.isOnline ? "Online" : "Offline"}
-                </span>
-                {role === "user" && headerInfo?.rate && (
-                  <span className="border-l border-white/30 pl-2">
-                    ₹{headerInfo.rate}/min
+              <div className="flex flex-wrap items-center gap-2 text-sm text-white/90">
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-2.5 h-2.5 rounded-full ${headerInfo?.isOnline ? "bg-green-400 animate-pulse" : "bg-gray-400"
+                    }`}></span>
+                  <span className="font-medium">
+                    {headerInfo?.isOnline ? "Online" : "Offline"}
                   </span>
+                </div>
+                {/* {role === "user" && headerInfo?.rate && (
+                  <div className="flex items-center gap-1 px-2 py-0.5 bg-white/20 rounded-full">
+                    <span className="text-white font-medium">₹{headerInfo.rate}/min</span>
+                  </div>
+                )} */}
+                {timeLeft && (
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 bg-orange-500/30 rounded-full border border-orange-400/30">
+                    <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span>
+                    <span className="text-orange-100 font-medium text-xs">
+                      {formatTimeCalculateTime(timeLeft)}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {headerInfo?.showEndButton && headerInfo?.chatStatus !== "ended" ? (
+            {headerInfo?.showEndButton && headerInfo?.chatStatus !== "ended" && !isChatCompletedFromStorage ? (
               <button
                 onClick={checkEnded}
                 className="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
@@ -731,7 +900,7 @@ I'm ready for the consultation.`;
 
               return (
                 <div
-                  key={`msg-${i}-${item?.message?.slice(0, 10)}`}
+                  // key={`msg-${i}-${item?.message?.slice(0, 10)}`}
                   className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}
                 >
                   {!isMine && (
@@ -787,7 +956,7 @@ I'm ready for the consultation.`;
             {role === "user" && !autoUserMessageSent && (
               <button
                 onClick={() => {
-                  console.log("🔧 Manual trigger clicked");
+                  // console.log("🔧 Manual trigger clicked");
                   sendAutoUserDetailsMessage();
                 }}
                 className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors duration-200 font-medium border border-red-100"
@@ -803,50 +972,20 @@ I'm ready for the consultation.`;
                   setInputValue("");
                 }}
                 disabled={headerInfo?.chatStatus === "ended" ||
-                  (role === "user" && !autoUserMessageSent) 
-                   // (role === "astrologer" && !firstMessageReceived)
+                  (role === "user" && !autoUserMessageSent) ||
+                  isChatCompletedFromStorage
+                  // (role === "astrologer" && !firstMessageReceived)
                 }
                 className="px-3 py-1.5 text-xs bg-orange-50 text-orange-600 rounded-full hover:bg-orange-100 transition-colors duration-200 font-medium border border-orange-100 disabled:opacity-50"
               >
                 {quickMsg}
               </button>
             ))}
+
           </div>
 
           <div className="w-full max-w-4xl mx-auto">
             <div className="flex items-end gap-2 bg-white border border-gray-200 rounded-2xl px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-orange-500 transition">
-
-              {/* Emoji Button */}
-              {/* <div className="relative">
-                <button
-                  onClick={() => setShowEmoji(!showEmoji)}
-                  disabled={
-                    headerInfo?.chatStatus === "ended" ||
-                    (role === "user" && !autoUserMessageSent) ||
-                    (role === "astrologer" && !firstMessageReceived)
-                  }
-                  className="p-2 text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded-full transition disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <FiSmile className="text-xl" />
-                </button>
-
-               
-                {showEmoji && (
-                  <div className="absolute bottom-12 left-0 w-56 bg-white border border-gray-200 rounded-2xl shadow-xl p-3 grid grid-cols-6 gap-2 z-50 animate-fadeIn">
-                    {emojis.map((emoji, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleEmojiSelect(emoji)}
-                        className="text-lg hover:scale-125 hover:bg-gray-100 rounded-lg p-1 transition"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div> */}
-
-              {/* Textarea */}
               <textarea
                 ref={textareaRef}
                 value={inputValue}
@@ -857,15 +996,13 @@ I'm ready for the consultation.`;
                     ? "Chat has ended"
                     : role === "user" && !autoUserMessageSent
                       ? "Sending your details..."
-                      : role === "astrologer" 
-                         ? "Type your message..."  : "Type your message..."
-                      // && !firstMessageReceived
-                      //   ? "Waiting for user message..."
-                      //   : "Type your message..."
+                      : role === "astrologer"
+                        ? "Type your message..." : "Type your message..."
                 }
                 disabled={
                   headerInfo?.chatStatus === "ended" ||
-                  (role === "user" && !autoUserMessageSent) 
+                  (role === "user" && !autoUserMessageSent) ||
+                  isChatCompletedFromStorage
                   // || (role === "astrologer" && !firstMessageReceived)
                 }
                 className="flex-1 bg-transparent px-2 py-2 resize-none focus:outline-none text-sm max-h-[120px] disabled:opacity-50"
@@ -874,13 +1011,18 @@ I'm ready for the consultation.`;
 
               {/* Send Button */}
               <button
-                onClick={handleSend}
-                disabled={!inputValue.trim() || headerInfo?.chatStatus === "ended" || (role === "user" && !autoUserMessageSent) 
+                // onClick={handleSend}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (inputValue.trim().length > 0) handleSend();
+                }}
+                disabled={!inputValue.trim() || headerInfo?.chatStatus === "ended" || (role === "user" && !autoUserMessageSent) || isChatCompletedFromStorage
                   // || (role === "astrologer" && !firstMessageReceived)
                 }
                 className={`p-2.5 rounded-full transition-all duration-200 ${inputValue.trim() &&
                   headerInfo?.chatStatus !== "ended" &&
-                  !(role === "user" && !autoUserMessageSent) 
+                  !(role === "user" && !autoUserMessageSent)
                   // &&!(role === "astrologer" && !firstMessageReceived)
                   ? "bg-orange-500 text-white hover:bg-orange-600 shadow-md hover:scale-105"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -888,6 +1030,22 @@ I'm ready for the consultation.`;
               >
                 <FiSend className="text-lg" />
               </button>
+
+
+              {role === "astrologer" && (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors duration-200 font-medium border border-blue-100"
+                  title="Open Kundli"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 11H15M12 8V16M12 8L9 11M12 8L15 11M3 12H21M7 19H17M12 14V20M12 20L9 17M12 20L15 17" />
+                  </svg>
+                  Kundli
+                </button>
+              )}
+
+
             </div>
           </div>
         </div>
@@ -954,6 +1112,16 @@ I'm ready for the consultation.`;
             </div>
           </div>
         </div>
+      )}
+
+      {/* Kundli Popup - Only for Astrologer */}
+      {role === "astrologer" && (
+        <ChatKundliPopUp
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
       )}
     </div>
   );

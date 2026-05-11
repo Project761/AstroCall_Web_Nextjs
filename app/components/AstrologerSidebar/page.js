@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -19,6 +19,8 @@ import { BsChatDots } from "react-icons/bs";
 import { FiPhoneCall } from "react-icons/fi";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
 import Image from "next/image";
+import socketService from "@/app/services/socketService";
+import AstroChat from "@/app/astrologer-panel/astro-chat/page";
 
 const NAV_ITEMS = [
   { name: "Dashboard", icon: <FaTachometerAlt />, path: "/astrologer-panel/dashboard" },
@@ -38,10 +40,13 @@ const NAV_ITEMS = [
 
 const AstrologerSidebar = ({ isOpen = true, onNavigate }) => {
 
-  const { loginAstrologerData, setLoginAstrologerData, astrows } = useMenuContext();
+  const { loginAstrologerData, Astropageload, setAstropageload } = useMenuContext();
+  const AstroId = typeof window !== "undefined" ? localStorage.getItem("AstroLoginId") : "";
 
   const pathname = usePathname();
   const router = useRouter();
+
+
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
@@ -52,6 +57,44 @@ const AstrologerSidebar = ({ isOpen = true, onNavigate }) => {
     }
     router.replace("/astrologer-login");
   };
+
+  // useEffect(() => {
+  //   if (loginAstrologerData && AstroId) {
+  //     setAstropageload(true)
+  //   }
+  // }, [loginAstrologerData, AstroId])
+
+  // useEffect(() => {
+  //   if (loginAstrologerData?.IsChat === true ||loginAstrologerData?.IsChat === "true") {
+  //     handleChatToggle(loginAstrologerData)
+  //   }
+  // }, [loginAstrologerData])
+
+  const hasRun = useRef(false);
+
+  useEffect(() => {
+    if (!hasRun.current && (loginAstrologerData?.IsChat === true || loginAstrologerData?.IsChat === "true")) {
+      handleChatToggle();
+      hasRun.current = true;
+    }
+  }, [loginAstrologerData]);
+
+
+  const handleChatToggle = () => {
+    if (loginAstrologerData && AstroId) {
+      socketService.sendAstro({
+        UserId: `WA${AstroId}`,
+        Status: "OnlineType",
+        // OnlineType: "1",
+        Type: "chat",
+        ChatOnline: "1",
+        CallOnline: loginAstrologerData?.IsCall === true ? "1" : "0",
+        BusyType: "0",
+        messageId: "NewRequest",
+      });
+    }
+  };
+
 
   return (
     <aside className={`${isOpen ? "block" : "hidden"} lg:block w-64 bg-gray-900 text-white`}>
@@ -114,6 +157,7 @@ const AstrologerSidebar = ({ isOpen = true, onNavigate }) => {
           </ul>
         </nav>
       </div>
+      <AstroChat />
     </aside>
   );
 };
