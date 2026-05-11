@@ -11,13 +11,10 @@ import { postWithToken } from "@/app/utils/api";
 import { FaStar, FaStarHalf } from "react-icons/fa6";
 import SEO from "@/app/components/SEO/page.js";
 import InsufficientBalancePopup from "@/app/components/InsufficientBalancePopup.js";
-// Custom Loading Indicator Component
-const LoadingIndicator = ({ size = "medium" }) => {
-    return (<div className="flex justify-center items-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-    </div>);
-};
-// Custom Modal Component
+import AuthModal from "../components/AuthModal/page";
+import { useMenuContext } from "../hooks/useMenuContext";
+
+
 const CustomModal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen)
         return null;
@@ -43,19 +40,22 @@ const ChatToAstrologers = () => {
         };
         return translations[key] || key;
     };
+
+
+      const {loginUserData} = useMenuContext();
+
     const router = useRouter();
     const UserLoginId = typeof window !== 'undefined' ? localStorage.getItem("UserLoginId") || "" : "";
     const Usermessage = typeof window !== 'undefined' ? sessionStorage.getItem("Usermessage") || "" : "";
-    // Mock context data - replace with actual context if needed
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+ 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showAuthModal, setShowAuthModal] = useState(false);
     const [showInsufficientBalancePopup, setShowInsufficientBalancePopup] = useState(false);
     const [insufficientBalanceData, setInsufficientBalanceData] = useState({
       requiredAmount: 0,
       currentBalance: 0,
       astrologerName: ''
     });
-    const [loginUserData, setLoginUserData] = useState(null);
     const [AstroNameHomePage, setAstroNameHomePage] = useState(null);
     const [LanguagesData, setLanguagesData] = useState([]);
     const [SkillsData, setSkillsData] = useState([]);
@@ -588,10 +588,13 @@ const ChatToAstrologers = () => {
                         : "border-gray-600 hover:shadow-gray-400/60"}`} style={{ minHeight: '36px', touchAction: 'manipulation' }} onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    
+                    // Check if user is logged in
                     if (!UserLoginId || UserLoginId.length === 0) {
-                        setIsModalOpen(true);
+                        setShowAuthModal(true);
                         return;
                     }
+                    
                     if (ChatPopUpStatus === true || ChatPopUpStatus === "true") {
                         toastifyInfo("You are already on the list");
                         return;
@@ -609,7 +612,6 @@ const ChatToAstrologers = () => {
                     else if (card?.FreeState === "Not Free") {
                         const requiredAmount = price * 5;
                         const currentBalance = loginUserData?.WalletAmt || 0;
-                        
                         if (currentBalance < requiredAmount) {
                             setInsufficientBalanceData({
                                 requiredAmount: requiredAmount,
@@ -618,17 +620,18 @@ const ChatToAstrologers = () => {
                             });
                             setShowInsufficientBalancePopup(true);
                         } else {
+                            console.log("Proceeding with chat - balance sufficient");
                             loginOrChatModal(card);
                         }
                     }
-                }}>
+                }}>    
                       <p className={`text-xs sm:text-sm font-bold
                            ${card?.Isbusy
                     ? "text-red-700"
                     : isOnline
                         ? "text-green-700"
                         : "text-gray-700"}`}>
-                        {t("chat")}
+                        Chat
                       </p>
                     </button>
 
@@ -685,23 +688,17 @@ const ChatToAstrologers = () => {
         </div>
       </CustomModal>
 
-      <CustomModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Login Required">
-        <h5 className="text-lg sm:text-xl mb-4 sm:mb-5 text-center">Please login to chat with astrologers</h5>
-        <div className="flex justify-center">
-          <button className="bg-orange-500 text-white font-medium px-6 sm:px-8 py-2.5 sm:py-3 rounded-full shadow hover:shadow-lg transition duration-300 text-sm sm:text-base" onClick={() => {
-            router.push('/login');
-        }}>
-            Go to Login
-          </button>
-        </div>
-      </CustomModal>
-
       <InsufficientBalancePopup
         isOpen={showInsufficientBalancePopup}
         onClose={() => setShowInsufficientBalancePopup(false)}
         requiredAmount={insufficientBalanceData.requiredAmount}
         currentBalance={insufficientBalanceData.currentBalance}
         astrologerName={insufficientBalanceData.astrologerName}
+      />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
       />
     </>);
 };

@@ -75,7 +75,7 @@ export const toastifyError = (message) => {
           }
         }, 300);
       }
-    }, 4000);
+    }, 3000);
   }
 };
 

@@ -157,19 +157,19 @@ export default function Header() {
   };
 
   const handleTalkClick = () => {
-    if (isLogin) {
+    // if (isLogin) {
       handleNavigation("/talk-to-astrologers");
-    } else {
-      setIsAuthModalOpen("login");
-    }
+    // } else {
+    //   setIsAuthModalOpen("login");
+    // }
   };
 
   const handleChatClick = () => {
-    if (isLogin) {
+    // if (isLogin) {
       handleNavigation("/chat-to-astrologers");
-    } else {
-      setIsAuthModalOpen("login");
-    }
+    // } else {
+    //   setIsAuthModalOpen("login");
+    // }
   };
 
   // ✅ Prevent hydration mismatch
@@ -208,7 +208,7 @@ export default function Header() {
               
               <button
                 onClick={handleTalkClick}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                className="bg-orange-500 text-white px-4 py-2 cursor-pointer rounded-lg flex items-center gap-2"
               >
                 Talk to Astrologer
                 <MdPhoneInTalk />
@@ -216,7 +216,7 @@ export default function Header() {
 
               <button
                 onClick={handleChatClick}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                className="bg-orange-500 text-white px-4 py-2 cursor-pointer rounded-lg flex items-center gap-2"
               >
                 Chat with Astrologer
                 <IoMdChatboxes />
