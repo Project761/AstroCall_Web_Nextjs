@@ -208,7 +208,7 @@ export default function Header() {
               
               <button
                 onClick={handleTalkClick}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                className="bg-orange-500 cursor-pointer text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600 transition-all duration-300"
               >
                 Talk to Astrologer
                 <MdPhoneInTalk />
@@ -216,7 +216,7 @@ export default function Header() {
 
               <button
                 onClick={handleChatClick}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                className="bg-orange-500 cursor-pointer text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600 transition-all duration-300"
               >
                 Chat with Astrologer
                 <IoMdChatboxes />

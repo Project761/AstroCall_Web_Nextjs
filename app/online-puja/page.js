@@ -234,7 +234,7 @@ const OnlinePuja = () => {
       <div className="absolute bottom-[0] right-[-90px] right-image hidden md:block">
         <img className="carousel-image" src="/assets/images/customar-before.webp" alt="" loading="lazy" width="800" height="450" decoding="async" />
       </div>
-      <div className="bg-[#F973160D] pt-20 lg:pt-24">
+      <div className="bg-[#F973160D] mt-14">
         <div className="bg-gradient-to-br from-orange-500 to-orange-600 main-container rounded-lg sm:rounded-xl text-white text-center py-8 sm:py-10 md:py-12 px-3 sm:px-4 mt-4 sm:mt-6 shadow-lg">
           <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold px-2">
             Online Pooja Services – Book Your Pooja Easily
