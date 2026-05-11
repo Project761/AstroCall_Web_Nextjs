@@ -8,6 +8,7 @@ import { IoNotificationsOutline, IoWallet } from "react-icons/io5";
 import { FaPrayingHands, FaRupeeSign, FaUsers } from "react-icons/fa";
 import { IoIosClock, IoIosPeople, IoMdStar } from "react-icons/io";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
+import SEO from "@/app/components/SEO/page.js";
 import { FiPhoneCall } from "react-icons/fi";
 import { BsChatDots } from "react-icons/bs";
 import { useRouter } from "next/navigation";

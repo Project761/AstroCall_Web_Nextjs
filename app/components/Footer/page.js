@@ -211,7 +211,7 @@ export default function Footer({ footers }) {
               {isThirdHOpen ? null : (
                 <li>
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><Link href="/online-puja-services" className="text-sm sm:text-base hover:underline transition">Online Puja Services</Link></li>
+                    <li><Link href="/online-puja" className="text-sm sm:text-base hover:underline transition">Online Puja Services</Link></li>
                   </ul>
                 </li>
               )}
