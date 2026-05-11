@@ -523,9 +523,7 @@ const Profile = () => {
             [field]: val,
         }));
     };
-    const handleFileUpload = () => {
-        alert("File upload functionality would be implemented here");
-    };
+  
     const toggleAccordion = () => {
         setIsOpen((prev) => !prev);
     };

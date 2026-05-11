@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { postWithToken } from "@/app/utils/api";
 import { FaStar, FaStarHalf } from "react-icons/fa6";
 import SEO from "@/app/components/SEO/page.js";
+import { toastifyInfo } from "../utils/utility";
+import InsufficientBalancePopup from "@/app/components/InsufficientBalancePopup.js";
 // Custom Loading Indicator Component
 const LoadingIndicator = ({ size = "medium" }) => {
     return (<div className="flex justify-center items-center">
@@ -30,11 +32,7 @@ const CustomModal = ({ isOpen, onClose, title, children }) => {
       </div>
     </div>);
 };
-// Toast notification utility
-const toastifyInfo = (message) => {
-    // Simple alert for now - can be replaced with proper toast library
-    alert(message);
-};
+
 const TalkToAstrologers = () => {
     // Mock translation function - replace with actual translation if needed
     const t = (key) => {
@@ -53,6 +51,12 @@ const TalkToAstrologers = () => {
     // Mock context data - replace with actual context if needed
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showInsufficientBalancePopup, setShowInsufficientBalancePopup] = useState(false);
+    const [insufficientBalanceData, setInsufficientBalanceData] = useState({
+      requiredAmount: 0,
+      currentBalance: 0,
+      astrologerName: ''
+    });
     const [loginUserData, setLoginUserData] = useState(null);
     const [AstroNameHomePage, setAstroNameHomePage] = useState(null);
     const [LanguagesData, setLanguagesData] = useState([]);
@@ -95,6 +99,7 @@ const TalkToAstrologers = () => {
             setIsLoadingAstrologerData(false);
         }
     };
+
     const Get_BusyTimes = async () => {
         try {
             // Mock implementation - replace with actual API call
@@ -104,6 +109,7 @@ const TalkToAstrologers = () => {
             console.error("Error fetching busy times:", error);
         }
     };
+
     const [searchVal, setSearchVal] = useState(AstroNameHomePage ? AstroNameHomePage : "");
     const [astroName, setAstroName] = useState("");
     const [PricePerMinastro, setPricePerMinastro] = useState(0);
@@ -118,6 +124,7 @@ const TalkToAstrologers = () => {
     const [showPopup, setShowPopup] = useState(false);
     const [selected, setSelected] = useState("Popularity");
     const GenderOptions = ["Male", "Female"];
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -151,10 +158,12 @@ const TalkToAstrologers = () => {
         setastrologerdata(filteredData);
         setDisplayedAstrologers(filteredData);
     }, [searchVal, AstroNameHomePage, astrologers]);
+
+   
     const loginOrChatModal = (card) => {
         try {
             if (typeof window !== 'undefined' && localStorage.getItem("UserLoginId")) {
-                const navUrl = `/UserChatHome?page=chat-to-astro&AstroId=${card?.ID}&Type=chat&IsChat=${card?.IsChat}`;
+                 const navUrl = `/talk-to-astrologers/user-talk-home?AstroId=${card?.ID}&Type=call&IsCall=${card?.IsCall}`;
                 router.push(navUrl);
             }
             else {
@@ -164,20 +173,22 @@ const TalkToAstrologers = () => {
         catch (error) {
             console.error("Navigation error in loginOrChatModal:", error);
             if (typeof window !== 'undefined' && localStorage.getItem("UserLoginId") && card?.ID) {
-                window.location.href = `/chat-to-astrologers/user-chat-home?page=chat-to-astro&AstroId=${card?.ID}&Type=chat&IsChat=${card?.IsChat}`;
+                window.location.href =`/talk-to-astrologers/user-talk-home?AstroId=${card?.ID}&Type=call&IsCall=${card?.IsCall}`;
             }
         }
     };
+
+
     useEffect(() => {
         const interval = setInterval(() => {
             try {
                 if (typeof window === 'undefined')
                     return;
-                const raw = sessionStorage.getItem("AstrologerOnlineChat");
+                const raw = sessionStorage.getItem("AstrologerOnlineCall");
                 if (!raw)
                     return;
                 const msg = JSON.parse(raw);
-                if (msg?.Type === "chat" && msg?.UserId && msg?.Message) {
+                if (msg?.Type === "call" && msg?.UserId && msg?.Message) {
                     const normalizedUserId = String(msg.UserId.replace(/[a-zA-Z]/g, ''));
                     const isOnline = msg?.Message === "This Astrologer is Online";
                     setChatOnlineStatus((prev) => ({
@@ -192,6 +203,7 @@ const TalkToAstrologers = () => {
         }, 2000);
         return () => clearInterval(interval);
     }, []);
+
     const sortOptions = [
         "Popularity",
         "Experience : High to Low",
@@ -202,6 +214,7 @@ const TalkToAstrologers = () => {
         "Price : Low to High",
         "Rating : High to Low",
     ];
+
     const applyFilters = () => {
         let filteredData = [...astrologers];
         if (selectedSkillIds.length > 0) {
@@ -229,6 +242,7 @@ const TalkToAstrologers = () => {
         setDisplayedAstrologers(filteredData);
         setIsFilterOpen(false);
     };
+
     useEffect(() => {
         if (selected === "Popularity") {
             setastrologerdata(displayedAstrologers);
@@ -262,7 +276,9 @@ const TalkToAstrologers = () => {
         }
         setastrologerdata(sortedData);
     }, [selected]);
+
     const [timeLeft, setTimeLeft] = useState(0);
+
     useEffect(() => {
         if (!timeLeft)
             return;
@@ -271,6 +287,8 @@ const TalkToAstrologers = () => {
         }, 1000);
         return () => clearInterval(interval);
     }, [timeLeft]);
+
+
     const hmsToMinutes = (value) => {
         if (!value)
             return 0;
@@ -293,13 +311,15 @@ const TalkToAstrologers = () => {
         }
         return 0;
     };
+
+
     useEffect(() => {
         const interval = setInterval(() => {
             try {
                 if (!AstroNotBusy)
                     return;
                 const normalizedAstroId = String(AstroNotBusy?.AstroId);
-                if (AstroNotBusy?.Type === "chat" && AstroNotBusy?.Message === "Astro Chat is Not Busy.") {
+                if (AstroNotBusy?.Type === "call" && AstroNotBusy?.Message === "Astro Chat is Not Busy.") {
                     setastrologerdata(prevData => prevData.map(card => String(card.ID) === normalizedAstroId
                         ? { ...card, Isbusy: false }
                         : card));
@@ -312,6 +332,8 @@ const TalkToAstrologers = () => {
         }, 2000);
         return () => clearInterval(interval);
     }, [AstroNotBusy]);
+
+
     useEffect(() => {
         if (!Array.isArray(astrologerdata) || astrologerdata.length === 0)
             return;
@@ -332,6 +354,8 @@ const TalkToAstrologers = () => {
             };
         }));
     }, [AstroBusyMap, AstroNotBusyStatus]);
+
+
     return (<>
       <SEO title="talk with Expert Astrologers Online | AstroCall Live" description="talk with certified astrologers online anytime on AstroCall Live. Get instant astrology guidance on love, career, finance, and health from trusted Jyotish experts." canonical="https://astrocall.live/talk-to-astrologers" type="service" schema={{
             "@context": "https://schema.org",
@@ -493,7 +517,7 @@ const TalkToAstrologers = () => {
                 </>)}
             </div>) : (astrologerdata?.map((card, index) => {
             const socketStatus = chatOnlineStatus[String(card.ID)];
-            const isOnline = socketStatus === true ? true : socketStatus === false ? false : card?.IsChat === true;
+            const isOnline = socketStatus === true ? true : socketStatus === false ? false : card?.IsCall === true;
             return (<div key={card?.ID || index} className="flex bg-white p-3 sm:p-4 rounded-xl shadow-md duration-300 gap-3 sm:gap-4 md:gap-5 hover:scale-105 hover:shadow-lg relative sellerCard">
                   <div className="flex flex-col items-center left-side flex-shrink-0">
                     <div className="img relative">
@@ -597,10 +621,17 @@ const TalkToAstrologers = () => {
                         loginOrChatModal(card);
                     }
                     else if (card?.FreeState === "Not Free") {
-                        if (loginUserData?.WalletAmt < price * 5) {
-                            setCallstatus(true);
-                        }
-                        else {
+                        const requiredAmount = price * 5;
+                        const currentBalance = loginUserData?.WalletAmt || 0;
+                        
+                        if (currentBalance < requiredAmount) {
+                            setInsufficientBalanceData({
+                                requiredAmount: requiredAmount,
+                                currentBalance: currentBalance,
+                                astrologerName: card?.FirstName || 'Astrologer'
+                            });
+                            setShowInsufficientBalancePopup(true);
+                        } else {
                             loginOrChatModal(card);
                         }
                     }
@@ -678,6 +709,14 @@ const TalkToAstrologers = () => {
           </button>
         </div>
       </CustomModal>
+
+      <InsufficientBalancePopup
+        isOpen={showInsufficientBalancePopup}
+        onClose={() => setShowInsufficientBalancePopup(false)}
+        requiredAmount={insufficientBalanceData.requiredAmount}
+        currentBalance={insufficientBalanceData.currentBalance}
+        astrologerName={insufficientBalanceData.astrologerName}
+      />
     </>);
 };
 export default TalkToAstrologers;

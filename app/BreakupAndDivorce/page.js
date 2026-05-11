@@ -2,11 +2,12 @@
 
 import React, { useContext, useEffect, useState } from "react";
 import DOMPurify from "dompurify";
-import { OrbitProgress } from "react-loading-indicators";
+
 
 import { MenuContext } from "../context/MenuContext";
 import { postWithToken } from "../utils/api";
 import SEO from "../components/SEO/page";
+import { OrbitProgress } from "react-loading-indicators";
 
 const BreakupAndDivorce = () => {
     const { isMenuOpen } = useContext(MenuContext);

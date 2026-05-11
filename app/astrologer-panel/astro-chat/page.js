@@ -4,18 +4,23 @@ import socketService from "@/app/services/socketService";
 import { useRouter } from "next/navigation";
 import ChatUI from "@/app/components/chat/ChatUI";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
+import ChatKundliPopUp from "@/app/components/ChatKundliPopUp";
+import { CgAdd } from "react-icons/cg";
+import Image from "next/image";
 
 export default function AstroChat() {
 
   const AstroId = typeof window !== "undefined" ? localStorage.getItem("AstroLoginId") : "";
   const router = useRouter();
 
-  const { loginAstrologerData, astroParsedData, setAstroParsedData, setAstrologerToggleStatus, astroCheckEndedChat, setAstroCheckEndedChat } = useMenuContext();
+  const { loginAstrologerData, astroParsedData, setAstroParsedData, setAstrologerToggleStatus, setAstroCheckEndedChat, callPopupData, setcallPopupData } = useMenuContext();
 
   const [playSound, setPlaySound] = useState(false);
   const [isPopUPOpen, setIsPopupOpen] = useState(false);
   const [showPopupCall, setshowPopupCall] = useState(false);
-  const [callPopupData, setcallPopupData] = useState(null);
+  // const [callPopupData, setcallPopupData] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("Basic");
 
   // console.log(astroParsedData, 'astroparsdata')
   const [showChatPopup, setShowChatPopup] = useState(false);
@@ -29,6 +34,7 @@ export default function AstroChat() {
 
 
   useEffect(() => {
+
     if (AstroId) {
       socketService.connectAstro(AstroId);
     }
@@ -64,6 +70,8 @@ export default function AstroChat() {
         setPlaySound(true);
         setTimeout(() => setPlaySound(false), 100);
         setShowChatPopup(true);
+        setpopupAceept(false);
+        router.push(`/astrologer-panel/dashboard`);
         break;
 
 
@@ -72,13 +80,6 @@ export default function AstroChat() {
         setAstroParsedData(messageData);
         setShowChatPopup(true);
         setCurrentChannel(messageData?.ChannelName);
-
-
-
-        // Update URL with channel ID
-        // if (messageData?.ChannelName) {
-        //   router.push(`/astrologer-panel/astro-chat/chat?channel=${messageData.ChannelName}&AstroChatTokenId=${encodeURIComponent(messageData?.AstroChatTokenId || '')}&WaitingListId=${encodeURIComponent(messageData?.WaitingListId || '')}&AstroId=${encodeURIComponent(messageData?.AstroId || '')}&UserId=${encodeURIComponent(messageData?.UserId)}`);
-        // }
         break;
 
 
@@ -103,11 +104,12 @@ export default function AstroChat() {
 
 
       case "Chat Completed":
-        // sessionStorage.setItem("AstroChatCompleted", "Chat Completed");
+        sessionStorage.setItem("AstroChatCompleted", "Chat Completed");
         // setAstroChatCompleted("Chat Completed");
         setAstroParsedData(messageData);
         setShowChatPopup(false);
         setChatMessages([]);
+        setpopupAceept(false)
         break;
 
 
@@ -124,6 +126,7 @@ export default function AstroChat() {
         setShowChatPopup(false);
         setshowPopupCall(false);
         setcallPopupData(null)
+        setpopupAceept(false)
         break;
 
 
@@ -135,13 +138,15 @@ export default function AstroChat() {
       case "Call is Processing":
         setcallPopupData(messageData);
         setshowPopupCall(true);
+        router.push("/astrologer-panel/dashboard");
         // setAcceptedUser(false);
-        navigate("/dashboard");
+        // navigate("/dashboard");
         break;
 
       case "Removed call Message":
         setcallPopupData(null);
         setshowPopupCall(false);
+        setpopupAceept(false)
         break;
 
 
@@ -258,12 +263,14 @@ export default function AstroChat() {
             </h2>
 
             <div className="flex items-center gap-4 mb-4">
-              <img
+              <Image
                 src={astroParsedData?.ProfilePic ? `https://${astroParsedData?.ProfilePic?.replace(/\\/g, "/")}` : ""}
                 alt="Profile"
                 loading="lazy"
                 decoding="async"
-                className="w-16 h-16 rounded-full object-cover border border-gray-300"
+                className="rounded-full object-cover border border-gray-300"
+                width={64}
+                height={64}
               />
               <div>
                 <h3 className="text-lg font-medium text-gray-900">{astroParsedData?.UserName}</h3>
@@ -321,12 +328,14 @@ export default function AstroChat() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-sm mx-4 mb-6 bg-orange-300 rounded-2xl shadow-xl p-4 pointer-events-auto animate-slide-up">
             <div className="flex items-center gap-4 mb-5">
-              <img
+              <Image
                 src={astroParsedData?.ProfilePic ? `https://${astroParsedData?.ProfilePic?.replace(/\\/g, "/")}` : profilepic}
                 alt="Profile"
                 loading="lazy"
                 decoding="async"
-                className="w-16 h-16 rounded-full object-cover border border-gray-600 shadow"
+                className="rounded-full object-cover border border-gray-600 shadow"
+                width={64}
+                height={64}
               />
               <div>
                 <h3 className="text-lg font-semibold text-black"> {astroParsedData?.UserName}</h3>
@@ -348,6 +357,46 @@ export default function AstroChat() {
               )
             }
           </div>
+        </div>
+      )}
+
+      {showPopupCall && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center max-w-sm w-full animate-fadeIn scale-100 z-10">
+            <img
+              src={
+                callPopupData?.ProfilePic
+                  ? `https://${callPopupData?.ProfilePic?.replace(/\\/g, "/")}`
+                  : profilepic
+              }
+              className="w-20 h-20 rounded-full border-4 border-orange-500 shadow-md object-cover"
+            />
+
+            <h2 className="mt-3 text-xl font-semibold text-gray-800"> {callPopupData?.UserName} </h2>
+
+            <p className="text-gray-600 mt-2 text-center">
+              Your call has started with{" "}
+              <span className="font-medium text-orange-600">  {callPopupData?.UserName} </span>
+              .
+            </p>
+
+            <div className="mt-4 text-orange-600 animate-pulse text-sm font-medium"> 📞 Connecting Live...  </div>
+
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="mt-6 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2 rounded-full shadow-md transition-all duration-300"
+            >
+              Open Kundli
+            </button>
+          </div>
+
+          <ChatKundliPopUp
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
         </div>
       )}
     </>

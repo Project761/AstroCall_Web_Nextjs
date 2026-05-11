@@ -192,7 +192,7 @@ export default function Header() {
               alt="AstroCall"
               width={50}
               height={50}
-              style={{ borderRadius: '50%' }}
+              // style={{ borderRadius: '50%' }}
             />
 
             <span className="text-2xl font-bold">
@@ -264,7 +264,7 @@ export default function Header() {
               ) : (
                 <div className="flex items-center gap-4">
                   
-                  <div
+                  {/* <div
                     onClick={() =>
                       setIsAuthModalOpen("login")
                     }
@@ -272,7 +272,7 @@ export default function Header() {
                   >
                     <CgProfile className="text-2xl" />
                     <span>Login</span>
-                  </div>
+                  </div> */}
 
                   <div
                     onClick={() =>

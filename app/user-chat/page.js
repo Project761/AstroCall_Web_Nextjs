@@ -7,12 +7,13 @@ import { useRouter } from "next/navigation";
 import { FiMinimize } from "react-icons/fi";
 import Image from "next/image";
 import { useMenuContext } from "../hooks/useMenuContext";
+import ReviewPopup from "@/app/components/ReviewPopup";
 
 export default function UserChat() {
 
   const router = useRouter();
   const userId = typeof window !== "undefined" ? localStorage.getItem("UserLoginId") : "";
-  const { popupData, setPopupData, UserCheckEndedChat, setUserCheckEndedChat } = useMenuContext();
+  const { popupData, setPopupData, setUserCheckEndedChat, Get_SingleData_User } = useMenuContext();
 
   // const [popupData, setPopupData] = useState(null);
   const [ChatPopUpStatus, setChatPopUpStatus] = useState(false);
@@ -21,6 +22,7 @@ export default function UserChat() {
   const [shouldShowPopup, setShouldShowPopup] = useState(true);
   const [clickbuttonloading, setclickbuttonloading] = useState(true);
   const [twominchatpopup, settwominchatpopup] = useState(false);
+  const [showReviewPopup, setShowReviewPopup] = useState(false);
 
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function UserChat() {
     switch (data?.Message) {
 
       case "Please Accept Request":
-
+        sessionStorage.removeItem("UserChatCompleted");
         setChatPopUpStatus(true);
         setUsermessage(data?.Message);
         setPopupData(data);
@@ -59,6 +61,7 @@ export default function UserChat() {
         setUsermessage(RecordAdd);
         setPopupData(data);
         setChatPopUpStatus(true);
+        sessionStorage.removeItem("UserChatCompleted");
         sessionStorage.setItem("requestSentTime", Date.now());
         break;
 
@@ -97,6 +100,7 @@ export default function UserChat() {
         setPopupData(data);
         sessionStorage.setItem("requestSentTime", Date.now());
         setChatPopUpStatus(true);
+        sessionStorage.removeItem("UserChatCompleted");
         break;
 
       case "This Astrologer is Online And Busy":
@@ -159,10 +163,13 @@ export default function UserChat() {
         sessionStorage.setItem("requestSentTime", Date.now());
         break
 
-      // case "Please Provide the Review":
-      //   const ReviewCall = "Please Provide the Review";
-      //   setUsermessage(ReviewCall);
-      //   // setreviewstatus(true)
+      case "Please Provide the Review":
+        const ReviewCall = "Please Provide the Review";
+        setUsermessage(ReviewCall);
+        setShowReviewPopup(true); // Open review popup
+        setPopupData(data);
+        setChatPopUpStatus(false);
+        break;
       //   setPopupData(data);
       //   setChatPopUpStatus(false);
       //   setUsermessage("")
@@ -207,6 +214,12 @@ export default function UserChat() {
         // setBusyForAstro(data);
         break;
       }
+      case "Removed call Message": {
+        setChatPopUpStatus(false)
+        setPopupData(null);
+        // setBusyForAstro(data);
+        break;
+      }
 
       case "Waiting List Deleted":
       case "Astro Chat is Not Busy.":
@@ -218,12 +231,10 @@ export default function UserChat() {
           setChatPopUpStatus(false);
           setPopupData(null);
           setUsermessage("");
-          if (typeof window !== "undefined") sessionStorage.removeItem("requestSentTime");
         }
-
         if (data?.Message === "Chat Completed") {
-          if (typeof window !== "undefined") sessionStorage.setItem("UserChatCompleted", data?.Message);
-          // Get_SingleData_User(localStorage.getItem("UserLoginId"));
+          sessionStorage.setItem("UserChatCompleted", data?.Message);
+          Get_SingleData_User(localStorage.getItem("UserLoginId"));
           setPopupData(data);
           // setreviewstatus(true);
           setChatPopUpStatus(false);
@@ -257,7 +268,7 @@ export default function UserChat() {
         // setAstroChatCompleted(ChatCompleted);
         setPopupData(data);
         setUsermessage("")
-        // Get_SingleData_User(localStorage.getItem("UserLoginId"));
+        Get_SingleData_User(localStorage.getItem("UserLoginId"));
         // setreviewstatus(true)
         setChatPopUpStatus(false);
 
@@ -503,6 +514,13 @@ export default function UserChat() {
 
       )}
 
+
+      {/* Review Popup */}
+      <ReviewPopup
+        isOpen={showReviewPopup}
+        onClose={() => setShowReviewPopup(false)}
+        popupData={popupData}
+      />
 
 
     </>

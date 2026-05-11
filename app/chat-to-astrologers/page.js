@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { postWithToken } from "@/app/utils/api";
 import { FaStar, FaStarHalf } from "react-icons/fa6";
 import SEO from "@/app/components/SEO/page.js";
+import InsufficientBalancePopup from "@/app/components/InsufficientBalancePopup.js";
 // Custom Loading Indicator Component
 const LoadingIndicator = ({ size = "medium" }) => {
     return (<div className="flex justify-center items-center">
@@ -30,11 +31,6 @@ const CustomModal = ({ isOpen, onClose, title, children }) => {
       </div>
     </div>);
 };
-// Toast notification utility
-const toastifyInfo = (message) => {
-    // Simple alert for now - can be replaced with proper toast library
-    alert(message);
-};
 const ChatToAstrologers = () => {
     // Mock translation function - replace with actual translation if needed
     const t = (key) => {
@@ -53,6 +49,12 @@ const ChatToAstrologers = () => {
     // Mock context data - replace with actual context if needed
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showInsufficientBalancePopup, setShowInsufficientBalancePopup] = useState(false);
+    const [insufficientBalanceData, setInsufficientBalanceData] = useState({
+      requiredAmount: 0,
+      currentBalance: 0,
+      astrologerName: ''
+    });
     const [loginUserData, setLoginUserData] = useState(null);
     const [AstroNameHomePage, setAstroNameHomePage] = useState(null);
     const [LanguagesData, setLanguagesData] = useState([]);
@@ -605,10 +607,17 @@ const ChatToAstrologers = () => {
                         loginOrChatModal(card);
                     }
                     else if (card?.FreeState === "Not Free") {
-                        if (loginUserData?.WalletAmt < price * 5) {
-                            setCallstatus(true);
-                        }
-                        else {
+                        const requiredAmount = price * 5;
+                        const currentBalance = loginUserData?.WalletAmt || 0;
+                        
+                        if (currentBalance < requiredAmount) {
+                            setInsufficientBalanceData({
+                                requiredAmount: requiredAmount,
+                                currentBalance: currentBalance,
+                                astrologerName: card?.FirstName || 'Astrologer'
+                            });
+                            setShowInsufficientBalancePopup(true);
+                        } else {
                             loginOrChatModal(card);
                         }
                     }
@@ -686,6 +695,14 @@ const ChatToAstrologers = () => {
           </button>
         </div>
       </CustomModal>
+
+      <InsufficientBalancePopup
+        isOpen={showInsufficientBalancePopup}
+        onClose={() => setShowInsufficientBalancePopup(false)}
+        requiredAmount={insufficientBalanceData.requiredAmount}
+        currentBalance={insufficientBalanceData.currentBalance}
+        astrologerName={insufficientBalanceData.astrologerName}
+      />
     </>);
 };
 export default ChatToAstrologers;

@@ -21,12 +21,8 @@ const CustomModal = ({ isOpen, onClose, title, children }) => {
     </div>);
 };
 // Toast notification utilities
-const toastifySuccess = (message) => {
-    alert("✅ " + message);
-};
-const toastifyError = (message) => {
-    alert("❌ " + message);
-};
+
+
 const AstrologerLogin = () => {
     const router = useRouter();
     const GetAstroLoginId = typeof window !== 'undefined' ? localStorage.getItem("AstroLoginId") || '' : '';

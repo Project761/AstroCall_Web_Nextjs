@@ -11,8 +11,7 @@ import { useMenuContext } from "@/app/hooks/useMenuContext";
 import { FiPhoneCall } from "react-icons/fi";
 import { BsChatDots } from "react-icons/bs";
 import { useRouter } from "next/navigation";
-import AstroChat from "../astro-chat/page";
-import SEO from "@/app/components/SEO/page.js";
+// import AstroChat from "../astro-chat/page";
 
 
 
@@ -20,7 +19,7 @@ import SEO from "@/app/components/SEO/page.js";
 export default function AstrologerDashboard() {
   const AstroId = typeof window !== "undefined" ? localStorage.getItem("AstroLoginId") : "";
 
-  const { loginAstrologerData, setLoginAstrologerData, astrows, astrologerToggleStatus } = useMenuContext();
+  const { loginAstrologerData, astrologerToggleStatus, Astropageload, setAstropageload } = useMenuContext();
   // console.log(loginAstrologerData, 'asdfasdf')
   const router = useRouter();
 
@@ -143,7 +142,6 @@ export default function AstrologerDashboard() {
   const handleChatToggle = () => {
     const newState = !isCheckedChat;
     setIsCheckedChat(newState);
-
     socketService.sendAstro({
       UserId: `WA${AstroId}`,
       Status: newState ? "OnlineType" : "ToggleClose",
@@ -154,6 +152,17 @@ export default function AstrologerDashboard() {
       messageId: "NewRequest",
     });
   };
+
+  // useEffect(() => {
+  //   if (Astropageload) {
+  //     handleChatToggle();
+  //     console.log("handleChatToggle called in useEffect when Astropageload is true");
+  //   }
+  // }, [Astropageload])
+
+
+
+
   const handleCallToggle = () => {
     const newState = !isCheckedCall;
     setIsCheckedCall(newState);
@@ -249,17 +258,26 @@ export default function AstrologerDashboard() {
     sessionStorage.setItem("IsCall", isCall);
 
     // 🔥 IMPORTANT: Sirf TRUE pe socket hit
-    if (isChat) {
-      socketService.sendAstro({
-        UserId: `WA${AstroId}`,
-        Status: "OnlineType",
-        Type: "chat",
-        ChatOnline: "1",
-        CallOnline: isCall ? "1" : "0",
-        BusyType: "0",
-        messageId: "NewRequest",
-      });
-    }
+    // if (isChat) {
+    //   socketService.sendAstro({
+    //     UserId: `WA${AstroId}`,
+    //     Status: "OnlineType",
+    //     Type: "chat",
+    //     ChatOnline: "1",
+    //     CallOnline: isCall ? "1" : "0",
+    //     BusyType: "0",
+    //     messageId: "NewRequest",
+    //   });
+    //   console.log({
+    //     UserId: `WA${AstroId}`,
+    //     Status: "OnlineType",
+    //     Type: "chat",
+    //     ChatOnline: "1",
+    //     CallOnline: isCall ? "1" : "0",
+    //     BusyType: "0",
+    //     messageId: "NewRequest",
+    //   }, 'isChat is true');
+    // }
 
     if (isCall) {
       socketService.sendAstro({
@@ -488,7 +506,7 @@ export default function AstrologerDashboard() {
         </div>
       </div>
 
-      <AstroChat />
+      {/* <AstroChat /> */}
     </>
   )
 }
