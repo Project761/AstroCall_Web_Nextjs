@@ -90,8 +90,11 @@ export const MenuProvider = ({ children }) => {
     }, [UserLoginId]);
 
     useEffect(() => {
-        Get_Data_GetDataAgoraKey()
-    }, [])
+        // Only call Get_Data_GetDataAgoraKey if user is authenticated
+        if (isLogin || GetAstroLoginId) {
+            Get_Data_GetDataAgoraKey()
+        }
+    }, [isLogin, GetAstroLoginId])
 
     const Get_SingleData_User = async (id) => {
         if (!id)
@@ -138,6 +141,10 @@ export const MenuProvider = ({ children }) => {
 
     // Get_Data_RazorPayKey function
     const Get_Data_RazorPayKey = async () => {
+        // Only proceed if user is authenticated
+        if (!isLogin && !GetAstroLoginId) {
+            return;
+        }
         try {
             const res = await GetWithToken("RazorPay/GetDataRazorPayKey");
             if (res?.success === true) {
@@ -151,6 +158,10 @@ export const MenuProvider = ({ children }) => {
 
     // Get_Data_GetDataAgoraKey function
     const Get_Data_GetDataAgoraKey = async () => {
+        // Only proceed if user is authenticated
+        if (!isLogin && !GetAstroLoginId) {
+            return;
+        }
         try {
             const res = await GetWithToken("RazorPay/GetDataAgoraKey");
             if (res?.success === true) {

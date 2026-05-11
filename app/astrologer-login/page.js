@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OTPInput from "react-otp-input";
-import { postWithToken, loginApi, saveAuthToken, clearAuthData } from "@/app/utils/api";
+import { postWithToken, loginApi, saveAuthToken, clearAuthData, getPostData, postData } from "@/app/utils/api";
+import { toastifySuccess, toastifyError } from "@/app/utils/utility";
 import SEO from "@/app/components/SEO/page.js";
 // Custom Modal Component
 const CustomModal = ({ isOpen, onClose, title, children }) => {
@@ -111,8 +112,11 @@ const AstrologerLogin = () => {
     const Check_Mobile_Registered = async () => {
         try {
             const val = { MobileNo: value?.phoneNumber };
-            const res = await postWithToken("Astrologer/CheckIfMobileRegistered", val);
+            console.log("Checking mobile registration for:", val);
+            const res = await getPostData("Astrologer/CheckIfMobileRegistered", val);
+            console.log("Mobile registration response:", res);
             if (res?.[0]?.Message === "Astrologer Found" || res?.[0]?.Message === "No data available") {
+                console.log("Astrologer found, sending OTP...");
                 Get_OTP();
             }
             else if (res?.[0]?.Message === "User Found") {
@@ -121,23 +125,45 @@ const AstrologerLogin = () => {
             }
         }
         catch (error) {
-            console.log(error);
+            console.log("Error in Check_Mobile_Registered:", error);
         }
     };
     const Get_OTP = async () => {
         try {
             const { phoneNumber } = value;
             const val = { MobileNo: phoneNumber };
-            const res = await postWithToken("SMS/GetData_SMS", val);
-            if (res?.success === true) {
+            console.log("Sending OTP to:", val);
+            const res = await getPostData("SMS/GetData_SMS", val);
+            console.log("OTP response:", res);
+            // Handle different response formats
+            if (res?.success === true || res?.[0]?.success === true || (res && res.length > 0 && res[0].success === true)) {
+                console.log("OTP sent successfully, setting states...");
                 setExpireOtp(true);
                 setTimerOn(true);
                 setnumstatus(false);
                 setSendOtp(true);
+                console.log("sendOtp state set to true");
+            } else {
+                console.log("OTP send failed, trying alternative approach...");
+                // Try with postData function instead
+                try {
+                    const res2 = await postData("SMS/GetData_SMS", val);
+                    console.log("Alternative OTP response:", res2);
+                    if (res2?.success === true) {
+                        console.log("OTP sent successfully with alternative method, setting states...");
+                        setExpireOtp(true);
+                        setTimerOn(true);
+                        setnumstatus(false);
+                        setSendOtp(true);
+                        console.log("sendOtp state set to true");
+                    }
+                } catch (altError) {
+                    console.log("Alternative method also failed:", altError);
+                }
             }
         }
         catch (error) {
-            console.log(error);
+            console.log("Error in Get_OTP:", error);
         }
     };
     const OtpVerify = async (mobileOtp) => {
