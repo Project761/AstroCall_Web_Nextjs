@@ -173,6 +173,7 @@ export const MenuProvider = ({ children }) => {
             }
             // Fetch fresh data
             const res = await getPostData("Muhurat/GetData_Muhurat", { IsActive: "1" });
+            console.log(res, "res")
             setMuhuratData(res);
             // Cache for 1 hour
             if (typeof window !== 'undefined') {
