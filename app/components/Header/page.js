@@ -157,19 +157,19 @@ export default function Header() {
   };
 
   const handleTalkClick = () => {
-    if (isLogin) {
+    // if (isLogin) {
       handleNavigation("/talk-to-astrologers");
-    } else {
-      setIsAuthModalOpen("login");
-    }
+    // } else {
+    //   setIsAuthModalOpen("login");
+    // }
   };
 
   const handleChatClick = () => {
-    if (isLogin) {
+    // if (isLogin) {
       handleNavigation("/chat-to-astrologers");
-    } else {
-      setIsAuthModalOpen("login");
-    }
+    // } else {
+    //   setIsAuthModalOpen("login");
+    // }
   };
 
   // ✅ Prevent hydration mismatch
