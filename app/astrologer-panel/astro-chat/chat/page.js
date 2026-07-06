@@ -1,7 +1,11 @@
-"use client";
+import AstroChatSessionClient from "./AstroChatSessionClient";
 
-import ChatUI from "@/app/components/chat/ChatUI";
+export const metadata = {
+  title: "Live Chat - AstroCall",
+  description: "Live chat session",
+  robots: { index: false, follow: false },
+};
 
-export default function AstroChatPage() {
-    return <ChatUI role="astrologer" />;
+export default function AstroChatSessionPage() {
+  return <AstroChatSessionClient />;
 }

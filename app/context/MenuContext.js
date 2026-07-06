@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useEffect, useRef, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { postWithToken, GetWithToken, TokenWithDeleteUpadateAdd, getPostData } from "../utils/api";
 import { format } from "date-fns";
@@ -8,8 +8,12 @@ export const MenuContext = createContext();
 
 export const MenuProvider = ({ children }) => {
     const pathname = usePathname();
-    const UserLoginId = typeof window !== 'undefined' ? localStorage.getItem("UserLoginId") || "" : "";
-    const GetAstroLoginId = typeof window !== 'undefined' ? localStorage.getItem("AstroLoginId") || "" : "";
+    const [UserLoginId, setUserLoginId] = useState(() =>
+        typeof window !== "undefined" ? localStorage.getItem("UserLoginId") || "" : ""
+    );
+    const [GetAstroLoginId, setGetAstroLoginId] = useState(() =>
+        typeof window !== "undefined" ? localStorage.getItem("AstroLoginId") || "" : ""
+    );
     // State management
     const [isMenuOpen, setisMenuOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,14 +29,8 @@ export const MenuProvider = ({ children }) => {
     const [astroParsedData, setAstroParsedData] = useState(null);
 
     const [Astropageload, setAstropageload] = useState(false);
-    
-    // console.log(Astropageload, "Astropageload in context")
-
-
-
-
-    const [valueset, setValueset] = useState(0);
-    const [showinput, setshowinput] = useState(true);
+    const [userCalculateTime, setUserCalculateTime] = useState("");
+    const [AstroCalculateTime, setAstroCalculateTime] = useState("");
     const [ChatPopUpStatus, setChatPopUpStatus] = useState(false);
     const [userMessage, setUsermessage] = useState("");
     const [ChatCallTrue, setChatCallTrue] = useState(false);
@@ -41,9 +39,21 @@ export const MenuProvider = ({ children }) => {
     const [Gemstonereviewstatus, setGemstonereviewstatus] = useState(false);
     const [PlanSuccessPopup, setPlanSuccessPopup] = useState(false);
     const [FAQData, setFAQData] = useState([]);
-    const [isLogin, setisLogin] = useState(typeof window !== 'undefined' ? localStorage.getItem("IsLogin") === "true" : false);
-    const [loadingAstroData, setloadingAstroData] = useState(false);
+    const [isLogin, setisLogin] = useState(() => {
+        if (typeof window === "undefined") return false;
+        return Boolean(
+            localStorage.getItem("LoginTokenData") &&
+            localStorage.getItem("UserLoginId")
+        );
+    });
     const [loadingUserData, setloadingUserData] = useState(false);
+
+
+
+
+
+
+
     const [MuhuratData, setMuhuratData] = useState();
     const [VratUpvaasData, setVratUpvaasData] = useState([]);
     const [popupData, setPopupData] = useState(null);
@@ -79,24 +89,19 @@ export const MenuProvider = ({ children }) => {
     const [AstroNotBusy, setAstroNotBusy] = useState('');
     const [AstroNotBusyCall, setAstroNotBusyCall] = useState('');
     const [isLoadingAstrologerData, setIsLoadingAstrologerData] = useState(false);
-    const [visitorId, setVisitorId] = useState(typeof window !== 'undefined' ? localStorage.getItem("visitor_Id") || "" : "");
+    const [visitorId, setVisitorId] = useState(() =>
+        typeof window !== "undefined" ? localStorage.getItem("visitor_Id") || "" : ""
+    );
 
     const toggleMenu = () => setisMenuOpen(prev => !prev);
 
-
-    // Get_SingleData_User function
     useEffect(() => {
-        Get_SingleData_User(UserLoginId);
-    }, [UserLoginId]);
+        if (typeof window === "undefined") return;
+        setUserLoginId(localStorage.getItem("UserLoginId") || "");
+        setGetAstroLoginId(localStorage.getItem("AstroLoginId") || "");
+    }, [isLogin]);
 
-    useEffect(() => {
-        // Only call Get_Data_GetDataAgoraKey if user is authenticated
-        if (isLogin || GetAstroLoginId) {
-            Get_Data_GetDataAgoraKey()
-        }
-    }, [isLogin, GetAstroLoginId])
-
-    const Get_SingleData_User = async (id) => {
+    const Get_SingleData_User = useCallback(async (id) => {
         if (!id)
             return;
         setloadingUserData(true);
@@ -112,19 +117,9 @@ export const MenuProvider = ({ children }) => {
         finally {
             setloadingUserData(false);
         }
-    };
-    // Get_SingleData_Astrologer function
+    }, []);
 
-    useEffect(() => {
-        if (GetAstroLoginId) {
-            Get_SingleData_Astrologer(GetAstroLoginId);
-        }
-    }, [GetAstroLoginId]);
-
-
-
-    const Get_SingleData_Astrologer = async (id) => {
-        setloadingAstroData(true);
+    const Get_SingleData_Astrologer = useCallback(async (id) => {
         try {
             const res = await postWithToken("Astrologer/GetSingleData_Astrologer", { AstrologerID: id });
             if (res) {
@@ -134,10 +129,45 @@ export const MenuProvider = ({ children }) => {
         catch (err) {
             console.error(err);
         }
-        finally {
-            setloadingAstroData(false);
+    }, []);
+
+    const Get_Data_GetDataAgoraKey = useCallback(async () => {
+        // Only proceed if user is authenticated
+        if (!isLogin && !GetAstroLoginId) {
+            return;
         }
-    };
+        try {
+            const res = await GetWithToken("RazorPay/GetDataAgoraKey");
+            if (res?.success === true) {
+                setGetAgoraKey(res?.data);
+            }
+        }
+        catch (err) {
+            console.error(err);
+        }
+    }, [isLogin, GetAstroLoginId]);
+
+    useEffect(() => {
+        void (async () => {
+            await Get_SingleData_User(UserLoginId);
+        })();
+    }, [UserLoginId, Get_SingleData_User]);
+
+    useEffect(() => {
+        if (isLogin || GetAstroLoginId) {
+            void (async () => {
+                await Get_Data_GetDataAgoraKey();
+            })();
+        }
+    }, [isLogin, GetAstroLoginId, Get_Data_GetDataAgoraKey]);
+
+    useEffect(() => {
+        if (GetAstroLoginId) {
+            void (async () => {
+                await Get_SingleData_Astrologer(GetAstroLoginId);
+            })();
+        }
+    }, [GetAstroLoginId, Get_SingleData_Astrologer]);
 
     // Get_Data_RazorPayKey function
     const Get_Data_RazorPayKey = async () => {
@@ -156,89 +186,73 @@ export const MenuProvider = ({ children }) => {
         }
     };
 
-    // Get_Data_GetDataAgoraKey function
-    const Get_Data_GetDataAgoraKey = async () => {
-        // Only proceed if user is authenticated
-        if (!isLogin && !GetAstroLoginId) {
-            return;
-        }
-        try {
-            const res = await GetWithToken("RazorPay/GetDataAgoraKey");
-            if (res?.success === true) {
-                setGetAgoraKey(res?.data);
-            }
-        }
-        catch (err) {
-            console.error(err);
-        }
-    };
+    // Get_Data_GetDataAgoraKey function — defined above with useCallback
 
-    // Get_Data_Muhurat function
-    const Get_Data_Muhurat = async () => {
+    const Get_Data_Muhurat = useCallback(async () => {
         try {
             // Check if data is cached (simple 1-hour cache)
-            const cachedData = typeof window !== 'undefined' ? localStorage.getItem("muhurat_data") : null;
-            const cachedTime = typeof window !== 'undefined' ? localStorage.getItem("muhurat_time") : null;
-            const now = new Date().getTime();
-            // Cache for 1 hour (3600000 ms)
-            if (cachedData && cachedTime && (now - parseInt(cachedTime)) < 3600000) {
-                setMuhuratData(JSON.parse(cachedData));
-                return;
-            }
+            // const cachedData = typeof window !== 'undefined' ? localStorage.getItem("muhurat_data") : null;
+            // const cachedTime = typeof window !== 'undefined' ? localStorage.getItem("muhurat_time") : null;
+            // const now = new Date().getTime();
+            // // Cache for 1 hour (3600000 ms)
+            // if (cachedData && cachedTime && (now - parseInt(cachedTime)) < 3600000) {
+            //     setMuhuratData(JSON.parse(cachedData));
+            //     return;
+            // }
             // Fetch fresh data
             const res = await getPostData("Muhurat/GetData_Muhurat", { IsActive: "1" });
-            console.log(res, "res")
+            // console.log(res, "res")
             setMuhuratData(res);
             // Cache for 1 hour
-            if (typeof window !== 'undefined') {
-                localStorage.setItem("muhurat_data", JSON.stringify(res));
-                localStorage.setItem("muhurat_time", now.toString());
-                localStorage.setItem("muhurat_called", "true");
-            }
+            // if (typeof window !== 'undefined') {
+            //     localStorage.setItem("muhurat_data", JSON.stringify(res));
+            //     localStorage.setItem("muhurat_time", now.toString());
+            //     localStorage.setItem("muhurat_called", "true");
+            // }
         }
         catch (err) {
             console.error(err);
             // Use cached data if API fails
-            const cachedData = typeof window !== 'undefined' ? localStorage.getItem("muhurat_data") : null;
-            if (cachedData) {
-                setMuhuratData(JSON.parse(cachedData));
-            }
+            // const cachedData = typeof window !== 'undefined' ? localStorage.getItem("muhurat_data") : null;
+            // if (cachedData) {
+            //     setMuhuratData(JSON.parse(cachedData));
+            // }
         }
-    };
+    }, []);
 
     // Get_Data_VratandUpvaas function
-    const Get_Data_VratandUpvaas = async () => {
+    const Get_Data_VratandUpvaas = useCallback(async () => {
         try {
             // Check if data is cached (simple 1-hour cache)
-            const cachedData = typeof window !== 'undefined' ? localStorage.getItem("vratupvaas_data") : null;
-            const cachedTime = typeof window !== 'undefined' ? localStorage.getItem("vratupvaas_time") : null;
-            const now = new Date().getTime();
-            // Cache for 1 hour (3600000 ms)
-            if (cachedData && cachedTime && (now - parseInt(cachedTime)) < 3600000) {
-                setVratUpvaasData(JSON.parse(cachedData));
-                return;
-            }
+            // const cachedData = typeof window !== 'undefined' ? localStorage.getItem("vratupvaas_data") : null;
+            // const cachedTime = typeof window !== 'undefined' ? localStorage.getItem("vratupvaas_time") : null;
+            // const now = new Date().getTime();
+            // // Cache for 1 hour (3600000 ms)
+            // if (cachedData && cachedTime && (now - parseInt(cachedTime)) < 3600000) {
+            //     setVratUpvaasData(JSON.parse(cachedData));
+            //     return;
+            // }
             // Fetch fresh data
             const res = await getPostData("VratUpvaas/GetData_VratUpvaas", { IsActive: "1" });
             if (res) {
                 setVratUpvaasData(res);
                 // Cache for 1 hour
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem("vratupvaas_data", JSON.stringify(res));
-                    localStorage.setItem("vratupvaas_time", now.toString());
-                    localStorage.setItem("VratUpvaas_called", "true");
-                }
+                // if (typeof window !== 'undefined') {
+                //     localStorage.setItem("vratupvaas_data", JSON.stringify(res));
+                //     localStorage.setItem("vratupvaas_time", now.toString());
+                //     localStorage.setItem("VratUpvaas_called", "true");
+                // }
             }
         }
         catch (err) {
             console.error(err);
             // Use cached data if API fails
-            const cachedData = typeof window !== 'undefined' ? localStorage.getItem("vratupvaas_data") : null;
-            if (cachedData) {
-                setVratUpvaasData(JSON.parse(cachedData));
-            }
+            // const cachedData = typeof window !== 'undefined' ? localStorage.getItem("vratupvaas_data") : null;
+            // if (cachedData) {
+            //     setVratUpvaasData(JSON.parse(cachedData));
+            // }
         }
-    };
+    }, []);
 
     const Get_find_sun_moon = async (selectedDate, latitudedata, longitudedata, p1placeData, LanguageDropdown) => {
         const val = {
@@ -476,25 +490,19 @@ export const MenuProvider = ({ children }) => {
     }, [visitorId, pathname]);
 
     useEffect(() => {
-        const alreadyCalled = typeof window !== 'undefined' ? localStorage.getItem("muhurat_called") : null;
-        const alreadyCalledVratUpvaas = typeof window !== 'undefined' ? localStorage.getItem("VratUpvaas_called") : null;
-        if (alreadyCalled) {
-            Get_Data_Muhurat();
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem("muhurat_called");
+        void (async () => {
+            if (pathname === "/Muhurat") {
+                await Get_Data_Muhurat();
             }
-        }
-        else if (alreadyCalledVratUpvaas) {
-            Get_Data_VratandUpvaas();
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem("VratUpvaas_called");
+            if (pathname === "/VratUpvaas" || pathname === "/Upcomingfestival") {
+                await Get_Data_VratandUpvaas();
             }
-        }
-    }, []);
+        })();
+    }, [pathname, Get_Data_Muhurat, Get_Data_VratandUpvaas]);
 
     return (<MenuContext.Provider value={{
         // User IDs
-        UserLoginId, GetAstroLoginId,
+        UserLoginId, setUserLoginId, GetAstroLoginId,
         // Menu and UI states
         isMenuOpen, setisMenuOpen, toggleMenu,
         isModalOpen, setIsModalOpen, isOpen, setIsOpen,
@@ -514,13 +522,12 @@ export const MenuProvider = ({ children }) => {
         // Chat and call states
         ChatPopUpStatus, setChatPopUpStatus, userMessage, setUsermessage,
         ChatCallTrue, setChatCallTrue,
-        valueset, setValueset,
-        // UI states
-        showinput, setshowinput, popupAceept, setpopupAceept, Gemstonereviewstatus, setGemstonereviewstatus,
+
+        popupAceept, setpopupAceept, Gemstonereviewstatus, setGemstonereviewstatus,
         chatOffline, setchatOffline, chatonline, setchatonline, reviewstatus, setreviewstatus,
         PlanSuccessPopup, setPlanSuccessPopup,
         // Login and loading states
-        isLogin, setisLogin, loadingAstroData, setloadingAstroData, loadingUserData, setloadingUserData,
+        isLogin, setisLogin, loadingUserData, setloadingUserData,
         // Data states
         MuhuratData, setMuhuratData, VratUpvaasData, setVratUpvaasData, FAQData, setFAQData,
         sunmoonData, setsunmoonData, FindTithiData, setFindTithiData, nakshatraData, setnakshatraData,
@@ -534,13 +541,13 @@ export const MenuProvider = ({ children }) => {
         callPopupData, setcallPopupData, twominchatpopup, settwominchatpopup, playSound, setPlaySound,
         // Keys and tokens
         RazorPayKey, setRazorPayKey, GetAgoraKey, setGetAgoraKey, AstroNotBusyStatus, setAstroNotBusyStatus,
-        BusyTimes, AstroNotBusy, setAstroNotBusy, AstroNotBusyCall, setAstroNotBusyCall,
+        BusyTimes, setBusyTimes, AstroNotBusy, setAstroNotBusy, AstroNotBusyCall, setAstroNotBusyCall,
         // Utility functions
         Get_Data_Muhurat, Get_Data_VratandUpvaas, Get_Data_RazorPayKey, Get_Data_GetDataAgoraKey,
         Get_Data_Astrologer, GetDropDownData_Skills, GetDropDownData_lstLanguages,
         GetDropDownData_AstrologersCategory, GetData_ActivityLog, visitorId, setVisitorId, astroCheckEndedChat, setAstroCheckEndedChat, astroParsedData, setAstroParsedData, UserCheckEndedChat, setUserCheckEndedChat
 
-        , Astropageload, setAstropageload
+        , Astropageload, setAstropageload, userCalculateTime, setUserCalculateTime, AstroCalculateTime, setAstroCalculateTime
 
 
     }}>

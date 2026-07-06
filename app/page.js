@@ -1,253 +1,131 @@
-"use client";
-import { useEffect, lazy, useMemo, useCallback } from "react";
-import SEO from "./components/SEO/page";
-import IconsBar from "./components/topIconbar/page";
-import CommonAstrologicalServices from "./components/CommonAstrologicalServices/page";
-import LazyInView from "./components/LazyInView/page";
-import Carousel from "./components/carousel/page";
-import { useMenuContext } from "./hooks/useMenuContext";
-import Image from "next/image";
-import Head from "next/head";
-// Critical above-the-fold components - load immediately
-import AstrocallHomepage from "./components/AstrocallHomepage/page";
-import AstrologyStats from "./components/AstrologyStats/page";
-import WhyAstrocall from "./components/whyAstrocall/page";
+import Link from "next/link";
+import HomePageClient from "./HomePageClient";
 
-// Below-the-fold components - lazy load for performance
-const Astrologers = lazy(() => import("./components/astrologers/page"));
-const CustomersFeedback = lazy(() => import("./components/reviews/page"));
-const CelebritiesReview = lazy(() => import("./components/celebritiesReviews/page"));
-const HomeOnlinepuja = lazy(() => import("./components/onlinePuja/page"));
-const ZodiacGrid = lazy(() => import("./components/zodiacgrid/page"));
-const BlogSection = lazy(() => import("./components/blog/page"));
-const AstrologySection = lazy(() => import("./components/AstrologySection/page"));
-const HomeFAQ = lazy(() => import("./components/FAQ/page"));
-const SupportSection = lazy(() => import("./components/SupportSection/page"));
-const Footer = lazy(() => import("./components/Footer/page"));
+export const revalidate = 3600;
 
+const SITE = "https://astrocall.live";
+const CANONICAL = `${SITE}/`;
+const OG_IMAGE = `${SITE}/images/astrocall-og-image.jpg`;
 
-function HomepageContent() {
-  const { isMenuOpen, setLanguageStatus, setAstroNameHomePageCall, setAstroNameHomePage, settwominchatpopup } = useMenuContext();
+const TITLE = "AstroCall - Talk to India's Best Astrologers Online Now";
+const DESCRIPTION =
+  "Consult India's top astrologers online at AstroCall. Get free kundli, daily horoscope, and predictions for love, career, marriage, and finance via chat or call.";
+const KEYWORDS =
+  "astrology, online astrologers, free kundli, daily horoscope, kundali matching, vedic astrology, talk to astrologer, astrology consultation, horoscope prediction, online puja";
 
-  // Memoize sessionStorage cleanup function
-  const clearSessionStorage = useCallback(() => {
-    const keysToRemove = [
-      "category", "AstroLoginId", "activeMenu", "MuhuratID",
-      "VratUpvaasID", "OnlineStatus", "HoroscopeName", "AstroIDCallChat",
-      "PujaID", "GemstoneID", "AddressLocationID", "WalletPackageID"
-    ];
-    keysToRemove.forEach(key => sessionStorage.removeItem(key));
-  }, []);
-
-  // Memoize context setters
-  const initializeContext = useCallback(() => {
-    setLanguageStatus(true);
-    setAstroNameHomePageCall('');
-    settwominchatpopup(false);
-    setAstroNameHomePage('');
-  }, [setLanguageStatus, setAstroNameHomePageCall, settwominchatpopup, setAstroNameHomePage]);
-
-  useEffect(() => {
-    clearSessionStorage();
-    initializeContext();
-  }, [clearSessionStorage, initializeContext]);
-  // Memoize schema data to prevent re-creation
-  const schema = useMemo(() => ({
-    "@context": "https://schema.org",
-    "@graph": [
+export const metadata = {
+  title: {
+    absolute: TITLE,
+  },
+  description: DESCRIPTION,
+  keywords: KEYWORDS,
+  authors: [{ name: "AstroCall" }],
+  alternates: { canonical: CANONICAL },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: CANONICAL,
+    type: "website",
+    siteName: "AstroCall",
+    locale: "en_IN",
+    images: [
       {
-        "@type": "Organization",
-        "@id": "https://astrocall.live/#organization",
-        "name": "AstroCall",
-        "url": "https://astrocall.live/",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://astrocall.live/logo.png"
-        },
-        "description": "India's Most Trusted Astrology Platform. Connect with certified astrologers 24/7 via call or chat. Free Kundli, Daily Horoscope, Kundali Matching & more.",
-        "foundingLocation": { "@type": "Place", "name": "India" },
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "contactType": "customer support",
-          "url": "https://astrocall.live/contact",
-          "availableLanguage": ["English", "Hindi"]
-        },
-        "sameAs": [
-          "https://www.facebook.com/astrocall.live",
-          "https://www.instagram.com/astrocall.live",
-          "https://twitter.com/astrocall_live"
-        ]
+        url: OG_IMAGE,
+        alt: "AstroCall - Online Astrology Consultation",
       },
-      {
-        "@type": "WebSite",
-        "@id": "https://astrocall.live/#website",
-        "url": "https://astrocall.live/",
-        "name": "AstroCall — Talk to India's Best Astrologers Online",
-        "publisher": { "@id": "https://astrocall.live/#organization" },
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://astrocall.live/talk-to-astrologers?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        }
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [OG_IMAGE],
+  },
+};
+
+const homeSchema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE}/#organization`,
+      name: "AstroCall",
+      url: CANONICAL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE}/logo.png`,
       },
-      {
-        "@type": "WebPage",
-        "@id": "https://astrocall.live/#webpage",
-        "url": "https://astrocall.live/",
-        "name": "AstroCall — Talk to India's Best Astrologers Online | Free Kundli & Daily Horoscope",
-        "description": "Connect instantly with certified astrologers on AstroCall. Accurate predictions, Free Kundli, Daily Horoscope, Kundali Matching & online Pujas — 24/7.",
-        "isPartOf": { "@id": "https://astrocall.live/#website" },
-        "about": { "@id": "https://astrocall.live/#organization" },
-        "inLanguage": "en-IN"
-      }
-    ]
-  }), []);
-  return (<div className="homepage-root">
-    <Head>
-      <link rel="preload" href="/images/logo1.webp" as="image" type="image/webp" />
-      <link rel="preload" href="/images/logo.png" as="image" type="image/png" />
-      <link rel="preload" href="/images/customar-before.webp" as="image" type="image/webp" />
-      <link rel="preload" href="/images/iconbar-2.webp" as="image" type="image/webp" />
-      <link rel="preload" href="/images/iconbar-3.webp" as="image" type="image/webp" />
-      <link rel="preload" href="/images/iconbar-4.webp" as="image" type="image/webp" />
-      <link rel="preload" href="/images/iconbar-5.webp" as="image" type="image/webp" />
-      <link rel="preload" href="/images/iconbar-7.webp" as="image" type="image/webp" />
-      <link rel="preload" href="/images/kundli.webp" as="image" type="image/webp" />
-      {/* Preload critical pages */}
-      <link rel="prefetch" href="/talk-to-astrologers" />
-      <link rel="prefetch" href="/chat-to-astrologers" />
-      <link rel="prefetch" href="/freekundli" />
-      <link rel="prefetch" href="/kundali-matching" />
-      <link rel="prefetch" href="/daily-horoscope" />
-      <link rel="prefetch" href="/astrology-blog" />
-    </Head>
-    <SEO
-      title="AstroCall - Talk to India's Best Astrologers Online Now"
-      description="Consult India's top astrologers online at AstroCall. Get free kundli, daily horoscope, and predictions for love, career, marriage, and finance via chat or call."
-      canonical="https://astrocall.live/"
-      type="website"
-      schema={schema}
-      keywords="astrology, online astrologers, free kundli, daily horoscope, kundali matching, vedic astrology, talk to astrologer, astrology consultation, horoscope prediction, online puja"
-      author="AstroCall"
-      image="https://astrocall.live/images/astrocall-og-image.jpg"
-    />
+      description:
+        "India's Most Trusted Astrology Platform. Connect with certified astrologers 24/7 via call or chat. Free Kundli, Daily Horoscope, Kundali Matching & more.",
+      foundingLocation: { "@type": "Place", name: "India" },
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        url: `${SITE}/support`,
+        availableLanguage: ["English", "Hindi"],
+      },
+      sameAs: [
+        "https://www.facebook.com/astrocall.live",
+        "https://www.instagram.com/astrocall.live",
+        "https://twitter.com/astrocall_live",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE}/#website`,
+      url: CANONICAL,
+      name: "AstroCall — Talk to India's Best Astrologers Online",
+      publisher: { "@id": `${SITE}/#organization` },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${SITE}/talk-to-astrologers?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "WebPage",
+      "@id": `${SITE}/#webpage`,
+      url: CANONICAL,
+      name: "AstroCall — Talk to India's Best Astrologers Online | Free Kundli & Daily Horoscope",
+      description:
+        "Connect instantly with certified astrologers on AstroCall. Accurate predictions, Free Kundli, Daily Horoscope, Kundali Matching & online Pujas — 24/7.",
+      isPartOf: { "@id": `${SITE}/#website` },
+      about: { "@id": `${SITE}/#organization` },
+      inLanguage: "en-IN",
+    },
+  ],
+};
 
-    <div className={`content mt-16 ${isMenuOpen ? "blur" : ""}`}>
-      <div className="bg-[#ffff]">
-        <div className="main-orangeGradient py-2 text-center relative overflow-hidden">
-          <Carousel />
-        </div>
-
-        <div className="relative px-4 -mt-[12px]">
-          <div className="bg-white rounded-xl shadow__md__lists max-w-7xl mx-auto">
-            <IconsBar />
-          </div>
-        </div>
-
-        {/* Critical above-the-fold content - load immediately */}
-        <AstrocallHomepage />
-      </div>
-
-      <div className="services bg-[#F973160D] orangeLight pb-10 p-2 relative" style={{ minHeight: "549px" }}>
-        <div className="absolute bottom-[0] right-[-90px] right-image" style={{ width: '300px', height: '200px' }}>
-          <Image 
-            src="/images/customar-before.webp" 
-            alt="" 
-            width={300} 
-            height={200}
-            loading="eager" 
-            decoding="async"
-            fetchPriority="high"
-            priority={true}
-            className="object-cover"
-            style={{ position: 'absolute', bottom: 0, right: '-90px' }}
-          />
-        </div>
-        <CommonAstrologicalServices />
-      </div>
-
-      {/* Critical stats section - load immediately */}
-      <AstrologyStats />
-
-      {/* Critical why section - load immediately */}
-      <WhyAstrocall />
-
-      {/* Below-the-fold content - lazy load with smooth transitions */}
-      <LazyInView fallback={null}>
-        <ZodiacGrid />
-      </LazyInView>
-
-      <div className="bg-[#FFF6F0] py-8 relative" style={{ minHeight: '400px' }}>
-        <div className="absolute bottom-[0] right-[-100px] right-image" style={{ width: '300px', height: '200px' }}>
-          <Image 
-            src="/images/customar-before.webp" 
-            alt="" 
-            width={300} 
-            height={200}
-            loading="eager" 
-            decoding="async"
-            fetchPriority="high"
-            priority={true}
-            className="object-cover"
-            style={{ position: 'absolute', bottom: 0, right: '-100px' }}
-          />
-        </div>
-        <LazyInView fallback={null}>
-          <Astrologers />
-        </LazyInView>
-      </div>
-
-      <div className="bg-[#FECEAD] relative py-10" style={{ minHeight: '400px' }}>
-        <div className="absolute bottom-0 right-[-100px] right-image" style={{ width: '300px', height: '200px' }}>
-          <Image 
-            src="/images/customar-before.webp" 
-            alt="" 
-            width={300} 
-            height={200}
-            loading="eager" 
-            decoding="async"
-            fetchPriority="high"
-            priority={true}
-            className="object-cover"
-            style={{ position: 'absolute', bottom: 0, right: '-100px' }}
-          />
-        </div>
-        <LazyInView fallback={null}>
-          <HomeOnlinepuja />
-        </LazyInView>
-      </div>
-
-      <LazyInView fallback={null}>
-        <CustomersFeedback />
-      </LazyInView>
-
-      <LazyInView fallback={null}>
-        <CelebritiesReview />
-      </LazyInView>
-
-      <LazyInView fallback={null}>
-        <BlogSection />
-      </LazyInView>
-
-      <LazyInView fallback={null}>
-        <AstrologySection />
-      </LazyInView>
-
-      <LazyInView fallback={null}>
-        <HomeFAQ />
-      </LazyInView>
-
-      <LazyInView fallback={null}>
-        <SupportSection />
-      </LazyInView>
-    </div>
-
-
-  </div>);
-}
-export default function Home() {
-  return <HomepageContent />;
+export default async function Home() {
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeSchema) }}
+      />
+      {/* Server-rendered SEO content — always present in view-source */}
+      <section className="sr-only" aria-label="AstroCall homepage summary">
+        <h1>AstroCall — Talk to India&apos;s Best Astrologers Online</h1>
+        <p>
+          Consult certified astrologers via chat or call. Free Kundli, daily horoscope, kundali matching,
+          online puja, gemstones, and astrology blog.
+        </p>
+        <nav aria-label="Main services">
+          <ul>
+            <li><Link href="/chat-to-astrologers">Chat with Astrologers</Link></li>
+            <li><Link href="/talk-to-astrologers">Talk to Astrologers</Link></li>
+            <li><Link href="/freekundli">Free Kundli</Link></li>
+            <li><Link href="/daily-horoscope">Daily Horoscope</Link></li>
+            <li><Link href="/kundali-matching">Kundali Matching</Link></li>
+            <li><Link href="/online-puja">Online Puja</Link></li>
+            <li><Link href="/gemstone">Gemstone Store</Link></li>
+          </ul>
+        </nav>
+      </section>
+      <HomePageClient />
+    </>
+  );
 }

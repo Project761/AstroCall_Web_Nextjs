@@ -1,8 +1,11 @@
 "use client";
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
 const InsufficientBalancePopup = ({ isOpen, onClose, requiredAmount, currentBalance, astrologerName }) => {
+  const router = useRouter();
+
   if (!isOpen) return null;
 
   return (
@@ -36,8 +39,7 @@ const InsufficientBalancePopup = ({ isOpen, onClose, requiredAmount, currentBala
               e.preventDefault();
               e.stopPropagation();
               onClose();
-              // Redirect to plans page
-              window.location.href = '/plans';
+              router.push('/plans');
             }}
             style={{ touchAction: 'manipulation' }}
           >

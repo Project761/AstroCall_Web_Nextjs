@@ -1,5 +1,5 @@
 "use client";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { IoIosArrowForward } from "react-icons/io";
 import { MenuContext } from "../context/MenuContext";
 import { format } from "date-fns";
@@ -29,7 +29,7 @@ const CustomModal = ({ isOpen, onClose, children, className = "" }) => {
 
     return (
         <div
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center px-2 sm:px-4 py-4"
+            className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-md flex items-center justify-center px-2 sm:px-4 py-4"
             onClick={onClose}
         >
             <div
@@ -45,7 +45,7 @@ const CustomModal = ({ isOpen, onClose, children, className = "" }) => {
 const ChatKundliPopUp = ({ isOpen, onClose, activeTab, setActiveTab }) => {
 
     const { LanguageDropdown, setLanguageDropdown, astroParsedData, setAstroParsedData, callPopupData } = useContext(MenuContext);
-    const GetAstroLoginId = localStorage.getItem("AstroLoginId") ? localStorage.getItem("AstroLoginId") : "";
+    const GetAstroLoginId = typeof window !== 'undefined' && localStorage.getItem("AstroLoginId") ? localStorage.getItem("AstroLoginId") : "";
     // const popupData = sessionStorage.getItem("parsedDataAstro") ? sessionStorage.getItem("parsedDataAstro") : '';
     // const astroParsedData = popupData ? JSON.parse(popupData) : null;
 
@@ -132,31 +132,7 @@ const ChatKundliPopUp = ({ isOpen, onClose, activeTab, setActiveTab }) => {
 
 
 
-    useEffect(() => {
-        if (astroParsedData?.ChatUserBioID ? astroParsedData?.ChatUserBioID : callPopupData?.ChatUserBioID) {
-            Get_Single_CHATINTAKEFORM_Data(astroParsedData?.ChatUserBioID ? astroParsedData?.ChatUserBioID : callPopupData?.ChatUserBioID)
-        }
-    }, [astroParsedData, callPopupData])
-
-
-    const Get_Single_CHATINTAKEFORM_Data = async () => {
-        try {
-            const val = { ChatUserBioID: astroParsedData?.ChatUserBioID ? astroParsedData?.ChatUserBioID : callPopupData?.ChatUserBioID };
-            const res = await postWithToken('CHATINTAKEFORM/GetSinglaData_CHATINTAKEFORM', val)
-            // console.log(res, 'res')
-            if (res && Array.isArray(res) && res.length > 0) {
-                const [firstItem] = res;
-                setUserChatData(res);
-                // console.log(firstItem, 'firstItem')
-                // Insert_Free_Fundli(firstItem?.latitude, firstItem?.longitude, firstItem?.DOB, firstItem?.TOB);
-                Get_Data_Kundli(firstItem)
-            }
-        } catch (error) {
-            console.log(error)
-        }
-    }
-
-    const Get_Data_Kundli = async (detailsData) => {
+    const Get_Data_Kundli = useCallback(async (detailsData) => {
         let dob = detailsData?.DOB;
         let tob = detailsData?.TOB || "00:00 AM";
 
@@ -236,59 +212,34 @@ const ChatKundliPopUp = ({ isOpen, onClose, activeTab, setActiveTab }) => {
         } catch (error) {
             console.error("Error fetching data for Kundli Matching:", error);
         }
-    };
+    }, []);
 
-
-    // ---------------------------------- Other Api useEffect---------------------------------------------------------------------------------------------------------------------------------
-    useEffect(() => {
-        const fetchData = async () => {
-            if (GetAstroLoginId && datetimeData && latData && lonData && activeTab && regionkundli && LanguageDropdown) {
-                isFetchingRef.current = true;
-                try {
-                    const promises = [];
-
-                    // Run these API calls only when activeTab is "Kundli" and regionkundli is NOT only change
-                    if (activeTab === "Kundli" && prevRegionKundliRef.current === regionkundli) {
-                        promises.push(Get_Data_PlanetPanchang());
-                        // promises.push(Get_Data_vimshottari_dasha());
-                        // promises.push(Get_Data_vimshottari_dasha("maha-dasha"));
-                        promises.push(Get_Data_vimshottari_dasha("maha-dasha", null, null, null));
-                    }
-
-                    // Only call these APIs when regionkundli changes, without re-calling previous ones
-                    if (activeTab === "Kundli" && (regionkundli === "north" || regionkundli === "south")) {
-                        promises.push(getAstroHoroscopeChart_kundli_D1(regionkundli));
-                        promises.push(getAstroHoroscopeChart_kundli_D9(regionkundli));
-                    }
-
-                    if (activeTab === "Sade Sati") {
-                        promises.push(Get_Data_SadeSati());
-                    } else if (activeTab === "Mangal Dosha") {
-                        promises.push(Get_Data_ManglicDosh());
-                    } else if (activeTab === "Kalsarpa Doshas") {
-                        promises.push(Get_Data_kalsarpa_details());
-                    }
-
-                    if (promises.length > 0) {
-                        await Promise.all(promises);
-                    }
-
-                    // Update previous regionkundli reference
-                    prevRegionKundliRef.current = regionkundli;
-
-                } catch (error) {
-                    console.error("Error fetching data:", error);
-                } finally {
-                    isFetchingRef.current = false;
-                }
+    const Get_Single_CHATINTAKEFORM_Data = useCallback(async () => {
+        await Promise.resolve();
+        try {
+            const val = { ChatUserBioID: astroParsedData?.ChatUserBioID ? astroParsedData?.ChatUserBioID : callPopupData?.ChatUserBioID };
+            const res = await postWithToken('CHATINTAKEFORM/GetSinglaData_CHATINTAKEFORM', val)
+            if (res && Array.isArray(res) && res.length > 0) {
+                const [firstItem] = res;
+                setUserChatData(res);
+                Get_Data_Kundli(firstItem)
             }
-        };
+        } catch (error) {
+            console.log(error)
+        }
+    }, [astroParsedData, callPopupData, Get_Data_Kundli]);
 
-        fetchData();
-    }, [GetAstroLoginId, datetimeData, latData, lonData, LanguageDropdown, activeTab, regionkundli]);
+    useEffect(() => {
+        if (astroParsedData?.ChatUserBioID ? astroParsedData?.ChatUserBioID : callPopupData?.ChatUserBioID) {
+            void (async () => { await Get_Single_CHATINTAKEFORM_Data(astroParsedData?.ChatUserBioID ? astroParsedData?.ChatUserBioID : callPopupData?.ChatUserBioID); })();
+        }
+    }, [astroParsedData, callPopupData, Get_Single_CHATINTAKEFORM_Data])
 
 
-    // -----------------------------------Chart useEffect --------------------------------------------------------------------------------------------------------------------------------------
+    // ---------------------------------- Other Api useEffect (moved below API callbacks) ---------------------------------------------------------------------------------------------------------------------------------
+
+
+    // -----------------------------------Chart useEffect (moved below API callbacks) --------------------------------------------------------------------------------------------------------------------------------------
 
     const getAstroHoroscopeChart_kundli_D1 = async () => {
         const val = {
@@ -460,35 +411,7 @@ const ChatKundliPopUp = ({ isOpen, onClose, activeTab, setActiveTab }) => {
         }
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            if (GetAstroLoginId && datetimeData && latData && lonData && region && LanguageDropdown) {
-                try {
-                    isFetchingRef.current = true;
-                    if (activeTab === "Charts") {
-                        // ✅ Explicitly include all required chart IDs
-                        const chartIds = [
-                            "chalit", "SUN", "MOON",
-                            "D1", "D2", "D3", "D4", "D7",
-                            "D9", "D10", "D12", "D16", "D20",
-                            "D24", "D27", "D30", "D40", "D45",
-                            "D60",
-                        ];
-
-                        await Promise.all(chartIds?.map((chartId) => getAstroHoroscopeChart(chartId)));
-                    }
-                    setLoading(false);
-                } catch (error) {
-                    console.error("Error fetching data:", error);
-                } finally {
-                    isFetchingRef.current = false;
-                }
-            }
-        };
-        fetchData();
-    }, [GetAstroLoginId, datetimeData, latData, lonData, region, LanguageDropdown, activeTab]);
-
-    // -----------------------------------------------------------------Kundli-------------------------------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------Kaalsarp Doshas------------------------------------------------------------------------------------------
 
     const Get_Data_PlanetPanchang = async () => {
         const val = {
@@ -662,6 +585,76 @@ const ChatKundliPopUp = ({ isOpen, onClose, activeTab, setActiveTab }) => {
             console.error("Error", error);
         }
     };
+
+    // ---------------------------------- Other Api useEffect---------------------------------------------------------------------------------------------------------------------------------
+    useEffect(() => {
+        const fetchData = async () => {
+            if (GetAstroLoginId && datetimeData && latData && lonData && activeTab && regionkundli && LanguageDropdown) {
+                isFetchingRef.current = true;
+                try {
+                    const promises = [];
+
+                    if (activeTab === "Kundli" && prevRegionKundliRef.current === regionkundli) {
+                        promises.push(Get_Data_PlanetPanchang());
+                        promises.push(Get_Data_vimshottari_dasha("maha-dasha", null, null, null));
+                    }
+
+                    if (activeTab === "Kundli" && (regionkundli === "north" || regionkundli === "south")) {
+                        promises.push(getAstroHoroscopeChart_kundli_D1(regionkundli));
+                        promises.push(getAstroHoroscopeChart_kundli_D9(regionkundli));
+                    }
+
+                    if (activeTab === "Sade Sati") {
+                        promises.push(Get_Data_SadeSati());
+                    } else if (activeTab === "Mangal Dosha") {
+                        promises.push(Get_Data_ManglicDosh());
+                    } else if (activeTab === "Kalsarpa Doshas") {
+                        promises.push(Get_Data_kalsarpa_details());
+                    }
+
+                    if (promises.length > 0) {
+                        await Promise.all(promises);
+                    }
+
+                    prevRegionKundliRef.current = regionkundli;
+
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                } finally {
+                    isFetchingRef.current = false;
+                }
+            }
+        };
+
+        void fetchData();
+    }, [GetAstroLoginId, datetimeData, latData, lonData, LanguageDropdown, activeTab, regionkundli]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (GetAstroLoginId && datetimeData && latData && lonData && region && LanguageDropdown) {
+                try {
+                    isFetchingRef.current = true;
+                    if (activeTab === "Charts") {
+                        const chartIds = [
+                            "chalit", "SUN", "MOON",
+                            "D1", "D2", "D3", "D4", "D7",
+                            "D9", "D10", "D12", "D16", "D20",
+                            "D24", "D27", "D30", "D40", "D45",
+                            "D60",
+                        ];
+
+                        await Promise.all(chartIds?.map((chartId) => getAstroHoroscopeChart(chartId)));
+                    }
+                    setLoading(false);
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                } finally {
+                    isFetchingRef.current = false;
+                }
+            }
+        };
+        void fetchData();
+    }, [GetAstroLoginId, datetimeData, latData, lonData, region, LanguageDropdown, activeTab]);
 
 
     return (

@@ -1,7 +1,11 @@
-"use client";
+import UserChatSessionClient from "./UserChatSessionClient";
 
-import ChatUI from "@/app/components/chat/ChatUI";
+export const metadata = {
+  title: "Live Chat - AstroCall",
+  description: "Live chat session",
+  robots: { index: false, follow: false },
+};
 
-export default function UserChatPage() {
-    return <ChatUI role="user" />;
+export default function UserChatSessionPage() {
+  return <UserChatSessionClient />;
 }

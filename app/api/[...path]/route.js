@@ -1,7 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+
+async function getPath(paramsPromise) {
+  const params = await paramsPromise;
+  return (params?.path || []).join('/');
+}
 
 export async function GET(request, { params }) {
-  const path = params.path.join('/');
+  const path = await getPath(params);
   const targetUrl = `https://liveapi.astrocall.live/api/${path}${request.nextUrl.search}`;
 
   try {
@@ -9,10 +14,10 @@ export async function GET(request, { params }) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'FingerPrintJsKey': request.headers.get('fingerprintjskey') || '',
-        'Authorization': request.headers.get('authorization') || '',
-        'Origin': request.headers.get('origin') || '',
-        'Referer': request.headers.get('referer') || '',
+        FingerPrintJsKey: request.headers.get('fingerprintjskey') || '',
+        Authorization: request.headers.get('authorization') || '',
+        Origin: request.headers.get('origin') || '',
+        Referer: request.headers.get('referer') || '',
       },
     });
 
@@ -23,7 +28,8 @@ export async function GET(request, { params }) {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, FingerPrintJsKey',
+        'Access-Control-Allow-Headers':
+          'Content-Type, Authorization, FingerPrintJsKey',
       },
     });
   } catch (error) {
@@ -33,7 +39,7 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
-  const path = params.path.join('/');
+  const path = await getPath(params);
   const targetUrl = `https://liveapi.astrocall.live/api/${path}`;
 
   try {
@@ -43,12 +49,12 @@ export async function POST(request, { params }) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'FingerPrintJsKey': request.headers.get('fingerprintjskey') || '',
-        'Authorization': request.headers.get('authorization') || '',
-        'Origin': request.headers.get('origin') || '',
-        'Referer': request.headers.get('referer') || '',
+        FingerPrintJsKey: request.headers.get('fingerprintjskey') || '',
+        Authorization: request.headers.get('authorization') || '',
+        Origin: request.headers.get('origin') || '',
+        Referer: request.headers.get('referer') || '',
       },
-      body: body,
+      body,
     });
 
     const data = await response.json();
@@ -58,7 +64,8 @@ export async function POST(request, { params }) {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, FingerPrintJsKey',
+        'Access-Control-Allow-Headers':
+          'Content-Type, Authorization, FingerPrintJsKey',
       },
     });
   } catch (error) {
@@ -68,7 +75,7 @@ export async function POST(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-  const path = params.path.join('/');
+  const path = await getPath(params);
   const targetUrl = `https://liveapi.astrocall.live/api/${path}`;
 
   try {
@@ -78,12 +85,12 @@ export async function PUT(request, { params }) {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'FingerPrintJsKey': request.headers.get('fingerprintjskey') || '',
-        'Authorization': request.headers.get('authorization') || '',
-        'Origin': request.headers.get('origin') || '',
-        'Referer': request.headers.get('referer') || '',
+        FingerPrintJsKey: request.headers.get('fingerprintjskey') || '',
+        Authorization: request.headers.get('authorization') || '',
+        Origin: request.headers.get('origin') || '',
+        Referer: request.headers.get('referer') || '',
       },
-      body: body,
+      body,
     });
 
     const data = await response.json();
@@ -93,7 +100,8 @@ export async function PUT(request, { params }) {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, FingerPrintJsKey',
+        'Access-Control-Allow-Headers':
+          'Content-Type, Authorization, FingerPrintJsKey',
       },
     });
   } catch (error) {
@@ -103,7 +111,7 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const path = params.path.join('/');
+  const path = await getPath(params);
   const targetUrl = `https://liveapi.astrocall.live/api/${path}`;
 
   try {
@@ -111,10 +119,10 @@ export async function DELETE(request, { params }) {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'FingerPrintJsKey': request.headers.get('fingerprintjskey') || '',
-        'Authorization': request.headers.get('authorization') || '',
-        'Origin': request.headers.get('origin') || '',
-        'Referer': request.headers.get('referer') || '',
+        FingerPrintJsKey: request.headers.get('fingerprintjskey') || '',
+        Authorization: request.headers.get('authorization') || '',
+        Origin: request.headers.get('origin') || '',
+        Referer: request.headers.get('referer') || '',
       },
     });
 
@@ -125,7 +133,8 @@ export async function DELETE(request, { params }) {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, FingerPrintJsKey',
+        'Access-Control-Allow-Headers':
+          'Content-Type, Authorization, FingerPrintJsKey',
       },
     });
   } catch (error) {

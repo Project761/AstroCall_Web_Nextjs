@@ -1,50 +1,25 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { createContext, useContext, useEffect } from "react";
 import socket from "../services/socketService";
-
+import { useMenuContext } from "../hooks/useMenuContext";
+import { getStoredUserId, hasUserAuthSession } from "../lib/wsUrl";
 
 const SocketContext = createContext();
 
 export const SocketProvider = ({ children }) => {
-
-  const router = useRouter();
-  const [popup, setPopup] = useState(null);
+  const { UserLoginId, isLogin } = useMenuContext();
 
   useEffect(() => {
-    const userId = localStorage.getItem("UserLoginId");
-    const astroId = localStorage.getItem("AstroLoginId");
+    const userId = UserLoginId || getStoredUserId();
+    if (!userId || !(isLogin || hasUserAuthSession())) return;
 
-    // ✅ connect
-    if (userId) socket.connectUser(userId);
-    // if (astroId) socket.connectAstro(astroId);
-
-    // ✅ listen messages
-    // socket.setUserListener((data) => {
-    //   console.log("USER EVENT:", data);
-    //   // handleUserMessage(data);
-    // });
-
-    // socket.setAstroListener((data) => {
-    //   console.log("ASTRO EVENT:", data); 
-    //   // if (data.Type === "chat") {
-    //   //   setPopup({ role: "astrologer", data });
-    //   // }
-    // });
-
-    // return () => {
-    //   socket.disconnectAll();
-    // };
-  }, []);
-
-
+    socket.connectUser(userId);
+    socket.setupVisibilityHandler(userId, null);
+  }, [isLogin, UserLoginId]);
 
   return (
-    <SocketContext.Provider value={{
-      socket,
-      popup,
-    }}>
+    <SocketContext.Provider value={{ socket }}>
       {children}
     </SocketContext.Provider>
   );

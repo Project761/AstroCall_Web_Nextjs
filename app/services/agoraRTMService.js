@@ -9,161 +9,216 @@ class AgoraRTMService {
 
   messageQueue = [];
   isInitializing = false;
+  initSessionId = 0;
 
-  async init({ appId, uid, channelName, token, onMessage, onReady }) {
+  messageHandler = null;
+  connectionHandler = null;
+  tokenExpiredHandler = null;
+
+  lastInitConfig = null;
+  onReconnect = null;
+  onTokenRenew = null;
+
+  async init({ appId, uid, channelName, token, onMessage, onReady, onError, onTokenRenew }) {
+    if (!uid || !channelName || !token) {
+      console.error("❌ Missing RTM params");
+      onError?.(new Error("Missing RTM params"));
+      return false;
+    }
+
+    if (this.isInitializing) {
+      console.warn("⏳ RTM already initializing...");
+      return false;
+    }
+
+    this.isInitializing = true;
+    const sessionId = ++this.initSessionId;
+    this.lastInitConfig = { appId, uid, channelName, token, onMessage, onReady, onError };
+    this.onTokenRenew = onTokenRenew;
+
     try {
-      if (!uid || !channelName || !token) {
-        console.error("❌ Missing RTM params");
-        return;
-      }
+      await this.cleanup();
 
-      // 🔥 Prevent multiple parallel init
-      if (this.isInitializing) {
-        console.warn("⏳ RTM already initializing...");
-        return;
-      }
-      this.isInitializing = true;
+      if (sessionId !== this.initSessionId) return false;
 
-      // console.log("🟡 INIT START");
-      // console.log("UID:", uid);
-      // console.log("CHANNEL:", channelName);
-
-      // ✅ STEP 1: CLEAN OLD SESSION
-      if (this.client) {
-        // console.log("♻️ Cleaning old session...");
-        try {
-          await this.channel?.leave();
-          await this.client.logout();
-        } catch (e) {
-          console.warn("Cleanup error:", e);
-        }
-
-        this.client = null;
-        this.channel = null;
-        this.isLoggedIn = false;
-        this.isChannelJoined = false;
-      }
-
-      // ✅ STEP 2: LOAD SDK
       const AgoraRTM = (await import("agora-rtm-sdk")).default;
-
       if (!AgoraRTM?.createInstance) {
-        console.error("❌ AgoraRTM load failed");
-        this.isInitializing = false;
-        return;
+        throw new Error("AgoraRTM load failed");
       }
 
-      // ✅ STEP 3: CREATE CLIENT
       this.client = AgoraRTM.createInstance(appId);
 
-      // ✅ STEP 4: LOGIN
-      // console.log("👉 LOGIN START");
-      await this.client.login({ uid, token });
-
-      this.isLoggedIn = true;
-      // console.log("✅ LOGIN SUCCESS");
-
-      // ✅ EVENTS
-      this.client.on("ConnectionStateChanged", (state, reason) => {
-        // console.log("🔄 RTM STATE:", state, reason);
-
+      this.connectionHandler = async (state) => {
         if (state === "DISCONNECTED" || state === "ABORTED") {
-          // console.warn("🔴 Disconnected");
           this.isLoggedIn = false;
           this.isChannelJoined = false;
+          if (this.lastInitConfig && sessionId === this.initSessionId) {
+            this.onReconnect?.();
+          }
         }
-      });
+      };
+      this.client.on("ConnectionStateChanged", this.connectionHandler);
 
-      this.client.on("TokenExpired", () => {
-        console.warn("⚠️ Token expired");
-      });
+      this.tokenExpiredHandler = async () => {
+        console.warn("⚠️ RTM Token expired — attempting renewal");
+        try {
+          const newToken = await this.onTokenRenew?.();
+          if (newToken && this.client) {
+            await this.client.renewToken(newToken);
+            if (this.lastInitConfig) this.lastInitConfig.token = newToken;
+          }
+        } catch (e) {
+          console.error("Token renewal failed:", e);
+          onError?.(e);
+        }
+      };
+      this.client.on("TokenExpired", this.tokenExpiredHandler);
 
-      // ✅ STEP 5: CREATE CHANNEL
-      // console.log("👉 CREATE CHANNEL");
+      await this.client.login({ uid, token });
+      if (sessionId !== this.initSessionId) return false;
+
+      this.isLoggedIn = true;
       this.channel = this.client.createChannel(channelName);
-
-      // ✅ STEP 6: JOIN CHANNEL
-      // console.log("👉 JOIN CHANNEL");
       await this.channel.join();
+      if (sessionId !== this.initSessionId) return false;
 
       this.isChannelJoined = true;
-      // console.log("✅ CHANNEL JOIN SUCCESS");
 
-      // ✅ READY
-      onReady && onReady();
-
-      // ✅ FLUSH QUEUE
-      if (this.messageQueue.length > 0) {
-        // console.log("📤 Sending queued messages:", this.messageQueue.length);
-
-        this.messageQueue.forEach((msg) => {
-          this.channel.sendMessage({
-            text: JSON.stringify(msg),
-          });
-        });
-
-        this.messageQueue = [];
-      }
-
-      // ✅ LISTENER
-      this.channel.on("ChannelMessage", ({ text }, senderId) => {
+      this.messageHandler = ({ text }, senderId) => {
         let parsed;
         try {
           parsed = JSON.parse(text);
         } catch {
-          parsed = { text };
+          parsed = { type: "chat", text, Message: text };
         }
+        if (typeof parsed === "string" || typeof parsed === "number") {
+          parsed = { type: "chat", text: String(parsed), Message: String(parsed) };
+        }
+        onMessage?.(parsed, senderId);
+      };
+      this.channel.on("ChannelMessage", this.messageHandler);
 
-        onMessage && onMessage(parsed, senderId);
-      });
-
+      this.flushQueue();
+      onReady?.();
+      return true;
     } catch (err) {
-      // console.error("❌ RTM INIT ERROR:", err);
-
-      this.client = null;
-      this.channel = null;
-      this.isLoggedIn = false;
-      this.isChannelJoined = false;
+      console.error("❌ RTM INIT ERROR:", err);
+      await this.cleanup();
+      onError?.(err);
+      return false;
     } finally {
-      this.isInitializing = false;
+      if (sessionId === this.initSessionId) {
+        this.isInitializing = false;
+      }
     }
   }
 
-  // ✅ SEND MESSAGE
+  flushQueue() {
+    if (!this.isChannelJoined || !this.channel || this.messageQueue.length === 0) return;
+
+    const queue = [...this.messageQueue];
+    this.messageQueue = [];
+
+    queue.forEach((msg) => {
+      const payload =
+        typeof msg === "string" ? { type: "chat", text: msg, Message: msg } : msg;
+      try {
+        this.channel.sendMessage({ text: JSON.stringify(payload) });
+      } catch {
+        this.messageQueue.push(payload);
+      }
+    });
+  }
+
   sendMessage(data) {
+    const payload =
+      typeof data === "string"
+        ? { type: "chat", text: data, Message: data }
+        : {
+            type: "chat",
+            text: data?.text || data?.Message || "",
+            Message: data?.Message || data?.text || "",
+            ...data,
+          };
+
+    if (!payload.text && !payload.Message) return false;
+
     if (!this.isChannelJoined || !this.channel) {
-      // console.warn("⏳ Queueing message (RTM not ready)");
-      this.messageQueue.push(data);
-      return;
+      if (this.messageQueue.length < 50) {
+        this.messageQueue.push(payload);
+      }
+      return false;
     }
 
     try {
-      this.channel.sendMessage({
-        text: JSON.stringify(data),
-      });
+      this.channel.sendMessage({ text: JSON.stringify(payload) });
+      return true;
     } catch (err) {
-      // console.error("❌ Send failed, queueing:", err);
-      this.messageQueue.push(data);
+      if (this.messageQueue.length < 50) {
+        this.messageQueue.push(payload);
+      }
+      return false;
     }
   }
 
-  // ✅ LEAVE
-  async leave() {
+  async cleanup() {
+    if (this.channel && this.messageHandler) {
+      try {
+        this.channel.off("ChannelMessage", this.messageHandler);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    if (this.client) {
+      if (this.connectionHandler) {
+        try {
+          this.client.off("ConnectionStateChanged", this.connectionHandler);
+        } catch (e) {
+          /* ignore */
+        }
+      }
+      if (this.tokenExpiredHandler) {
+        try {
+          this.client.off("TokenExpired", this.tokenExpiredHandler);
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    }
+
     try {
       await this.channel?.leave();
+    } catch (e) {
+      /* ignore */
+    }
+    try {
       await this.client?.logout();
     } catch (e) {
-      // console.warn("Leave error:", e);
+      /* ignore */
     }
 
     this.client = null;
     this.channel = null;
+    this.messageHandler = null;
+    this.connectionHandler = null;
+    this.tokenExpiredHandler = null;
     this.isLoggedIn = false;
     this.isChannelJoined = false;
+  }
+
+  async leave() {
+    this.initSessionId += 1;
     this.messageQueue = [];
     this.isInitializing = false;
+    this.lastInitConfig = null;
+    await this.cleanup();
+  }
 
-    // console.log("👋 RTM CLEANED");
+  async reconnect() {
+    if (!this.lastInitConfig || this.isInitializing) return false;
+    const cfg = this.lastInitConfig;
+    return this.init(cfg);
   }
 }
 

@@ -29,26 +29,56 @@ export const toastifySuccess = (message) => {
 };
 
 
+// export const toastifyInfo = (message) => {
+//   const isMobile = window.innerWidth <= 640;
+//   toast.info(`${message}`, {
+//     position: isMobile ? "top-center" : "top-right",
+//     autoClose: 1000,
+//     hideProgressBar: false,
+//     closeOnClick: true,
+//     pauseOnHover: true,
+//     draggable: true,
+//     progress: undefined,
+//     theme: "dark",
+//     style: {
+//       fontSize: isMobile ? '14px' : '16px',
+//       padding: isMobile ? '12px 16px' : '16px 20px',
+//       width: isMobile ? '90vw' : 'auto',
+//       maxWidth: isMobile ? '90vw' : '400px',
+//       margin: isMobile ? '10px auto' : '10px',
+//     },
+//   });
+// }
+
 export const toastifyInfo = (message) => {
-  const isMobile = window.innerWidth <= 640;
-  toast.info(`${message}`, {
-    position: isMobile ? "top-center" : "top-right",
-    autoClose: 1000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    progress: undefined,
-    theme: "dark",
-    style: {
-      fontSize: isMobile ? '14px' : '16px',
-      padding: isMobile ? '12px 16px' : '16px 20px',
-      width: isMobile ? '90vw' : 'auto',
-      maxWidth: isMobile ? '90vw' : '400px',
-      margin: isMobile ? '10px auto' : '10px',
-    },
-  });
-}
+  if (typeof window !== "undefined") {
+    const toast = document.createElement("div");
+    toast.className =
+      "fixed top-4 right-4 bg-red-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 items-center min-w-[300px] transform transition-all duration-300 ease-in-out animate-slide-in";
+
+    const messageText = document.createElement("div");
+    messageText.textContent = message;
+    messageText.className = "font-medium text-center";
+
+    toast.appendChild(messageText);
+
+    document.body.appendChild(toast);
+
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(100%)";
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }
+    }, 3000);
+  }
+};
+
 
 export const toastifyError = (message) => {
   if (typeof window !== "undefined") {

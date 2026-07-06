@@ -1,121 +1,32 @@
-"use client";
-import React, { useContext, useEffect, useState } from "react";
-import DOMPurify from "dompurify";
-import { OrbitProgress } from "react-loading-indicators";
-import { MenuContext } from "../context/MenuContext";
-import { postWithToken } from "../utils/api";
-import SEO from "../components/SEO/page";
+import VedicAstrologyClient from "./VedicAstrologyClient";
 
-const VedicAstrology = () => {
-    const { isMenuOpen } = useContext(MenuContext);
+const SITE = "https://astrocall.live";
+const CANONICAL = `${SITE}/VedicAstrology`;
 
-    const [vedicData, setVedicData] = useState(undefined);
-
-    useEffect(() => {
-        getVedicData();
-    }, []);
-
-    const getVedicData = async () => {
-        const payload = {
-            IsActive: "1",
-            Category: "Vedic Astrology",
-        };
-
-        try {
-            const res = await postWithToken(
-                "PrivacyPolicy/GetData_PrivacyPolicy",
-                payload
-            );
-
-            if (res) {
-                const filteredData = res.filter((data) => data?.Category);
-                setVedicData(filteredData);
-            } else {
-                setVedicData([]);
-            }
-        } catch (error) {
-            console.log(error, "error");
-            setVedicData([]);
-        }
-    };
-
-    return (
-        <>
-            <SEO
-                title="Vedic Astrology Services - Birth Chart & Predictions"
-                description="Consult Vedic astrologers on AstroCall for detailed birth chart analysis, life predictions, remedies and guidance on love, career, marriage and finance."
-                keywords="vedic astrology, jyotish, birth chart, kundli, vedic astrology services, indian astrology, hindu astrology, planetary positions, life predictions"
-                canonical="https://astrocall.live/vedic-astrology-services"
-                type="service"
-            />
-
-            <div className="bg-[#F973160D]">
-                <div className="main-container text-left py-5">
-                    <div className="bg-orange-500 rounded-md w-full text-white text-center py-10 px-4  mt-18">
-                        <div className="flex flex-col items-center justify-center">
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-extrabold">
-                                    Vedic Astrology (Jyotish) Services | Birth Chart & Life
-                                    Analysis
-                                </h1>
-                            </div>
-
-                            <p className="mt-3 max-w-xl text-sm sm:text-base leading-relaxed">
-                                Unlock your destiny with our professional Vedic Astrology
-                                services. Get a detailed birth chart (Kundali), Dasha
-                                predictions, and a karmic analysis for guidance and clarity from
-                                our expert astrologers.
-                            </p>
-
-                            <div className="w-8 h-[2px] bg-white mt-4" />
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    className={`content ${isMenuOpen ? "blur" : ""
-                        } flex justify-center`}
-                >
-                    <div className="mt-1 w-full">
-                        {vedicData === undefined ? (
-                            <div className="flex justify-center">
-                                <OrbitProgress color="#6b716b" size="medium" />
-                            </div>
-                        ) : vedicData.length === 0 ? (
-                            <div className="flex justify-center items-center h-[300px]">
-                                <p className="text-center text-gray-600 text-lg font-medium">
-                                    No data available
-                                </p>
-                            </div>
-                        ) : (
-                            vedicData.map((item, index) => (
-                                <div className="main-container" key={index}>
-                                    <div className="text-center flex flex-col justify-center my-6">
-                                        <h1 className="text-3xl font-semibold">
-                                            {item?.Category}
-                                        </h1>
-
-                                        <div className="w-[20%] h-[3px] m-auto rounded-full bg-primaryColor mt-1" />
-                                    </div>
-
-                                    <div className="paragraph px-2 md:px-6">
-                                        <div
-                                            className="ml-5 text-justify leading-relaxed"
-                                            dangerouslySetInnerHTML={{
-                                                __html: DOMPurify.sanitize(
-                                                    item?.PrivacyPolicyhtml || ""
-                                                ),
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-            </div>
-        </>
-    );
+export const metadata = {
+  title: "Vedic Astrology Services - Birth Chart & Predictions",
+  description:
+    "Consult Vedic astrologers on AstroCall for detailed birth chart analysis, life predictions, remedies and guidance on love, career, marriage and finance.",
+  keywords:
+    "vedic astrology, jyotish, birth chart, kundli, vedic astrology services, indian astrology, hindu astrology, planetary positions, life predictions",
+  alternates: { canonical: CANONICAL },
+  openGraph: {
+    title: "Vedic Astrology Services - Birth Chart & Predictions",
+    description:
+      "Consult Vedic astrologers on AstroCall for detailed birth chart analysis, life predictions, remedies and guidance on love, career, marriage and finance.",
+    url: CANONICAL,
+    type: "website",
+    siteName: "AstroCall",
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Vedic Astrology Services - Birth Chart & Predictions",
+    description:
+      "Consult Vedic astrologers on AstroCall for detailed birth chart analysis, life predictions, remedies and guidance on love, career, marriage and finance.",
+  },
 };
 
-export default VedicAstrology;
+export default function VedicAstrologyPage() {
+  return <VedicAstrologyClient />;
+}

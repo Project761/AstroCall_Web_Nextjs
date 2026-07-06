@@ -1,16 +1,19 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Manrope } from "next/font/google";
 import "./globals.css";
 import AppShell from "./components/AppShell";
-import SEO from "./components/SEO/page.js";
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
+const plusJakarta = Plus_Jakarta_Sans({
+    variable: "--font-plus-jakarta",
     subsets: ["latin"],
+    weight: ["400", "500", "600", "700", "800"],
+    display: "swap",
 });
 
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
+const manrope = Manrope({
+    variable: "--font-manrope",
     subsets: ["latin"],
+    weight: ["400", "500", "600", "700", "800"],
+    display: "swap",
 });
 
 export const metadata = {
@@ -54,9 +57,7 @@ export const metadata = {
             'max-snippet': -1,
         },
     },
-    verification: {
-        google: 'your-google-verification-code',
-    },
+    metadataBase: new URL("https://astrocall.live"),
     other: {
         'theme-color': '#F97316',
         'msapplication-TileColor': '#F97316',
@@ -64,7 +65,7 @@ export const metadata = {
 };
 
 export default function RootLayout({ children, }) {
-    return (<html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    return (<html lang="en" className={`${plusJakarta.variable} ${manrope.variable} h-full antialiased`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -73,7 +74,7 @@ export default function RootLayout({ children, }) {
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-body">
         <AppShell>{children}</AppShell>
       </body>
     </html>);

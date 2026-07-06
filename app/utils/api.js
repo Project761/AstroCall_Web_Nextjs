@@ -323,49 +323,6 @@ export const TokenImageUpload = async (url, formData) => {
   return await makeApiCall();
 };
 
-// Ticket data POST with token
-export const getPostTicketData = async (url, postData) => {
-  const makeApiCall = async () => {
-    const auth = getAuthToken();
-    const visitorId = getVisitorId();
-    const apiUrl = buildUrl(getApiUrl(), url);
-
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${auth?.access_token}`,
-          'Content-Type': 'application/json',
-          'FingerPrintJsKey': visitorId,
-        },
-        body: JSON.stringify(postData),
-      });
-
-      const responseData = await response.json();
-
-      // Token expired condition
-      if (!response.ok && responseData?.Message === 'Authorization has been denied for this request.') {
-        const newAuth = await refreshAuthToken();
-        if (newAuth) {
-          // Retry with new token
-          return await makeApiCall();
-        } else {
-          return null;
-        }
-      }
-
-      // Return full API response
-      return responseData;
-
-    } catch (error) {
-      console.error('Error in getPostTicketData:', error);
-      return null;
-    }
-  };
-
-  return await makeApiCall();
-};
-
 // Simple POST/PUT/DELETE without token
 export const AddDeleteUpadate = async (url, postData) => {
   try {
@@ -545,24 +502,4 @@ export const isAuthenticated = () => {
 export const getCurrentAstrologerId = () => {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('AstroLoginId') || null;
-};
-
-// Testing function (kept for compatibility)
-export const fetchDataTesting = async (URL) => {
-  if (typeof window === 'undefined') return null;
-
-  const authData = sessionStorage.getItem('auth');
-  const auth = authData ? JSON.parse(authData) : null;
-  if (!auth?.token) return null;
-  const config = { headers: { Authorization: `Bearer ${auth.token}` } };
-
-  try {
-    const api = `${process.env.NEXT_PUBLIC_Base_URL || ''}${URL}`;
-    const response = await fetch(api, config);
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Testing fetch error:', error);
-    return null;
-  }
 };

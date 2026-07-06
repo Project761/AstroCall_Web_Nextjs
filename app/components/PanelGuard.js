@@ -18,7 +18,7 @@ export default function PanelGuard({ type, children }) {
         router.replace("/astrologer-login");
         return;
       }
-      setIsAuthorized(true);
+      queueMicrotask(() => setIsAuthorized(true));
       return;
     }
 
@@ -26,7 +26,7 @@ export default function PanelGuard({ type, children }) {
       router.replace("/");
       return;
     }
-    setIsAuthorized(true);
+    queueMicrotask(() => setIsAuthorized(true));
   }, [router, type]);
 
   if (!isAuthorized) {

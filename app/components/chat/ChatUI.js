@@ -1,34 +1,111 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import socketService from "@/app/services/socketService";
 import agoraRTM from "@/app/services/agoraRTMService";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
-import { IoMdChatboxes } from "react-icons/io";
 import ChatKundliPopUp from "@/app/components/ChatKundliPopUp";
 import { postWithToken, TokenWithDeleteUpadateAdd } from "@/app/utils/api";
-import { FiSend, FiPaperclip, FiSmile, FiMic, FiPhone, FiVideo, FiMoreVertical, FiInfo } from "react-icons/fi";
-import { FaStar, FaStarHalf } from "react-icons/fa6";
-import { LiaAwardSolid } from "react-icons/lia";
-import { IoLanguage } from "react-icons/io5";
-import { MdOutlineCases, MdVerified } from "react-icons/md";
-import { TbCurrencyRupee } from "react-icons/tb";
-import { FaSortAmountDown } from "react-icons/fa";
-import { IoClose } from "react-icons/io5";
+import { sanitizeHtml } from "@/app/lib/sanitizeHtml";
+import { format } from "date-fns";
+import {
+  ArrowLeft, Phone, MoreVertical, BadgeCheck, Wallet, Clock, Timer, Power,
+  AlertTriangle, Paperclip, Smile, Send, FileText, Camera, ImageIcon, Star, Gift, Lock, CheckCheck,
+} from "lucide-react";
+import Image from "next/image";
 
-export default function ChatUI({ role = "user" }) {
+const readSessionStorage = (key, fallback = "") => {
+  if (typeof window === "undefined") return fallback;
+  return sessionStorage.getItem(key) || fallback;
+};
+
+const readLocalStorage = (key, fallback = "") => {
+  if (typeof window === "undefined") return fallback;
+  return localStorage.getItem(key) || fallback;
+};
+
+const getMessageBody = (item) => String(item?.message ?? item?.text ?? "").trim();
+
+const normalizeRtmPayload = (msg) => {
+  if (msg == null) return "";
+  if (typeof msg === "string" || typeof msg === "number") return String(msg).trim();
+  if (typeof msg === "object") {
+    return String(msg.text ?? msg.Message ?? msg.message ?? "").trim();
+  }
+  return "";
+};
+
+const isSystemRtmPayload = (msg) => {
+  if (!msg || typeof msg !== "object") return false;
+  if (msg.Status === "getCltime" || msg.Message === "Time") return true;
+  if (msg.Type === "ping" || msg.Type === "pong" || msg.Type === "ACK") return true;
+  if (msg.type && !["chat", "userDetails"].includes(msg.type)) return true;
+  return false;
+};
+
+const buildMessageKey = (item) => {
+  if (item?.id) return `id:${item.id}`;
+  const body = getMessageBody(item);
+  const ts = item?.timestamp || item?.createdAt || "";
+  return `${item?.isMine ? "me" : "them"}|${body}|${ts}`;
+};
+
+const sortMessages = (list) =>
+  [...(list || [])].sort(
+    (a, b) => new Date(a.timestamp || a.createdAt || 0) - new Date(b.timestamp || b.createdAt || 0)
+  );
+
+const dedupeMessages = (list) => {
+  const seen = new Set();
+  return sortMessages(list).filter((item) => {
+    const body = getMessageBody(item);
+    if (!body) return false;
+    const key = buildMessageKey(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+const QUICK_EMOJIS = ["😊", "🙏", "❤️", "👍", "😂", "🙂"];
+
+export default function ChatUI({ role = "user", layoutMode = "overlay" }) {
   const router = useRouter();
   const params = useSearchParams();
-  const { popupData, UserCheckEndedChat, setUserCheckEndedChat, loginAstrologerData, astroParsedData, astroCheckEndedChat, setAstroCheckEndedChat } = useMenuContext();
 
-  const ChatCompletedUser = sessionStorage.getItem("UserChatCompleted") ? sessionStorage.getItem("UserChatCompleted") : '';
+  const { popupData, UserCheckEndedChat, setUserCheckEndedChat, loginAstrologerData, astroParsedData, astroCheckEndedChat, setAstroCheckEndedChat, userCalculateTime, AstroCalculateTime, setPopupData, loginUserData } = useMenuContext();
 
-  const astroChatCompletedShow = sessionStorage.getItem("AstroChatCompleted") ? sessionStorage.getItem("AstroChatCompleted") : "";
 
-  // Store and retrieve names from sessionStorage
-  const storedUserName = sessionStorage.getItem("ChatUserName") ? sessionStorage.getItem("ChatUserName") : '';
-  const storedAstroName = sessionStorage.getItem("ChatAstroName") ? sessionStorage.getItem("ChatAstroName") : '';
-  const isChatCompletedFromStorage = ChatCompletedUser || astroChatCompletedShow;
+
+  const [chatCompletedState, setChatCompletedState] = useState("");
+  const [rtmStatus, setRtmStatus] = useState("idle");
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState("");
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_PAGE_SIZE = 40;
+
+  const isChatCompletedFromStorage =
+    chatCompletedState === "Chat Completed" ||
+    readSessionStorage("UserChatCompleted") === "Chat Completed" ||
+    readSessionStorage("AstroChatCompleted") === "Chat Completed";
+
+  useEffect(() => {
+    const sync = () => {
+      const val =
+        sessionStorage.getItem("UserChatCompleted") ||
+        sessionStorage.getItem("AstroChatCompleted") ||
+        "";
+      setChatCompletedState(val);
+    };
+    sync();
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
+
+  const storedUserName = readSessionStorage("ChatUserName");
+  const storedAstroName = readSessionStorage("ChatAstroName");
 
   useEffect(() => {
     if (role === "user" && popupData?.AstroName && !storedAstroName) {
@@ -44,7 +121,7 @@ export default function ChatUI({ role = "user" }) {
   const getRoleData = () => {
     if (role === "astrologer") {
       return {
-        loginId: localStorage.getItem("AstroLoginId"),
+        loginId: readLocalStorage("AstroLoginId"),
         token: params.get("AstroChatTokenId"),
         uidPrefix: "WA",
         userName: "Astrologer",
@@ -56,7 +133,7 @@ export default function ChatUI({ role = "user" }) {
       };
     } else {
       return {
-        loginId: localStorage.getItem("UserLoginId"),
+        loginId: readLocalStorage("UserLoginId"),
         token: params.get("UserChatTokenId"),
         uidPrefix: "WU",
         userName: "User",
@@ -74,10 +151,7 @@ export default function ChatUI({ role = "user" }) {
   const WaitingListId = params.get("WaitingListId");
   const UserId = params.get("UserId");
   const AstroId = params.get("AstroId");
-
-  // States
   const [messages, setMessages] = useState([]);
-  // console.log(messages,'message ')
   const [chatHistory, setChatHistory] = useState([]);
   const [isReady, setIsReady] = useState(false);
   const [waitingListCheck, setWaitingListCheck] = useState(null);
@@ -87,141 +161,203 @@ export default function ChatUI({ role = "user" }) {
   const [autoUserMessageSent, setAutoUserMessageSent] = useState(false);
   const [isChatEnding, setIsChatEnding] = useState(false);
   const [isSendingAutoMessage, setIsSendingAutoMessage] = useState(false);
-  const [processedMessageIds, setProcessedMessageIds] = useState(new Set());
-  const [chatStartTime, setChatStartTime] = useState(null);
-  const [remainingTime, setRemainingTime] = useState(null);
-  const [isChatCompleted, setIsChatCompleted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Basic");
-
   const [timeLeft, setTimeLeft] = useState(0);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const textareaRef = useRef(null);
-  const quickMessages = ['Hello!', 'How are you?', 'Thank you', 'Good bye'];
+  const pendingKeysRef = useRef(new Set());
+  const autoUserMessageSentRef = useRef(false);
+  const allHistoryRef = useRef([]);
+  const timerEndRef = useRef(null);
+  const getTimeIntervalRef = useRef(null);
 
-  // Format message function
-  const formatMessage = (msg, isMine = false) => ({
-    isMine,
-    message: msg?.Message || msg?.text || "",
-    sender: msg?.UserName || (isMine ? "You" : roleData.userName),
-    createdAt: msg?.createdAt || new Date().toISOString(),
-    timestamp: msg?.timestamp || new Date().toISOString()
-  });
+  const formatMessage = useCallback((msg, isMine = false) => {
+    const body = normalizeRtmPayload(msg);
+    return {
+      id: msg?.ChatId || msg?.Id || msg?.id || null,
+      isMine,
+      message: body,
+      text: body,
+      sender: msg?.UserName || (isMine ? "You" : roleData.userName),
+      createdAt: msg?.createdAt || msg?.timestamp || new Date().toISOString(),
+      timestamp: msg?.timestamp || msg?.createdAt || new Date().toISOString(),
+      status: msg?.status || (isMine ? "sent" : "received"),
+    };
+  }, [roleData.userName]);
+
+  const appendLiveMessage = useCallback((msg, isMine = false) => {
+    const body = normalizeRtmPayload(msg);
+    if (!body) return;
+
+    const formatted = formatMessage(
+      {
+        text: body,
+        Message: body,
+        timestamp: msg?.timestamp || new Date().toISOString(),
+        createdAt: msg?.createdAt || new Date().toISOString(),
+        status: isMine ? "sent" : "received",
+      },
+      isMine
+    );
+
+    const key = buildMessageKey(formatted);
+    if (pendingKeysRef.current.has(key)) return;
+    pendingKeysRef.current.add(key);
+
+    setMessages((prev) => dedupeMessages([...prev, formatted]));
+
+    setTimeout(() => {
+      pendingKeysRef.current.delete(key);
+    }, 3000);
+  }, [formatMessage]);
 
   // Fetch chat history
-  const fetchChatHistory = async () => {
+  const fetchChatHistory = useCallback(async () => {
+    if (!UserId || !AstroId || !channel) return;
+    setHistoryLoading(true);
     try {
-      const payload = {
+      const res = await postWithToken("Chat/ReturnChat", {
         UserID: UserId,
         AstroID: AstroId,
-      };
-      const res = await postWithToken("Chat/ReturnChat", payload);
+      });
+      const filtered = (res || []).filter(
+        (item) => item?.ChannelName?.trim() === channel?.trim()
+      );
+      const formatted = filtered.map((msg) =>
+        formatMessage(
+          {
+            ChatId: msg.ChatId || msg.Id,
+            Message: msg.Message,
+            UserName: msg.IsfromAstro ? "Astrologer" : "User",
+            createdAt: msg.DateTimes,
+            timestamp: msg.DateTimes,
+          },
+          role === "user" ? !msg.IsfromAstro : msg.IsfromAstro
+        )
+      );
+      allHistoryRef.current = dedupeMessages(formatted);
+      setHistoryPage(1);
+      setChatHistory(allHistoryRef.current.slice(-HISTORY_PAGE_SIZE));
+    } catch (error) {
+      console.error("Error fetching chat history:", error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [UserId, AstroId, channel, role, formatMessage]);
+
+  const loadOlderMessages = useCallback(() => {
+    const all = allHistoryRef.current;
+    if (!all.length || loadingOlder) return;
+    const currentlyShown = historyPage * HISTORY_PAGE_SIZE;
+    if (currentlyShown >= all.length) return;
+
+    setLoadingOlder(true);
+    const container = messagesContainerRef.current;
+    const prevHeight = container?.scrollHeight || 0;
+
+    setHistoryPage((p) => p + 1);
+    setChatHistory(all.slice(-(currentlyShown + HISTORY_PAGE_SIZE)));
+
+    requestAnimationFrame(() => {
+      if (container) {
+        container.scrollTop = container.scrollHeight - prevHeight;
+      }
+      setLoadingOlder(false);
+    });
+  }, [historyPage, loadingOlder]);
+
+  // Initialize RTM
+  const fetchWaitingList = useCallback(async () => {
+    try {
+      const res = await postWithToken('WaitingList/GetData_WaitingListUser', { "AstroId": "", "UserId": roleData.loginId });
       if (res) {
-        const FilterChat = res?.filter((item) => item?.ChannelName?.trim() === channel?.trim());
-        if (FilterChat?.length > 0) {
-          const formatted = FilterChat?.map(msg =>
-            formatMessage(
-              {
-                Message: msg.Message,
-                UserName: msg.IsfromAstro ? "Astrologer" : "User",
-                createdAt: msg.DateTimes,
-                timestamp: msg.DateTimes
-              },
-              role === "user" ? !msg.IsfromAstro : msg.IsfromAstro
-            )
-          );
-          setChatHistory(formatted);
+        const checkData = res?.find((item) => item?.WaitingListId == roleData.contextData?.WaitingListId);
+        if (checkData) {
+          setWaitingListCheck(checkData);
         }
       }
     } catch (error) {
-      console.error("Error fetching chat history:", error);
+      console.error("Error fetching waiting list:", error);
     }
-  };
+  }, [roleData.loginId, roleData.contextData?.WaitingListId]);
 
-  // Initialize RTM
   useEffect(() => {
     if (!channel || !roleData.token || !roleData.loginId) return;
 
-    let isMounted = true;
+    let cancelled = false;
+    const myUid = `${roleData.uidPrefix}${roleData.loginId}`;
+
+    agoraRTM.onReconnect = () => {
+      if (!cancelled) agoraRTM.reconnect();
+    };
 
     const initRTM = async () => {
-      await agoraRTM.init({
+      setRtmStatus("connecting");
+      setIsReady(false);
+
+      const ok = await agoraRTM.init({
         appId: "6b24a712e983467b9ace351f51518f08",
-        uid: `${roleData.uidPrefix}${roleData.loginId}`,
+        uid: myUid,
         channelName: channel,
         token: roleData.token,
-        // onMessage: (msg) => {
-
-        //   // const messageContent = `${msg?.Message}_${msg?.UserName}`;
-        //   const messageContent = msg;
-        //   const messageHash = btoa(messageContent).slice(0, 16);
-        //   if (processedMessageIds.has(messageHash)) {
-        //     console.warn("⚠️ Duplicate message detected and skipped:", messageHash);
-        //     return;
-        //   }
-        //   setProcessedMessageIds(prev => new Set([...prev, messageHash]));
-        //   setMessages(prev => [
-        //     ...prev,
-        //     // formatMessage(
-        //     //   msg,
-        //     //   role === "user" ? msg?.UserName === "User" : false
-        //     // )
-        //     formatMessage(
-        //       { text: msg },
-        //       false
-        //     )
-        //   ]);
-        // },
-        onMessage: (msg) => {
-
-          const messageText =
-            typeof msg === "object"
-              ? msg?.text || msg?.Message || ""
-              : msg;
-
-          setMessages(prev => [
-            ...prev,
-            formatMessage(
-              { text: messageText },
-              false
-            )
-          ]);
+        onMessage: (msg, senderId) => {
+          if (isSystemRtmPayload(msg)) return;
+          const body = normalizeRtmPayload(msg);
+          if (!body) return;
+          if (senderId && senderId === myUid) return;
+          appendLiveMessage(msg, false);
         },
         onReady: () => {
-          console.log("🟢 RTM is ready!");
+          if (cancelled) return;
+          setRtmStatus("ready");
           setIsReady(true);
-          if (role === "user" && !autoUserMessageSent) {
-            setTimeout(() => {
-              if (!autoUserMessageSent) {
-                sendAutoUserDetailsMessage();
-              }
-            }, 500);
-          }
-        }
+        },
+        onError: () => {
+          if (cancelled) return;
+          setRtmStatus("error");
+          setIsReady(false);
+        },
+        onTokenRenew: async () => roleData.token,
       });
+
+      if (!ok && !cancelled) setRtmStatus("error");
     };
 
-    initRTM();
+    void initRTM();
 
     return () => {
-      isMounted = false;
+      cancelled = true;
+      agoraRTM.onReconnect = null;
       agoraRTM.leave();
+      queueMicrotask(() => {
+        setRtmStatus("idle");
+        setIsReady(false);
+      });
     };
-  }, [channel, roleData.token, roleData.loginId, role]);
+  }, [channel, roleData.token, roleData.loginId, role, appendLiveMessage]);
 
   useEffect(() => {
-    if (AstroId && UserId) {
-      fetchChatHistory();
-    }
-  }, [AstroId, UserId]);
+    queueMicrotask(() => {
+      pendingKeysRef.current.clear();
+      setMessages([]);
+      setChatHistory([]);
+      allHistoryRef.current = [];
+      setHistoryPage(1);
+    });
+  }, [channel]);
+
+  useEffect(() => {
+    void (async () => { await fetchChatHistory(); })();
+  }, [fetchChatHistory]);
 
   useEffect(() => {
     if (role === "user" && roleData.loginId) {
-      fetchWaitingList();
+      void (async () => { await fetchWaitingList(); })();
     }
-  }, [roleData.loginId]);
+  }, [role, roleData.loginId, fetchWaitingList]);
 
 
   const checkChannelMessageSent = () => {
@@ -235,156 +371,199 @@ export default function ChatUI({ role = "user" }) {
     localStorage.setItem(channelKey, 'sent');
   };
 
-  // Initialize auto message sent state from localStorage
   useEffect(() => {
     if (channel) {
-      const alreadySent = checkChannelMessageSent();
-      setAutoUserMessageSent(alreadySent);
+      queueMicrotask(() => {
+        const alreadySent = checkChannelMessageSent();
+        setAutoUserMessageSent(alreadySent);
+        autoUserMessageSentRef.current = alreadySent;
+      });
     }
   }, [channel]);
 
   useEffect(() => {
-    if (role !== "user" || autoUserMessageSent || isSendingAutoMessage || isChatEnding) return;
-
-    // console.log("🔍 Auto message trigger check...");
-    // console.log("📊 isReady:", isReady);
-    // console.log("📊 agoraRTM.isChannelJoined:", agoraRTM.isChannelJoined);
-    // console.log("📊 UserChatData:", UserChatData);
-    // console.log("📊 popupData:", popupData);
-
-    // Only trigger if all conditions are met
-    if (isReady && agoraRTM.isChannelJoined && UserChatData) {
-      // console.log("🚀 All conditions met, triggering auto message...");
-      sendAutoUserDetailsMessage();
-    }
-  }, [isReady, agoraRTM.isChannelJoined, UserChatData, popupData, autoUserMessageSent, isSendingAutoMessage, isChatEnding, role]);
-
-  const fetchWaitingList = async () => {
-    try {
-      const res = await postWithToken('WaitingList/GetData_WaitingListUser', { "AstroId": "", "UserId": roleData.loginId });
-      if (res) {
-        const checkData = res?.find((item) => item?.WaitingListId == roleData.contextData?.WaitingListId);
-        if (checkData) {
-          setWaitingListCheck(checkData);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching waiting list:", error);
-    }
-  };
-
+    autoUserMessageSentRef.current = autoUserMessageSent;
+  }, [autoUserMessageSent]);
 
   const sendMessage = async (text) => {
-    if (!agoraRTM.isChannelJoined) {
-      console.warn("⏳ RTM not ready");
-      return;
+    const body = String(text || "").trim();
+    if (!body || !agoraRTM.isChannelJoined || isSending) return;
+
+    setIsSending(true);
+    setSendError("");
+
+    appendLiveMessage({ text: body, Message: body, status: "sending" }, true);
+
+    try {
+      const sent = agoraRTM.sendMessage({
+        type: "chat",
+        text: body,
+        Message: body,
+        UserName: roleData.userName,
+        timestamp: new Date().toISOString(),
+      });
+
+      if (!sent) throw new Error("RTM send failed");
+
+      await insertChat(body);
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.message === body && m.status === "sending" ? { ...m, status: "sent" } : m
+        )
+      );
+    } catch (error) {
+      console.error("Send message error:", error);
+      setSendError("Message send failed. Please try again.");
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.message === body && m.status === "sending" ? { ...m, status: "failed" } : m
+        )
+      );
+    } finally {
+      setIsSending(false);
     }
-
-    // UI update
-    setMessages((prev) => [
-      ...prev,
-      formatMessage(
-        {
-          text: text,
-        },
-        true
-      )
-    ]);
-
-    // RTM simple text send
-    agoraRTM.sendMessage(text);
-
-    // DB insert
-    await insertChat(text);
   };
 
 
 
   // Insert chat to database
   const insertChat = async (text) => {
-    try {
-      const val = {
-        ChannelName: channel,
-        // UserID: role === "user" ? roleData.loginId : roleData.contextData?.UserId,
-        // AstroID: role === "user" ? roleData.contextData?.AstroId : roleData.contextData?.AstroId,
-
-        AstroID: AstroId,
-        UserID: UserId,
-        IsfromAstro: role === "astrologer",
-        Message: text,
-        WaitingListId: WaitingListId,
-        chatOrderId: WaitingListId
-      };
-      await TokenWithDeleteUpadateAdd("Chat/InsertChat", val);
-    } catch (error) {
-      console.log("InsertChat Error:", error);
-    }
+    const val = {
+      ChannelName: channel,
+      AstroID: AstroId,
+      UserID: UserId,
+      IsfromAstro: role === "astrologer",
+      Message: text,
+      WaitingListId: WaitingListId,
+      chatOrderId: WaitingListId,
+    };
+    await TokenWithDeleteUpadateAdd("Chat/InsertChat", val);
   };
 
+  const fetchChatIntakeData = useCallback(async (bioId) => {
+    try {
+      const res = await postWithToken("CHATINTAKEFORM/GetSinglaData_CHATINTAKEFORM", {
+        ChatUserBioID: bioId,
+      });
+      return res || null;
+    } catch (error) {
+      console.error("Intake form fetch error:", error);
+      return null;
+    }
+  }, []);
+
+  const buildUserDetailsMessage = (data) => {
+    const list = Array.isArray(data) ? data : data ? [data] : [];
+    if (!list.length) {
+      if (!popupData) return "";
+      return `Hi ${popupData?.AstroName || "Astrologer"},
+Below are my details:
+Name: User
+Mobile: ${popupData?.UserMobile || "N/A"}
+Email: ${popupData?.UserEmail || "N/A"}
+Purpose: ${popupData?.UserPurpose || "General Consultation"}
+I'm ready for the consultation.`;
+    }
+
+    const item = list[0];
+    return `Hi ${popupData?.AstroName || "Astrologer"},
+Below are my details:
+Name: ${item?.NickName || "User"}
+Gender: ${item?.Gender || "N/A"}
+DOB: ${item?.DOB || "N/A"}
+TOB: ${item?.TOB || "N/A"}
+POB: ${item?.POB || "N/A"}
+Marital: ${item?.Marital || "N/A"}
+TopicofConcern: ${item?.TopicofConcern || "General"}
+Occupation: ${item?.Occupation || "N/A"}
+I'm ready for the consultation.`;
+  };
+
+  // Helper function to send auto message
+  const sendAutoMessage = async (message) => {
+    const body = String(message || "").trim();
+    if (!body) return;
+
+    appendLiveMessage({ Message: body, text: body }, true);
+
+    try {
+      agoraRTM.sendMessage({
+        type: "userDetails",
+        text: body,
+        Message: body,
+        UserName: roleData.userName,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("❌ RTM send error:", error);
+    }
+
+    if (role === "user") {
+      try {
+        socketService.sendUser({
+          Type: "userDetails",
+          Message: body,
+          ChannelName: channel,
+        });
+      } catch (error) {
+        console.error("❌ Socket send error:", error);
+      }
+    }
+
+    try {
+      await insertChat(body);
+    } catch (error) {
+      console.error("❌ Database insert error:", error);
+    }
+
+    setAutoUserMessageSent(true);
+    markChannelMessageSent();
+  };
+
+  const sendAutoUserDetailsMessageRef = useRef(null);
+
   // Send auto user details message
-  const sendAutoUserDetailsMessage = async () => {
-    // Prevent multiple simultaneous sends
+  const sendAutoUserDetailsMessage = useCallback(async () => {
     if (isSendingAutoMessage) {
-      console.warn("⏳ Auto message already being sent, skipping");
       return;
     }
 
-    // Don't send if chat is ending
     if (isChatEnding) {
-      console.warn("⏳ Chat is ending, not sending auto message");
       return;
     }
-
-    // Check if already sent for this channel
     if (checkChannelMessageSent()) {
-      console.warn("⏳ Auto message already sent for this channel");
       setAutoUserMessageSent(true);
       return;
     }
 
-    // Set sending flag to prevent duplicates
     setIsSendingAutoMessage(true);
-    // console.log("🚀 Attempting to send auto user details message...");
-    // console.log("📊 RTM Status:", agoraRTM.isChannelJoined);
-    // console.log("📊 UserChatData:", UserChatData);
-    // console.log("📊 Role:", role);
 
     try {
       if (!agoraRTM.isChannelJoined) {
-        console.warn("⏳ RTM not ready for auto message");
-        // Retry after 1 second
         setTimeout(() => {
           setIsSendingAutoMessage(false);
           if (agoraRTM.isChannelJoined && !autoUserMessageSent && !isChatEnding) {
-            sendAutoUserDetailsMessage();
+            sendAutoUserDetailsMessageRef.current?.();
           }
         }, 1000);
         return;
       }
 
       if (!UserChatData) {
-        console.warn("⏳ No UserChatData available, trying to fetch...");
-        // Try to fetch user data if not available
         if (popupData?.ChatUserBioID) {
-          await Get_Single_CHATINTAKEFORM_Data();
-          // Retry after data fetch
-          setTimeout(() => {
-            setIsSendingAutoMessage(false);
-            if (UserChatData && !autoUserMessageSent && !isChatEnding) {
-              sendAutoUserDetailsMessage();
-            }
-          }, 500);
+          const data = await fetchChatIntakeData(popupData.ChatUserBioID);
+          if (data) {
+            const details = buildUserDetailsMessage(data);
+            await sendAutoMessage(details || `Hi ${popupData?.AstroName || "Astrologer"},\nI'm ready for the consultation.`);
+          }
         }
         return;
       }
 
-      // Use the existing formatUserDetailsMessage function
-      const userDetails = formatUserDetailsMessage();
-      // console.log("📝 Formatted user details:", userDetails);
+      const userDetails = buildUserDetailsMessage(UserChatData);
 
       if (!userDetails || userDetails.trim() === '') {
-        console.warn("⏳ No user details available from formatUserDetailsMessage");
-        // Fallback to basic message
         const fallbackMessage = `Hi ${popupData?.AstroName || 'Astrologer'},\nI'm ready for the consultation.`;
         await sendAutoMessage(fallbackMessage);
         return;
@@ -396,74 +575,36 @@ export default function ChatUI({ role = "user" }) {
     } finally {
       setIsSendingAutoMessage(false);
     }
-  };
+  }, [isSendingAutoMessage, isChatEnding, autoUserMessageSent, UserChatData, popupData, fetchChatIntakeData, roleData.userName, role, channel]);
 
-  // Helper function to send auto message
-  const sendAutoMessage = async (message) => {
-    console.log("📤 Sending auto message:", message);
+  useEffect(() => {
+    sendAutoUserDetailsMessageRef.current = sendAutoUserDetailsMessage;
+  }, [sendAutoUserDetailsMessage]);
 
-    // UI update
-    setMessages((prev) => [
-      ...prev,
-      formatMessage({ Message: message }, true)
-    ]);
-
-    // RTM
-    try {
-      // agoraRTM.sendMessage({
-      //   Message: message,
-      //   UserName: roleData.userName
-      // });
-      agoraRTM.sendMessage(JSON.parse(message));
-      console.log("✅ RTM message sent");
-    } catch (error) {
-      console.error("❌ RTM send error:", error);
+  useEffect(() => {
+    if (role !== "user" || autoUserMessageSentRef.current || isSendingAutoMessage || isChatEnding) return;
+    if (isReady && agoraRTM.isChannelJoined && UserChatData) {
+      void (async () => { await sendAutoUserDetailsMessage(); })();
     }
-
-    // Socket
-    if (role === "user") {
-      try {
-        socketService.sendUser({
-          Type: "userDetails",
-          Message: message,
-          ChannelName: channel,
-        });
-        console.log("✅ Socket message sent");
-      } catch (error) {
-        console.error("❌ Socket send error:", error);
-      }
-    }
-
-    // Database insert
-    try {
-      await insertChat(message);
-      console.log("✅ Database insert successful");
-    } catch (error) {
-      console.error("❌ Database insert error:", error);
-    }
-
-    // Mark as sent in state and localStorage
-    setAutoUserMessageSent(true);
-    markChannelMessageSent();
-    console.log("✅ Auto user details message completed and marked for channel");
-  };
+  }, [isReady, UserChatData, autoUserMessageSent, isSendingAutoMessage, isChatEnding, role, sendAutoUserDetailsMessage]);
 
   // Navigation functions
-  const handleBack = () => {
-    router.push(roleData.backRoute);
-    // if (role === "astrologer") {
+  const handleBack = async () => {
+    try {
+      await agoraRTM.leave();
+    } catch (error) {
+      console.error("Leave RTM on back:", error);
+    }
     sessionStorage.removeItem("AstroChatCompleted");
     sessionStorage.removeItem("UserAccepted");
     localStorage.removeItem("AstroChatTokenId");
     sessionStorage.removeItem("UserChatCompleted");
-    // }
+    setPopupData(null);
+    router.push(roleData.backRoute);
   };
 
   const checkEnded = () => {
     if (!roleData.contextData) return;
-    // setIsChatEnding(true);
-    // console.log("🔴 Chat ending initiated, blocking auto messages");
-
     const payload = {
       UserId: `WU${roleData.contextData?.UserId}`,
       AstroId: `WA${roleData.contextData?.AstroId}`,
@@ -514,44 +655,88 @@ export default function ChatUI({ role = "user" }) {
   };
 
 
-  const combinedMessages = [
-    ...(chatHistory || []),
-    ...(messages || [])
-  ];
+  const combinedMessages = useMemo(
+    () => dedupeMessages([...(chatHistory || []), ...(messages || [])]),
+    [chatHistory, messages]
+  );
 
   // Get header info based on role
   const getHeaderInfo = () => {
+    const isEnded =
+      roleData.contextData?.Message === "Chat Completed" ||
+      isChatCompletedFromStorage;
+
     if (role === "astrologer") {
-
-
       return {
         name: roleData.contextData?.UserName || storedUserName,
         avatar: roleData.contextData?.AvatarUrl,
-        isOnline: true,
+        isOnline: !isEnded,
         rate: null,
-        showEndButton: roleData.contextData?.Message || astroChatCompletedShow || ChatCompletedUser !== "Chat Completed",
-        chatStatus: roleData.contextData?.Message === "Chat Completed" ? "ended" : "active"
+        showEndButton: !isEnded,
+        chatStatus: isEnded ? "ended" : "active",
       };
     }
-    else {
-      return {
-        name: roleData.contextData?.AstroName || storedAstroName,
-        avatar: roleData.contextData?.AvatarUrl,
-        isOnline: roleData.contextData?.Message || astroChatCompletedShow || ChatCompletedUser !== "Chat Completed",
-        rate: roleData.contextData?.Rate,
-        showEndButton: roleData.contextData?.Message !== "Chat Completed",
-        chatStatus: roleData.contextData?.Message === "Chat Completed" ? "ended" : "active"
-      };
-    }
+
+    return {
+      name: roleData.contextData?.AstroName || storedAstroName,
+      avatar: roleData.contextData?.ProfilePic,
+      isOnline: !isEnded,
+      rate: roleData.contextData?.Rate,
+      showEndButton: !isEnded,
+      chatStatus: isEnded ? "ended" : "active",
+    };
   };
 
   const headerInfo = getHeaderInfo();
   const checkEndedChatPopup = roleData.checkEndedChat || null;
 
 
+  // useEffect(() => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // }, [combinedMessages]);
+  // useEffect(() => {
+  //   const container = messagesContainerRef.current;
+
+  //   if (!container) return;
+
+  //   // user bottom ke kitne paas h
+  //   const isNearBottom =
+  //     container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+
+  //   // sirf tab auto scroll karo
+  //   if (isNearBottom) {
+  //     messagesEndRef.current?.scrollIntoView({
+  //       behavior: "smooth",
+  //       block: "end",
+  //     });
+  //   }
+  // }, [combinedMessages]);
+
+  const prevMessageCountRef = useRef(0);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    if (combinedMessages.length > prevMessageCountRef.current) {
+      const isNearBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+
+      if (isNearBottom) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }
+    }
+
+    prevMessageCountRef.current = combinedMessages.length;
   }, [combinedMessages]);
+
+  const handleMessagesScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container || loadingOlder) return;
+    if (container.scrollTop < 80) {
+      loadOlderMessages();
+    }
+  }, [loadOlderMessages, loadingOlder]);
 
   // Handle emoji select
   const handleEmojiSelect = (emoji) => {
@@ -563,7 +748,7 @@ export default function ChatUI({ role = "user" }) {
   // Handle send message
   const handleSend = () => {
     const message = inputValue.trim();
-    if (message) {
+    if (message && !isSending) {
       sendMessage(message);
       setInputValue("");
     }
@@ -584,29 +769,65 @@ export default function ChatUI({ role = "user" }) {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  // // Parse message with links
-  // const parseMessageWithLinks = (message) => {
-  //   if (!message) return '';
-  //   let parsedMessage = message.replace(/\n/g, "<br />");
+  const formatElapsed = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
 
-  //   // Parse GEMSTONE links
-  //   parsedMessage = parsedMessage.replace(
-  //     /#GEMSTONE:([^:]+):([^:]+):([^:]+):([^:]+)/g,
-  //     (match, id, name, price, image) => {
-  //       return `<span style="color: #2563eb; text-decoration: underline; cursor: pointer; font-weight: 600;" onclick="window.handleGemstoneClick('${id}', '${name}', '${price}', '${image}')">🔮 View Gemstone</span>`;
-  //     }
-  //   );
+  const formatTimeLeftShort = (seconds) => {
+    const safe = Math.max(0, Number(seconds) || 0);
+    if (safe <= 0) return "—";
+    const m = Math.floor(safe / 60);
+    const s = safe % 60;
+    return m > 0 ? `~ ${m}m ${String(s).padStart(2, "0")}s` : `~ ${s}s`;
+  };
 
-  //   // Parse PUJA links
-  //   parsedMessage = parsedMessage.replace(
-  //     /#PUJA:([^:]+):([^:]+):([^:]+):([^:]+)/g,
-  //     (match, id, name, price, image) => {
-  //       return `<span style="color: #2563eb; text-decoration: underline; cursor: pointer; font-weight: 600;" onclick="window.handlePujaClick('${id}', '${name}', '${price}', '${image}')">🙏 View Puja</span>`;
-  //     }
-  //   );
+  const getAvatarSrc = (path) => {
+    if (!path) return null;
+    const cleaned = path.replace(/\\/g, "/");
+    return cleaned.startsWith("http") ? cleaned : `https://${cleaned}`;
+  };
 
-  //   return parsedMessage;
-  // };
+  const walletBalance = loginUserData?.WalletAmt ?? popupData?.WalletAmt ?? 0;
+  const chatRate = headerInfo?.rate || popupData?.Rate || roleData.contextData?.Rate || 0;
+  const totalChatSeconds = convertToSeconds(role === "user" ? userCalculateTime : AstroCalculateTime);
+  const safeTimeLeft = Math.max(0, Number(timeLeft) || 0);
+  const walletTimeLeftSeconds =
+    role === "user" && chatRate > 0 && walletBalance > 0
+      ? Math.floor((walletBalance / chatRate) * 60)
+      : 0;
+  const displayTimeLeft = safeTimeLeft > 0 ? safeTimeLeft : walletTimeLeftSeconds;
+  const chatElapsed =
+    totalChatSeconds > 0
+      ? Math.min(totalChatSeconds, Math.max(0, totalChatSeconds - safeTimeLeft))
+      : 0;
+  const isWalletLow = role === "user" && displayTimeLeft > 0 && displayTimeLeft <= 120;
+  const showLowWalletBanner = role === "user" && (isWalletLow || (walletBalance > 0 && chatRate > 0 && walletBalance / chatRate < 2));
+  const astroRating = popupData?.Review || popupData?.AvgRating || popupData?.Rating || null;
+  const astroExp = popupData?.ExperiencedYears || loginAstrologerData?.ExperiencedYears || null;
+  const isInputDisabled =
+    headerInfo?.chatStatus === "ended" ||
+    rtmStatus !== "ready" ||
+    (role === "user" && !autoUserMessageSent) ||
+    isChatCompletedFromStorage ||
+    isSending;
+
+  const quickActions = role === "astrologer"
+    ? [
+      // { icon: FileText, label: "Document", color: "text-blue-500", bg: "bg-blue-50", onClick: () => { } },
+      // { icon: Camera, label: "Camera", color: "text-pink-500", bg: "bg-pink-50", onClick: () => { } },
+      // { icon: ImageIcon, label: "Gallery", color: "text-purple-500", bg: "bg-purple-50", onClick: () => { } },
+      { icon: Star, label: "Kundli", color: "text-amber-500", bg: "bg-amber-50", onClick: () => setIsModalOpen(true) },
+      // { icon: Gift, label: "Send Gift", color: "text-green-500", bg: "bg-green-50", onClick: () => { } },
+    ]
+    : [
+      { icon: FileText, label: "Document", color: "text-blue-500", bg: "bg-blue-50", onClick: () => sendAutoUserDetailsMessage() },
+      { icon: Camera, label: "Camera", color: "text-pink-500", bg: "bg-pink-50", onClick: () => { } },
+      { icon: ImageIcon, label: "Gallery", color: "text-purple-500", bg: "bg-purple-50", onClick: () => { } },
+      { icon: Star, label: "Kundli", color: "text-amber-500", bg: "bg-amber-50", onClick: () => { } },
+      { icon: Gift, label: "Send Gift", color: "text-green-500", bg: "bg-green-50", onClick: () => { } },
+    ];
 
   const urlRegex = /(https?:\/\/[^\s]+)/g;
 
@@ -633,14 +854,27 @@ export default function ChatUI({ role = "user" }) {
     // remove starting stars
     safeMessage = safeMessage.replace(/^\*+/, "");
 
-    return safeMessage
-      .replace(/\n/g, "<br/>")
-      .replace(
-        urlRegex,
-        (url) =>
-          `<a href="${url}" target="_blank" class="text-blue-300 underline">${url}</a>`
-      );
+    return sanitizeHtml(
+      safeMessage
+        .replace(/\n/g, "<br/>")
+        .replace(
+          urlRegex,
+          (url) =>
+            `<a href="${url}" target="_blank" rel="noopener noreferrer" class="underline font-medium">${url}</a>`
+        )
+    );
   };
+
+  const messageItems = useMemo(() => {
+    return combinedMessages.reduce((acc, item) => {
+      const ts = item?.timestamp || item?.createdAt;
+      const dateLabel = ts ? format(new Date(ts), "dd MMM yyyy") : "Today";
+      const prevDate = acc.length > 0 ? acc[acc.length - 1].dateLabel : null;
+      const showDate = dateLabel !== prevDate;
+      acc.push({ item, showDate, dateLabel, key: buildMessageKey(item) });
+      return acc;
+    }, []);
+  }, [combinedMessages]);
   // Setup global click handlers
   useEffect(() => {
     window.handleGemstoneClick = async (id, name, price, image) => {
@@ -669,69 +903,18 @@ export default function ChatUI({ role = "user" }) {
 
   useEffect(() => {
     if (popupData?.ChatUserBioID) {
-      Get_Single_CHATINTAKEFORM_Data(popupData?.ChatUserBioID)
+      fetchChatIntakeData(popupData.ChatUserBioID).then((data) => {
+        if (data) setUserChatData(data);
+      });
     }
-  }, [popupData?.ChatUserBioID])
-
-  const Get_Single_CHATINTAKEFORM_Data = async () => {
-    try {
-      const val = { ChatUserBioID: popupData?.ChatUserBioID };
-      const res = await postWithToken('CHATINTAKEFORM/GetSinglaData_CHATINTAKEFORM', val)
-
-      if (res) {
-        setUserChatData(res);
-      }
-
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  const formatUserDetailsMessage = () => {
-    // console.log("🔍 Formatting user details message...");
-    // console.log("📊 UserChatData:", UserChatData);
-    // console.log("📊 popupData:", popupData);
-
-    if (!UserChatData || UserChatData?.length === 0) {
-      console.warn("⚠️ No UserChatData available, using fallback");
-      // Fallback to basic message with popupData if available
-      if (popupData) {
-        return `Hi ${popupData?.AstroName || 'Astrologer'},
-Below are my details:
-Name: User
-Mobile: ${popupData?.UserMobile || 'N/A'}
-Email: ${popupData?.UserEmail || 'N/A'}
-Purpose: ${popupData?.UserPurpose || 'General Consultation'}
-I'm ready for the consultation.`;
-      }
-      return `Hi ${popupData?.AstroName || 'Astrologer'},
-I'm ready for the consultation.`;
-    }
-
-    const item = UserChatData[0];
-    // console.log("👤 User data item:", item);
-
-    const message = `Hi ${popupData?.AstroName || 'Astrologer'},
-Below are my details:
-Name: ${item?.NickName || 'User'}
-Gender: ${item?.Gender || 'N/A'}
-DOB: ${item?.DOB || 'N/A'}
-TOB: ${item?.TOB || 'N/A'}
-POB: ${item?.POB || 'N/A'}
-Marital: ${item?.Marital || 'N/A'}
-TopicofConcern: ${item?.TopicofConcern || 'General'}
-Occupation: ${item?.Occupation || 'N/A'}
-I'm ready for the consultation.`;
-
-    // console.log("📝 Formatted message:", message);
-    return message;
-  };
-
+  }, [popupData?.ChatUserBioID, fetchChatIntakeData]);
 
   function convertToSeconds(time) {
     if (!time || typeof time !== "string") return 0;
-    const [hours, minutes, seconds] = time.split(":").map(Number);
-    return hours * 3600 + minutes * 60 + seconds;
+    const parts = time.split(":").map(Number);
+    if (parts.length < 2 || parts.some((n) => Number.isNaN(n))) return 0;
+    const [hours = 0, minutes = 0, seconds = 0] = parts;
+    return Math.max(0, hours * 3600 + minutes * 60 + seconds);
   }
 
   function formatTimeCalculateTime(seconds) {
@@ -742,325 +925,461 @@ I'm ready for the consultation.`;
   }
 
   useEffect(() => {
-    if (role === "user") {
-      if (popupData) {
-        const seconds = convertToSeconds(popupData?.CalculateTime);
-        setTimeLeft(seconds);
-      }
-    } else if (role === "astrologer") {
-      if (astroParsedData) {
-        const seconds = convertToSeconds(astroParsedData?.CalculateTime);
-        setTimeLeft(seconds);
-      }
+    const calcTime = role === "user" ? userCalculateTime : AstroCalculateTime;
+    if (isChatCompletedFromStorage || !calcTime) return undefined;
+
+    const totalSeconds = convertToSeconds(calcTime);
+    if (totalSeconds <= 0) {
+      queueMicrotask(() => setTimeLeft(0));
+      return undefined;
     }
-  }, [role, popupData, astroParsedData]);
+
+    timerEndRef.current = Date.now() + totalSeconds * 1000;
+
+    const tick = () => {
+      if (!timerEndRef.current) return;
+      setTimeLeft(Math.max(0, Math.floor((timerEndRef.current - Date.now()) / 1000)));
+    };
+
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [role, userCalculateTime, AstroCalculateTime, isChatCompletedFromStorage]);
+
+  const GetTime = useCallback(() => {
+    if (role === "user") {
+      if (!(popupData?.UserId || UserId) || !(popupData?.AstroId || AstroId)) return;
+      socketService.sendUser({
+        UserId: `WU${popupData?.UserId || UserId}`,
+        AstroId: `WA${popupData?.AstroId || AstroId}`,
+        Status: "getCltime",
+        ReceivedMessageState: "U",
+        messageId: "NewRequest",
+      });
+    } else {
+      if (!(astroParsedData?.UserId || UserId) || !(astroParsedData?.AstroId || AstroId)) return;
+      socketService.sendAstro({
+        UserId: `WU${astroParsedData?.UserId || UserId}`,
+        AstroId: `WA${astroParsedData?.AstroId || AstroId}`,
+        Status: "getCltime",
+        ReceivedMessageState: "A",
+        messageId: "NewRequest",
+      });
+    }
+  }, [role, popupData, astroParsedData, UserId, AstroId]);
 
   useEffect(() => {
-    if (role === "user") {
-      if (ChatCompletedUser === "Chat Completed") {
-        // setIsRunning(false);
-        return;
+    GetTime();
+    getTimeIntervalRef.current = setInterval(GetTime, 30000);
+    return () => {
+      if (getTimeIntervalRef.current) clearInterval(getTimeIntervalRef.current);
+    };
+  }, [GetTime]);
+
+  useEffect(() => {
+    if (role !== "astrologer") return undefined;
+
+    const handleSocketMsg = (data) => {
+      if (!data) return;
+      if (data.Message === "Chat Completed" || data.Message === "Please Disconnect the Chat User Balance is Over") {
+        setChatCompletedState("Chat Completed");
       }
-
-      if (!popupData?.CalculateTime) return;
-
-      const totalSeconds = convertToSeconds(popupData?.CalculateTime);
-      const endTime = Date.now() + totalSeconds * 1000;
-
-      const timer = setInterval(() => {
-        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-        setTimeLeft(remaining);
-
-        if (remaining <= totalSeconds - 60) {
-        }
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-
-    else if (role === "astrologer") {
-      if (ChatCompletedUser === "Chat Completed") {
-        // setIsRunning(false);
-        return;
+      if (data.Status === "getCltime" || data.Message === "Time") return;
+      if (data.Type === "userDetails" && data.Message) {
+        if (channel && data.ChannelName && data.ChannelName !== channel) return;
+        appendLiveMessage({ Message: data.Message, text: data.Message }, false);
       }
+    };
 
-      if (!astroParsedData?.CalculateTime) return;
+    return socketService.addAstroListener(handleSocketMsg);
+  }, [role, channel, appendLiveMessage]);
 
-      const totalSeconds = convertToSeconds(astroParsedData?.CalculateTime);
-      const endTime = Date.now() + totalSeconds * 1000;
+  useEffect(() => {
+    if (role !== "user") return undefined;
 
-      const timer = setInterval(() => {
-        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-        setTimeLeft(remaining);
+    const handleSocketMsg = (data) => {
+      if (!data) return;
+      if (
+        data.Message === "Chat Completed" ||
+        data.Message === "Please Disconnect the Chat User Balance is Over"
+      ) {
+        setChatCompletedState("Chat Completed");
+      }
+    };
 
-        if (remaining <= totalSeconds - 60) {
-        }
-      }, 1000);
+    return socketService.addUserListener(handleSocketMsg);
+  }, [role]);
 
-      return () => clearInterval(timer);
-    }
-  }, [role, popupData, astroParsedData, ChatCompletedUser]);
+  const isPageLayout = layoutMode === "page";
+  const pageOuterClass = isPageLayout ? role === "user"
+    ? "fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4"
+    : "fixed inset-0 z-[55] flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4"
+    : "fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-3";
 
-
-
+  const pageInnerClass = isPageLayout
+    ? "relative z-10 flex h-[min(920px,calc(100dvh-5.5rem))] w-full max-w-[1000px] flex-col overflow-hidden rounded-2xl border border-orange-100/80 bg-white shadow-2xl"
+    : "relative z-10 flex h-[100dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl sm:h-[92dvh]";
+  const displayName = headerInfo?.name || (role === "user" ? (storedAstroName || popupData?.AstroName || "Astrologer") : (storedUserName || astroParsedData?.UserName || "User"));
+  const avatarSrc = getAvatarSrc(headerInfo?.avatar);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-      <div className="relative w-full max-w-[80vw] h-[90vh] bg-white rounded-xl shadow-lg overflow-hidden z-10">
-        {/* Header */}
-        {/* className="flex flex-col h-full max-h-full bg-gradient-to-b from-orange-50/50 to-white overflow-hidden" */}
-        <div className="bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 text-white p-4 flex items-center justify-between shadow-lg">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleBack}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
-              title="Go back"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+    <div className={pageOuterClass}>
+      {!isPageLayout && <div className="absolute inset-0 bg-black/10" />}
+      <div className={pageInnerClass}>
 
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/30 overflow-hidden">
-              {headerInfo?.avatar ? (
-                <img
-                  src={`https://${headerInfo.avatar.replace(/\\/g, "/")}`}
-                  alt={headerInfo?.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-white font-bold text-lg">
-                  {role === "astrologer" ? "U" : "A"}
-                </span>
-              )}
-            </div>
+        {/* ── Top profile bar + stats (sticky) ── */}
+        <div className="sticky top-0 z-10 shrink-0 bg-white shadow-sm">
+          <div className="border-b border-gray-100 px-3 py-2.5 sm:px-4">
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={handleBack} className="rounded-full p-1.5 text-gray-600 hover:bg-gray-100">
+                <ArrowLeft className="h-5 w-5" />
+              </button>
 
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-bold text-white truncate">
-                {headerInfo?.name || (role === "user" ? (storedAstroName || popupData?.AstroName || "Astrologer") : (storedUserName || astroParsedData?.UserName || "User"))}
-              </h2>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-white/90">
-                <div className="flex items-center gap-1.5">
-                  <span className={`w-2.5 h-2.5 rounded-full ${headerInfo?.isOnline ? "bg-green-400 animate-pulse" : "bg-gray-400"
-                    }`}></span>
-                  <span className="font-medium">
-                    {headerInfo?.isOnline ? "Online" : "Offline"}
-                  </span>
+              <div className="relative shrink-0">
+                {avatarSrc ? (
+                  <Image src={avatarSrc} alt={displayName} width={44} height={44} className="h-11 w-11 rounded-full object-cover" unoptimized />
+                ) : (
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#FFE8D9] text-sm font-bold text-[#FF5C00]">
+                    {displayName.charAt(0)}
+                  </div>
+                )}
+                {headerInfo?.isOnline && (
+                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1">
+                  <h2 className="truncate text-sm font-bold text-[#1A1A1A]">
+                    {role === "user" && !displayName.toLowerCase().startsWith("astro") ? `Astro ${displayName}` : displayName}
+                  </h2>
+                  {role === "user" && <BadgeCheck className="h-4 w-4 shrink-0 text-[#FF5C00]" />}
                 </div>
-                {/* {role === "user" && headerInfo?.rate && (
-                  <div className="flex items-center gap-1 px-2 py-0.5 bg-white/20 rounded-full">
-                    <span className="text-white font-medium">₹{headerInfo.rate}/min</span>
-                  </div>
+                {role === "user" && (astroRating || astroExp) && (
+                  <p className="truncate text-[11px] text-gray-500 flex items-center gap-1">
+                    {astroRating && (
+                      <>
+                        <span className="text-yellow-400">★</span>
+                        <span>{astroRating}</span>
+                      </>
+                    )}
+
+                    {astroRating && astroExp && (
+                      <span className="text-gray-300">•</span>
+                    )}
+
+                    {astroExp && (
+                      <span>{astroExp}+ Years Exp.</span>
+                    )}
+                  </p>
+                )}
+                {role === "astrologer" && (
+                  <p className="text-[11px] text-green-600 font-medium">Online</p>
+                )}
+              </div>
+
+              <div className="flex shrink-0 items-center gap-1">
+                {/* {role === "user" && (
+                  <button type="button" className="rounded-full p-2 text-gray-500 hover:bg-gray-100" aria-label="Call">
+                    <Phone className="h-4 w-4" />
+                  </button>
                 )} */}
-                {timeLeft && (
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 bg-orange-500/30 rounded-full border border-orange-400/30">
-                    <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span>
-                    <span className="text-orange-100 font-medium text-xs">
-                      {formatTimeCalculateTime(timeLeft)}
-                    </span>
-                  </div>
+                {/* <button type="button" className="rounded-full p-2 text-gray-500 hover:bg-gray-100" aria-label="More">
+                  <MoreVertical className="h-4 w-4" />
+                </button> */}
+                {headerInfo?.showEndButton && headerInfo?.chatStatus !== "ended" && !isChatCompletedFromStorage ? (
+                  <button
+                    type="button"
+                    onClick={checkEnded}
+                    className="ml-1 flex items-center gap-1 rounded-lg border border-red-300 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-red-500 transition hover:bg-red-50"
+                  >
+                    <Power className="h-3.5 w-3.5" /> End Chat
+                  </button>
+                ) : (
+                  <button type="button" onClick={handleBack} className="ml-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-semibold text-gray-600">
+                    Back
+                  </button>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {headerInfo?.showEndButton && headerInfo?.chatStatus !== "ended" && !isChatCompletedFromStorage ? (
-              <button
-                onClick={checkEnded}
-                className="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
-              >
-                END
-              </button>
-            ) : (
-              <button
-                onClick={handleBack}
-                className="bg-black hover:bg-gray-900 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
-              >
-                Back
-              </button>
-            )}
+          {/* ── Stats strip ── */}
+          <div className="overflow-x-auto border-b border-orange-100 bg-[#FFF9F1] px-2 py-2">
+            <div className="flex min-w-max items-center gap-1 sm:gap-2">
+              {role === "user" && chatRate > 0 && (
+                <div className="flex flex-col items-center px-2">
+                  <span className="text-[10px] text-gray-400">Rate</span>
+                  <span className="text-xs font-bold text-[#FF5C00]">₹{chatRate}/min</span>
+                </div>
+              )}
+              {role === "user" && (
+                <div className="flex flex-col items-center border-l border-orange-100 px-2">
+                  <span className="text-[10px] text-gray-400">Wallet</span>
+                  <span className="flex items-center gap-0.5 text-xs font-bold text-green-600">
+                    <Wallet className="h-3 w-3" /> ₹{walletBalance}
+                  </span>
+                </div>
+              )}
+              <div className="flex flex-col items-center border-l border-orange-100 px-2">
+                <span className="text-[10px] text-gray-400">Time Left</span>
+                <span className="flex items-center gap-0.5 text-xs font-bold text-green-600">
+                  <Clock className="h-3 w-3" />
+                  {displayTimeLeft > 0 ? formatTimeLeftShort(displayTimeLeft) : "—"}
+                </span>
+              </div>
+              <div className="flex flex-col items-center border-l border-orange-100 px-2">
+                <span className="text-[10px] text-gray-400">Chat Time</span>
+                <span className="flex items-center gap-0.5 text-xs font-bold text-red-500">
+                  <Timer className="h-3 w-3" /> {formatElapsed(chatElapsed)}
+                </span>
+              </div>
+              {/* {headerInfo?.showEndButton && headerInfo?.chatStatus !== "ended" && !isChatCompletedFromStorage ? (
+                <button
+                  type="button"
+                  onClick={checkEnded}
+                  className="ml-1 flex items-center gap-1 rounded-lg border border-red-300 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-red-500 transition hover:bg-red-50"
+                >
+                  <Power className="h-3.5 w-3.5" /> End Chat
+                </button>
+              ) : (
+                <button type="button" onClick={handleBack} className="ml-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-semibold text-gray-600">
+                  Back
+                </button>
+              )} */}
+            </div>
           </div>
         </div>
 
-        {/* Messages Container */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" style={{ height: 'calc(80vh - 140px)' }}>
-          {combinedMessages?.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                <FiSmile className="text-3xl text-orange-500" />
+        {/* ── Wallet low warning ── */}
+        {showLowWalletBanner && (
+          <div className="flex shrink-0 items-center justify-between gap-2 bg-[#FFF0E6] px-3 py-2 text-[11px]">
+            <div className="flex items-center gap-1.5 text-[#FF5C00]">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>Wallet low · Est. time left: {formatTimeLeftShort(displayTimeLeft)}</span>
+            </div>
+            <button type="button" onClick={() => router.push("/plans")} className="shrink-0 font-semibold text-[#FF5C00] hover:underline">
+              Recharge Now &gt;
+            </button>
+          </div>
+        )}
+
+        {/* ── RTM / connection status ── */}
+        {rtmStatus === "connecting" && (
+          <div className="shrink-0 bg-[#FFF9F1] px-3 py-2 text-center text-xs text-[#FF5C00]">
+            Connecting to chat...
+          </div>
+        )}
+        {rtmStatus === "error" && (
+          <div className="flex shrink-0 items-center justify-between gap-2 bg-red-50 px-3 py-2 text-xs text-red-600">
+            <span>Chat connection failed.</span>
+            <button
+              type="button"
+              className="font-semibold underline"
+              onClick={() => agoraRTM.reconnect()}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {sendError && (
+          <div className="shrink-0 bg-red-50 px-3 py-1.5 text-center text-xs text-red-500">{sendError}</div>
+        )}
+
+        {/* ── Messages ── */}
+        <div
+          ref={messagesContainerRef}
+          onScroll={handleMessagesScroll}
+          className="min-h-0 flex-1 overflow-y-auto bg-[#FFF9F1] px-3 py-4 sm:px-5"
+        >
+          {loadingOlder && (
+            <p className="mb-3 text-center text-[11px] text-gray-400">Loading older messages...</p>
+          )}
+          {historyLoading && combinedMessages.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center py-10 text-center">
+              <p className="text-sm text-gray-500">Loading chat...</p>
+            </div>
+          ) : combinedMessages?.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center py-10 text-center">
+              <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#FFE8D9]">
+                <Smile className="h-8 w-8 text-[#FF5C00]" />
               </div>
-              <p className="text-gray-600 text-lg font-medium mb-2">No messages yet</p>
-              <p className="text-gray-400 text-sm">Start the conversation with a friendly greeting!</p>
+              <p className="font-semibold text-[#1A1A1A]">Start your consultation</p>
+              <p className="mt-1 text-xs text-gray-400">Messages are end-to-end private</p>
             </div>
           ) : (
-            combinedMessages?.map((item, i) => {
+            messageItems.map(({ item, showDate, dateLabel, key }) => {
               const isMine = item?.isMine || item?.sender === "You";
+              const ts = item?.timestamp || item?.createdAt;
+              const body = getMessageBody(item);
+              const html = parseMessageWithLinks(body);
 
               return (
-                <div
-                  // key={`msg-${i}-${item?.message?.slice(0, 10)}`}
-                  className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}
-                >
-                  {!isMine && (
-                    <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
-                      <span className="text-white text-xs font-bold">
-                        {item?.sender ? item?.sender?.charAt(0)?.toUpperCase() : "U"}
-                      </span>
+                <React.Fragment key={key}>
+                  {showDate && (
+                    <div className="my-4 flex justify-center">
+                      <span className="rounded-full bg-gray-200/80 px-3 py-0.5 text-[11px] font-medium text-gray-500">{dateLabel === format(new Date(), "dd MMM yyyy") ? "Today" : dateLabel}</span>
                     </div>
                   )}
-
-                  <div className="max-w-xs lg:max-w-md">
-                    <div
-                      className={`px-4 py-3 rounded-2xl shadow-sm ${isMine
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-br-sm shadow-md"
-                        : "bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm"
-                        }`}
-                    >
-                      <p
-                        className="text-sm leading-relaxed break-words"
-                        dangerouslySetInnerHTML={{
-                          __html: parseMessageWithLinks(item?.message || item?.text)
-                        }}
-                      />
-                      {(item?.timestamp || item?.createdAt) && (
-                        <p className={`text-xs mt-1 ${isMine ? "text-orange-100" : "text-gray-400"
-                          }`}>
-                          {formatTime(item?.timestamp || item?.createdAt)}
-                        </p>
-                      )}
-                    </div>
-
-                    {!isMine && item?.sender && (
-                      <p className="text-xs text-gray-500 mt-1 ml-1">{item?.sender}</p>
+                  <div className={`mb-3 flex items-end gap-2.5 ${isMine ? "justify-end" : "justify-start"}`}>
+                    {!isMine && avatarSrc && (
+                      <Image src={avatarSrc} alt="" width={32} height={32} className="mb-1 h-8 w-8 shrink-0 rounded-full object-cover ring-2 ring-[#FFE8D9]" unoptimized />
                     )}
-                  </div>
-
-                  {isMine && (
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-bold">Y</span>
+                    <div className={`max-w-[min(78%,560px)] ${isMine ? "order-1" : ""}`}>
+                      <div
+                        className={`inline-block min-w-[72px] max-w-full rounded-2xl px-4 py-2.5 shadow-sm ${isMine
+                          ? "rounded-br-md bg-[#FF5C00] text-white"
+                          : "rounded-bl-md border border-[#FFD4B8] bg-[#FFE8D9] text-[#1A1A1A]"
+                          }`}
+                      >
+                        {html.includes("<") ? (
+                          <p
+                            className={`whitespace-pre-wrap text-[14px] leading-relaxed break-words [&_a]:underline ${isMine ? "[&_a]:text-orange-100" : "[&_a]:text-[#FF5C00]"}`}
+                            dangerouslySetInnerHTML={{ __html: html }}
+                          />
+                        ) : (
+                          <p className="whitespace-pre-wrap text-[14px] leading-relaxed break-words">{body}</p>
+                        )}
+                        <div className={`mt-0.5 flex items-center gap-1 ${isMine ? "justify-end" : "justify-start"}`}>
+                          {ts && <span className={`text-[10px] ${isMine ? "text-orange-100" : "text-gray-400"}`}>{formatTime(ts)}</span>}
+                          {isMine && item?.status === "failed" && (
+                            <span className="text-[10px] text-red-200">Failed</span>
+                          )}
+                          {isMine && item?.status !== "failed" && (
+                            <CheckCheck className={`h-3 w-3 ${item?.status === "sending" ? "text-orange-200" : "text-orange-100"}`} />
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                </React.Fragment>
               );
             })
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="border-t border-gray-200 bg-white p-4 flex-shrink-0">
-          <div className="flex gap-2 mb-3 justify-center flex-wrap">
-            {/* Debug manual trigger button for user role */}
-            {role === "user" && !autoUserMessageSent && (
+        {/* ── Recharge strip (bottom) ── */}
+        {showLowWalletBanner && (
+          <div className="shrink-0 border-t border-red-100 bg-[#FFF5F5] px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1 text-xs font-semibold text-red-600">
+                  <Wallet className="h-3.5 w-3.5" /> Wallet Balance: ₹{walletBalance}
+                </p>
+                <p className="text-[10px] text-red-400">Chat will end in less than {Math.max(1, Math.ceil(displayTimeLeft / 60))} minute{displayTimeLeft > 60 ? "s" : ""}.</p>
+              </div>
               <button
-                onClick={() => {
-                  // console.log("🔧 Manual trigger clicked");
-                  sendAutoUserDetailsMessage();
-                }}
-                className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors duration-200 font-medium border border-red-100"
+                type="button"
+                onClick={() => router.push("/plans")}
+                className="shrink-0 rounded-lg bg-red-500 px-2.5 py-2 text-[10px] font-bold leading-tight text-white hover:bg-red-600 sm:text-[11px]"
               >
-                📤 Send Details
+                Recharge ₹99<br className="sm:hidden" /> Get ₹99 Extra
               </button>
-            )}
-            {quickMessages.slice(0, 4).map((quickMsg, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  sendMessage(quickMsg);
-                  setInputValue("");
-                }}
-                disabled={headerInfo?.chatStatus === "ended" ||
-                  (role === "user" && !autoUserMessageSent) ||
-                  isChatCompletedFromStorage
-                  // (role === "astrologer" && !firstMessageReceived)
-                }
-                className="px-3 py-1.5 text-xs bg-orange-50 text-orange-600 rounded-full hover:bg-orange-100 transition-colors duration-200 font-medium border border-orange-100 disabled:opacity-50"
-              >
-                {quickMsg}
-              </button>
-            ))}
-
+            </div>
           </div>
+        )}
 
-          <div className="w-full max-w-4xl mx-auto">
-            <div className="flex items-end gap-2 bg-white border border-gray-200 rounded-2xl px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-orange-500 transition">
+        {/* ── Input row ── */}
+        <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <button type="button" className="shrink-0 rounded-full p-2 text-gray-400 hover:bg-gray-100" aria-label="Attach">
+              <Paperclip className="h-5 w-5" />
+            </button>
+            {
+              role === "astrologer" &&
+              <div className="mt-2.5 flex justify-between gap-1 px-1">
+                <button
+                  type="button"
+                  onClick={() => [setIsModalOpen(true)]}
+                  className="flex flex-1 flex-col items-center gap-0.5 disabled:opacity-40"
+                >
+                  <span className={`flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50`}>
+                    <Star className={`h-4 w-4 text-amber-500`} />
+                  </span>
+                  <span className="text-[9px] font-medium text-gray-500">Kundli</span>
+                </button>
+
+              </div>
+            }
+
+            <div className="relative flex flex-1 items-center">
               <textarea
                 ref={textareaRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder={
-                  headerInfo?.chatStatus === "ended"
-                    ? "Chat has ended"
-                    : role === "user" && !autoUserMessageSent
-                      ? "Sending your details..."
-                      : role === "astrologer"
-                        ? "Type your message..." : "Type your message..."
-                }
-                disabled={
-                  headerInfo?.chatStatus === "ended" ||
-                  (role === "user" && !autoUserMessageSent) ||
-                  isChatCompletedFromStorage
-                  // || (role === "astrologer" && !firstMessageReceived)
-                }
-                className="flex-1 bg-transparent px-2 py-2 resize-none focus:outline-none text-sm max-h-[120px] disabled:opacity-50"
+                placeholder={isInputDisabled ? (headerInfo?.chatStatus === "ended" ? "Chat has ended" : "Sending your details...") : "Type your message..."}
+                disabled={isInputDisabled}
+                className="max-h-[80px] w-full resize-none rounded-full border border-gray-200 bg-gray-50 py-2.5 pl-4 pr-10 text-sm text-[#1A1A1A] focus:border-[#FF5C00] focus:outline-none focus:ring-2 focus:ring-orange-100 disabled:opacity-50"
                 rows={1}
               />
-
-              {/* Send Button */}
               <button
-                // onClick={handleSend}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (inputValue.trim().length > 0) handleSend();
-                }}
-                disabled={!inputValue.trim() || headerInfo?.chatStatus === "ended" || (role === "user" && !autoUserMessageSent) || isChatCompletedFromStorage
-                  // || (role === "astrologer" && !firstMessageReceived)
-                }
-                className={`p-2.5 rounded-full transition-all duration-200 ${inputValue.trim() &&
-                  headerInfo?.chatStatus !== "ended" &&
-                  !(role === "user" && !autoUserMessageSent)
-                  // &&!(role === "astrologer" && !firstMessageReceived)
-                  ? "bg-orange-500 text-white hover:bg-orange-600 shadow-md hover:scale-105"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  }`}
+                type="button"
+                onClick={() => setShowEmoji((v) => !v)}
+                className="absolute right-3 text-gray-400 hover:text-[#FF5C00]"
+                aria-label="Emoji"
               >
-                <FiSend className="text-lg" />
+                <Smile className="h-5 w-5" />
               </button>
-
-
-              {role === "astrologer" && (
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors duration-200 font-medium border border-blue-100"
-                  title="Open Kundli"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 11H15M12 8V16M12 8L9 11M12 8L15 11M3 12H21M7 19H17M12 14V20M12 20L9 17M12 20L15 17" />
-                  </svg>
-                  Kundli
-                </button>
+              {showEmoji && (
+                <div className="absolute bottom-full right-0 z-20 mb-2 flex gap-1 rounded-xl border border-gray-100 bg-white p-2 shadow-lg">
+                  {QUICK_EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      className="rounded p-1 text-lg hover:bg-orange-50"
+                      onClick={() => handleEmojiSelect(emoji)}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
               )}
-
-
             </div>
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); if (inputValue.trim()) handleSend(); }}
+              disabled={!inputValue.trim() || isInputDisabled || isSending}
+              className={`shrink-0 rounded-full p-2.5 transition ${inputValue.trim() && !isInputDisabled ? "bg-[#FF5C00] text-white shadow-md hover:opacity-90" : "bg-gray-100 text-gray-300"}`}
+            >
+              <Send className="h-4 w-4" />
+            </button>
           </div>
+
+          {/* Quick actions */}
+          {/* <div className="mt-2.5 flex justify-between gap-1 px-1">
+            {quickActions.map(({ icon: Icon, label, color, bg, onClick }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={onClick}
+                disabled={isInputDisabled && label !== "Document"}
+                className="flex flex-1 flex-col items-center gap-0.5 disabled:opacity-40"
+              >
+                <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${bg}`}>
+                  <Icon className={`h-4 w-4 ${color}`} />
+                </span>
+                <span className="text-[9px] font-medium text-gray-500">{label}</span>
+              </button>
+            ))}
+          </div> */}
+
+          <p className="mt-2 flex items-center justify-center gap-1 text-[10px] text-gray-400">
+            <Lock className="h-3 w-3" /> Your chat is secure and private
+          </p>
         </div>
       </div>
 
       {/* End Chat Confirmation Modal */}
       {checkEndedChatPopup?.Message === "Are You Sure To End The Chat." && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm bg-opacity-50 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl p-6 border border-orange-300">
-            <h2 className="text-lg font-semibold text-gray-800 text-center mb-3">
-              End Chat Confirmation
-            </h2>
-            <p className="text-sm text-gray-600 text-center mb-6">Are you sure you want to end the chat?</p>
-            <div className="flex gap-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-orange-100 bg-white p-6 shadow-xl">
+            <h2 className="mb-2 text-center text-lg font-semibold text-[#1A1A1A]">End Chat?</h2>
+            <p className="mb-6 text-center text-sm text-gray-500">Are you sure you want to end this chat session?</p>
+            <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => {
                   if (role === "astrologer") {
                     sessionStorage.setItem("AstrologerChatEnd", true);
@@ -1069,12 +1388,13 @@ I'm ready for the consultation.`;
                     leaveRtmChannel();
                   }
                 }}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition"
+                className="flex-1 rounded-lg bg-[#FF5C00] py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
               >
                 Yes, End
               </button>
               <button
-                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2.5 rounded-lg shadow-md transition"
+                type="button"
+                className="flex-1 rounded-lg border border-gray-200 bg-[#FFF9F1] py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-orange-50"
                 onClick={() => roleData.setCheckEndedChat(null)}
               >
                 Cancel
@@ -1084,32 +1404,28 @@ I'm ready for the consultation.`;
         </div>
       )}
 
-      {/* Wait Modal */}
       {checkEndedChatPopup?.Message === "Please wait for 1 Minutes" && (
-        <div className="fixed inset-0 z-50 pointer-events-none bg-black/40 backdrop-blur-sm">
-          <div className="flex items-center justify-center h-full w-full pointer-events-none px-4">
-            <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 border border-orange-300 text-center pointer-events-auto">
-              <button
-                className="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-xl"
-                onClick={() => roleData.setCheckEndedChat(null)}
-              >
-                &times;
-              </button>
-              <div className="flex justify-center mb-4">
-                <div className="bg-orange-100 text-orange-500 rounded-full p-3">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
-                  </svg>
-                </div>
-              </div>
-              <h2 className="text-xl font-bold text-gray-800 mb-2">End Chat Confirmation</h2>
-              <p className="text-sm text-gray-600 mb-6">
-                Please wait for <span className="font-medium text-orange-500">1 minute</span> before ending the chat.
-              </p>
-              <button onClick={() => roleData.setCheckEndedChat(null)} className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full font-semibold transition duration-300">
-                Okay
-              </button>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 px-4">
+          <div className="relative w-full max-w-sm rounded-2xl border border-orange-100 bg-white p-6 text-center shadow-xl">
+            <button
+              type="button"
+              className="absolute right-3 top-3 text-xl text-gray-400 hover:text-red-500"
+              onClick={() => roleData.setCheckEndedChat(null)}
+            >
+              &times;
+            </button>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFE8D9] text-[#FF5C00]">
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+              </svg>
             </div>
+            <h2 className="mb-2 text-lg font-bold text-[#1A1A1A]">Please wait</h2>
+            <p className="mb-6 text-sm text-gray-500">
+              Wait <span className="font-semibold text-[#FF5C00]">1 minute</span> before ending the chat.
+            </p>
+            <button type="button" onClick={() => roleData.setCheckEndedChat(null)} className="rounded-full bg-[#FF5C00] px-6 py-2 text-sm font-semibold text-white transition hover:opacity-90">
+              Okay
+            </button>
           </div>
         </div>
       )}
