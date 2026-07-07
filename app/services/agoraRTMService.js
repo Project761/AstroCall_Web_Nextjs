@@ -19,7 +19,7 @@ class AgoraRTMService {
   onReconnect = null;
   onTokenRenew = null;
 
-  async init({ appId, uid, channelName, token, onMessage, onReady, onError, onTokenRenew }) {
+  async init({ appId, uid, channelName, token, onMessage, onReady , onError, onTokenRenew }) {
     if (!uid || !channelName || !token) {
       console.error("❌ Missing RTM params");
       onError?.(new Error("Missing RTM params"));

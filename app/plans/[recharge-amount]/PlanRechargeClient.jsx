@@ -8,7 +8,7 @@ import { FaBolt, FaShieldAlt, FaLock, FaCheck } from "react-icons/fa";
 import { postWithToken, TokenWithDeleteUpadateAdd } from "../../utils/api";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
 import { ORANGE, CREAM, CREAM_ALT, PEACH } from "@/app/lib/siteTheme";
-
+ 
 
 const PaymentMethodBtn = ({ name, icon, onClick }) => {
     const renderIcon = () => {

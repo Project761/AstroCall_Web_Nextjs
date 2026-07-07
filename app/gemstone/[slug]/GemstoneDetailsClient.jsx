@@ -174,14 +174,14 @@ export default function GemstoneDetailsClient({ initialGemstoneRows = null }) {
 
   return (
     <div className="min-h-screen bg-white pt-[72px] pb-8">
-      <PageBanner
+      {/* <PageBanner
         bannerSrc={PAGE_BANNER_IMAGES.gemstone}
         currentPage={item.HeadingDescription}
         crumbs={[{ label: "Gemstones", href: "/gemstone" }]}
         title={item.HeadingDescription}
         subtitle="Authentic, lab-certified gemstones energized for astrological benefits."
         titleClassName="font-heading text-xl font-bold text-[#1A1A1A] sm:text-2xl md:text-3xl"
-      />
+      /> */}
       <div className="main-container px-4 py-4">
 
         <div className="grid gap-6 lg:grid-cols-12">

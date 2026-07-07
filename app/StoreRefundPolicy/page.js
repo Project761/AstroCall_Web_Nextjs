@@ -12,13 +12,13 @@ export const metadata = {
     "AstroCall refund policy, store refund policy, astrology service refunds, return policy, refund eligibility, refund process",
   alternates: { canonical: CANONICAL },
   openGraph: {
-    title: "Store Refund Policy – AstroCall Astrology Services",
+    title: "Store Refund Policy – AstroCall Astrology Services", 
     description:
       "Review AstroCall's store refund policy. Learn when you are eligible for a refund on astrology consultations, reports or services purchased through our platform.",
     url: CANONICAL,
     type: "website",
     siteName: "AstroCall",
-    locale: "en_IN",
+    locale: "en_IN", 
   },
   twitter: {
     card: "summary_large_image",

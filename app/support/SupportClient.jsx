@@ -27,7 +27,7 @@ export default function SupportClient() {
 
   const handleSubmitTicket = (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsSubmitting(true); 
     setTimeout(() => {
       setSubject(""); setMessage(""); setIsSubmitting(false); setShowTicketForm(false);
     }, 1000);

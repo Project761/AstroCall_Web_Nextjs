@@ -10,7 +10,7 @@ export const metadata = {
     "Review AstroCall Live's Refund and Cancellation Policy. Learn about eligibility, timelines, and refund process.",
   alternates: {
     canonical: CANONICAL,
-  },
+  }, 
   openGraph: {
     title: "Refund & Cancellation Policy | AstroCall Live",
     description:

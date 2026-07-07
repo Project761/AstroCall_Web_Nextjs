@@ -13,13 +13,13 @@ export const metadata = {
     title: "Shipping & Delivery Policy | AstroCall Live",
     description:
       "Read AstroCall Live's Shipping and Delivery Policy for gemstones and products. Learn about delivery timelines and charges.",
-    url: CANONICAL,
+    url: CANONICAL, 
     type: "website",
     siteName: "AstroCall",
     locale: "en_IN",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary_large_image", 
     title: "Shipping & Delivery Policy | AstroCall Live",
     description:
       "Read AstroCall Live's Shipping and Delivery Policy for gemstones and products. Learn about delivery timelines and charges.",

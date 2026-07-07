@@ -97,8 +97,10 @@ export const MenuProvider = ({ children }) => {
 
     useEffect(() => {
         if (typeof window === "undefined") return;
-        setUserLoginId(localStorage.getItem("UserLoginId") || "");
-        setGetAstroLoginId(localStorage.getItem("AstroLoginId") || "");
+        queueMicrotask(() => {
+            setUserLoginId(localStorage.getItem("UserLoginId") || "");
+            setGetAstroLoginId(localStorage.getItem("AstroLoginId") || "");
+        });
     }, [isLogin]);
 
     const Get_SingleData_User = useCallback(async (id) => {
@@ -112,7 +114,7 @@ export const MenuProvider = ({ children }) => {
             }
         }
         catch (err) {
-            console.error(err);
+            console.error(err); 
         }
         finally {
             setloadingUserData(false);

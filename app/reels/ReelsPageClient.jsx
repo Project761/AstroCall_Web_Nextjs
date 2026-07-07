@@ -10,7 +10,7 @@ import {
   FaHeart, FaInstagramSquare, FaOm, FaPhone, FaPlay, FaSearch, FaShareAlt, FaTelegram,
   FaUserGraduate, FaVideo, FaWhatsapp,
 } from "react-icons/fa";
-import { MdDelete, MdVerified } from "react-icons/md";
+import { MdDelete, MdVerified } from "react-icons/md"; 
 import { IoLogoFacebook } from "react-icons/io";
 import {
   IoCalendar, IoCash, IoHeart, IoPlanet, IoSchool, IoSparkles,
@@ -21,7 +21,7 @@ import AuthModal from "../components/AuthModal";
 import PageBanner from "@/app/components/PageBanner";
 import { PAGE_BANNER_IMAGES } from "@/app/lib/siteTheme";
 
-const ORANGE = "#FF5C00";
+const ORANGE = "#FF5C00"; 
 const CREAM = "#FFF9F1";
 const CARD = "rounded-2xl border border-gray-100 bg-white shadow-sm";
 

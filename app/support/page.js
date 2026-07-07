@@ -25,3 +25,4 @@ export const metadata = {
 export default function SupportPage() {
   return <SupportClient />;
 }
+ 

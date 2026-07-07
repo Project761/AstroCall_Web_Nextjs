@@ -20,7 +20,7 @@ export async function generateMetadata({ params }) {
     description: "Complete your wallet recharge on AstroCall",
     robots: { index: false, follow: false },
   };
-}
+} 
 
 export default function PlanRechargePage() {
   return <PlanRechargeClient />;

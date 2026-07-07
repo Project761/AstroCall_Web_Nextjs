@@ -13,7 +13,7 @@ export const metadata = {
     url: CANONICAL,
     type: "website",
     siteName: "AstroCall",
-    locale: "en_IN",
+    locale: "en_IN", 
   },
   twitter: {
     card: "summary_large_image",

@@ -9,7 +9,7 @@ export const metadata = {
   alternates: { canonical: CANONICAL },
   robots: { index: false, follow: false },
   openGraph: {
-    title: "Astrologer Login - AstroCall",
+    title: "Astrologer Login - AstroCall", 
     description: "Login to your astrologer account and start consultations",
     url: CANONICAL,
     type: "website",

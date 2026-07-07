@@ -11,7 +11,7 @@ const Suggested = () => {
      const UserLoginId = typeof window !== 'undefined' && localStorage.getItem("UserLoginId") ? localStorage.getItem("UserLoginId") : "";
    
  
-
+ 
     const [SuggestionsData, setSuggestionsData] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(15);

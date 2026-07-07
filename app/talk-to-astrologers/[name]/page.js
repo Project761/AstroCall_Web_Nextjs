@@ -17,7 +17,7 @@ export async function generateMetadata({ params }) {
   const { name } = await params;
   const astrologer = await fetchAstrologerBySlug(name);
 
-  if (!astrologer) {
+  if (!astrologer) { 
     return {
       title: "Astrologer Profile | AstroCall",
       description: "Consult with expert astrologers on AstroCall.",

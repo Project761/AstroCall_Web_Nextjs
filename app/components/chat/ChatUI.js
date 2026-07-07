@@ -804,8 +804,8 @@ I'm ready for the consultation.`;
       : 0;
   const isWalletLow = role === "user" && displayTimeLeft > 0 && displayTimeLeft <= 120;
   const showLowWalletBanner = role === "user" && (isWalletLow || (walletBalance > 0 && chatRate > 0 && walletBalance / chatRate < 2));
-  const astroRating = popupData?.Review || popupData?.AvgRating || popupData?.Rating || null;
-  const astroExp = popupData?.ExperiencedYears || loginAstrologerData?.ExperiencedYears || null;
+  const astroRating = popupData?.Review || popupData?.AvgRating || popupData?.Rating || 4.9;
+  const astroExp = popupData?.ExperiencedYears || loginAstrologerData?.ExperiencedYears || 10;
   const isInputDisabled =
     headerInfo?.chatStatus === "ended" ||
     rtmStatus !== "ready" ||
@@ -970,7 +970,7 @@ I'm ready for the consultation.`;
 
   useEffect(() => {
     GetTime();
-    getTimeIntervalRef.current = setInterval(GetTime, 30000);
+    // getTimeIntervalRef.current = setInterval(GetTime, 30000);
     return () => {
       if (getTimeIntervalRef.current) clearInterval(getTimeIntervalRef.current);
     };

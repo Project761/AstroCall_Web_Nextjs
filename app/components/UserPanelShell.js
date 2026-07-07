@@ -182,7 +182,7 @@ export default function UserPanelShell({ children }) {
           </div>
 
           <div className="flex items-start gap-5 lg:gap-6">
-            <aside className="sticky top-20 hidden max-h-[calc(100vh-5rem)] w-[240px] shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm lg:flex xl:w-[260px]">
+            <aside className="sticky top-20 hidden max-h-[calc(100vh-1rem)] w-[240px] shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm lg:flex xl:w-[260px]">
               {sidebarContent}
             </aside>
 

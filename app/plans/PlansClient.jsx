@@ -272,7 +272,7 @@ export default function PlansClient() {
             style={{ background: `linear-gradient(90deg, transparent, ${ORANGE}, transparent)` }}
           />
         </div>
-
+ 
         {plansdata === undefined ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
             {[...Array(6)].map((_, i) => (
@@ -280,7 +280,7 @@ export default function PlansClient() {
             ))}
           </div>
         ) : plansdata?.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
             {plansdata.map((item, index) => (
               <PlanCard
                 key={item?.WalletPackageID ?? index}

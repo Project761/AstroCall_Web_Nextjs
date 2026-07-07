@@ -9,3 +9,4 @@ export const metadata = {
 export default function SuggestedPage() {
   redirect("/my-account/suggested");
 }
+ 

@@ -4,7 +4,7 @@ async function getPath(paramsPromise) {
   const params = await paramsPromise;
   return (params?.path || []).join('/');
 }
-
+ 
 export async function GET(request, { params }) {
   const path = await getPath(params);
   const targetUrl = `https://liveapi.astrocall.live/api/${path}${request.nextUrl.search}`;

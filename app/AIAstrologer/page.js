@@ -2,7 +2,7 @@ import AIAstrologerClient from "./AIAstrologerClient";
 
 const SITE = "https://astrocall.live";
 const CANONICAL = `${SITE}/AIAstrologer`;
-
+ 
 export const metadata = {
   title: "AI Astrologer – Coming Soon | AstroCall",
   description:

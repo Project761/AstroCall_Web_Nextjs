@@ -247,7 +247,7 @@ export default function AstrocallHomepage({
           </div>
 
           {/* Panchang rows */}
-          <div className="space-y-2">
+          <div className="">
             <PanchangRow
               icon={GiSunPriest}
               label="Tithi"

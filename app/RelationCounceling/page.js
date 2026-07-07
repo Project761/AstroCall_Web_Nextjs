@@ -16,7 +16,7 @@ export const metadata = {
     description:
       "Get relationship counselling on AstroCall. Talk to astrologers for love, marriage issues, breakups, compatibility concerns, and emotional healing support.",
     url: CANONICAL,
-    type: "website",
+    type: "website", 
     siteName: "AstroCall",
     locale: "en_IN",
   },

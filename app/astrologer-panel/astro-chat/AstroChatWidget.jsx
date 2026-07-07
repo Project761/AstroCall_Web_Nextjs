@@ -27,7 +27,7 @@ export default function AstroChatWidget() {
 
   const handleAstroMessages = useCallback((messageData) => {
     const msg = messageData?.Message;
-
+console.log("📩 Received WebSocket message:", messageData);
     switch (msg) {
 
       // 🔥 NEW CHAT REQUEST
@@ -241,113 +241,167 @@ export default function AstroChatWidget() {
       setTimeout(() => {
         router.push(`/astrologer-panel/astro-chat/chat?channel=${astroParsedData.ChannelName}&AstroChatTokenId=${encodeURIComponent(astroParsedData?.AstroChatTokenId || '')}&WaitingListId=${encodeURIComponent(astroParsedData?.WaitingListId || '')}&AstroId=${encodeURIComponent(astroParsedData?.AstroId || '')}&UserId=${encodeURIComponent(astroParsedData?.UserId)}`);
       }, 5000);
-       setShowChatPopup(false);
+      setShowChatPopup(false);
     }
   }
 
   return (
     <>
       {showChatPopup && astroParsedData && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/20 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-orange-100 bg-white p-5 shadow-xl mb-2">
-            <h2 className="mb-4 text-center text-lg font-bold text-[#1A1A1A]">
-              Chat Request
-            </h2>
+        <div
+          className={`fixed inset-0 z-50 flex items-end justify-center px-4 pb-5 ${astroParsedData?.Message === "Please Accept Request" ||
+            astroParsedData?.Message === "User Chat is Live." ||
+            astroParsedData?.Message === "User Chat is Live"
+            ? "bg-black/20"
+            : "pointer-events-none"
+            }`}
+        >
+          <div className="pointer-events-auto w-full max-w-[340px]">
+            <div className="relative overflow-hidden rounded-2xl border border-orange-400/20 bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#020617] p-4 shadow-[0_20px_60px_rgba(0,0,0,.45)]">
 
-            <div className="flex items-center gap-4 mb-4">
-              <Image
-                src={astroParsedData?.ProfilePic ? `https://${astroParsedData?.ProfilePic?.replace(/\\/g, "/")}` : ""}
-                alt="Profile"
-                loading="lazy"
-                decoding="async"
-                className="rounded-full object-cover border border-gray-300"
-                width={64}
-                height={64}
-              />
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">{astroParsedData?.UserName}</h3>
-                {
-                  astroParsedData?.IsChatProgress === '1' || astroParsedData?.IsChatProgress === 1 ?
-                    <p className="text-sm text-gray-600 mt-1">
-                      <span className="text-green-700 font-semibold">{astroParsedData?.Message}</span>
-                    </p>
-                    :
-                    <p className="text-sm text-gray-600 mt-1">
-                      <span className="text-red-600 font-semibold">Message:</span> Please accept the request.
-                    </p>
-                }
+              {/* Glow */}
+              <div className="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-orange-500/10 blur-3xl"></div>
+
+              <div className="flex items-center gap-3">
+
+                {/* Profile */}
+                <div className="relative shrink-0">
+                  <Image
+                    src={
+                      astroParsedData?.ProfilePic
+                        ? `https://${astroParsedData?.ProfilePic.replace(/\\/g, "/")}`
+                        : ""
+                    }
+                    alt="Profile"
+                    width={56}
+                    height={56}
+                    className="h-14 w-14 rounded-full border-2 border-orange-400 object-cover"
+                  />
+
+                  <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[#0F172A] bg-green-500"></span>
+                </div>
+
+                {/* Details */}
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-base font-semibold text-white">
+                    {astroParsedData?.UserName}
+                  </h3>
+
+                  <p className="mt-1 text-xs text-gray-300">
+                    {astroParsedData?.IsChatProgress === "1" ||
+                      astroParsedData?.IsChatProgress === 1
+                      ? "💬 User is waiting..."
+                      : "New Chat Request"}
+                  </p>
+
+                  <p className="mt-1 text-xs font-medium text-orange-400">
+                    {astroParsedData?.IsChatProgress === "1" ||
+                      astroParsedData?.IsChatProgress === 1
+                      ? astroParsedData?.Message
+                      : "Please accept the request"}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="flex gap-3">
-              {
-                astroParsedData?.IsChatProgress === '1' || astroParsedData?.IsChatProgress === 1 || astroParsedData?.Message === "Accepted" ? <>
+              {/* Buttons */}
+              <div className="mt-4 flex gap-2">
+                {astroParsedData?.IsChatProgress === "1" ||
+                  astroParsedData?.IsChatProgress === 1 ||
+                  astroParsedData?.Message === "Accepted" ? (
                   <button
-                    onClick={() => { HandleJoinChatUser() }}
-                    className="flex-1 rounded-lg bg-[#FF5C00] py-2.5 font-medium text-white transition hover:opacity-90"
+                    onClick={HandleJoinChatUser}
+                    className="w-full rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.02]"
                   >
                     Join Chat
                   </button>
-                </>
-                  :
+                ) : (
                   <>
                     <button
                       onClick={() => {
                         accept_Chat_Request();
-                        sessionStorage.removeItem("AstroChatCompleted")
+                        sessionStorage.removeItem("AstroChatCompleted");
                       }}
-                      className="flex-1 rounded-lg bg-[#FF5C00] py-2.5 font-medium text-white transition hover:opacity-90"
+                      className="flex-1 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.02]"
                     >
                       Accept
                     </button>
 
                     <button
-                      onClick={() => {
-                        reject_Chat_Request();
-                      }}
-                      className="flex-1 rounded-lg border border-red-200 bg-red-50 py-2.5 font-medium text-red-600 transition hover:bg-red-100"
+                      onClick={reject_Chat_Request}
+                      className="flex-1 rounded-lg border border-red-400 bg-red-500/10 py-2.5 text-sm font-semibold text-red-400 transition hover:bg-red-500 hover:text-white"
                     >
                       Reject
                     </button>
                   </>
-              }
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {popupAceept && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/20">
-          <div className="w-full max-w-sm rounded-2xl border border-orange-100 bg-white p-5 shadow-xl mb-2">
-            <div className="flex items-center gap-4 mb-5">
-              <Image
-                src={astroParsedData?.ProfilePic ? `https://${astroParsedData?.ProfilePic?.replace(/\\/g, "/")}` : ""}
-                alt="Profile"
-                loading="lazy"
-                decoding="async"
-                className="rounded-full object-cover border border-gray-600 shadow"
-                width={64}
-                height={64}
-              />
-              <div>
-                <h3 className="text-lg font-semibold text-black"> {astroParsedData?.UserName}</h3>
-                <p className="text-sm text-black"> Waiting for user to accept your request...</p>
-                <p className="text-xs text-black">This may take a few moments.</p>
-              </div>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-5">
+          <div className="pointer-events-auto w-full max-w-[340px]">
+            <div className="relative overflow-hidden rounded-2xl border border-orange-400/20 bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#020617] p-4 shadow-[0_20px_60px_rgba(0,0,0,.45)]">
 
-            {
-              astroParsedData?.Message === "Astro Cancel Request" && (
-                <div className="flex justify-end">
-                  <button
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition duration-200"
-                    onClick={() => { AstroCancelRequest(); }}
-                  >
-                    Cancel Request
-                  </button>
+              {/* Glow Effect */}
+              <div className="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-orange-500/10 blur-3xl"></div>
+
+              <div className="flex items-center gap-3">
+
+                {/* Profile */}
+                <div className="relative shrink-0">
+                  <Image
+                    src={
+                      astroParsedData?.ProfilePic
+                        ? `https://${astroParsedData?.ProfilePic.replace(/\\/g, "/")}`
+                        : ""
+                    }
+                    alt="Profile"
+                    width={56}
+                    height={56}
+                    className="h-14 w-14 rounded-full border-2 border-orange-400 object-cover"
+                  />
+
+                  <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[#0F172A] bg-yellow-400"></span>
                 </div>
-              )
-            }
+
+                {/* Content */}
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-base font-semibold text-white">
+                    {astroParsedData?.UserName}
+                  </h3>
+
+                  <p className="mt-1 text-xs text-gray-300">
+                    Waiting for user...
+                  </p>
+
+                  <p className="mt-1 text-xs font-medium text-orange-400">
+                    Waiting for user to accept your request.
+                  </p>
+
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    This may take a few moments.
+                  </p>
+                </div>
+              </div>
+
+              {/* Loader */}
+              <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="h-full w-1/3 animate-pulse rounded-full bg-orange-500"></div>
+              </div>
+
+              {/* Cancel Button */}
+              {astroParsedData?.Message === "Astro Cancel Request" && (
+                <button
+                  onClick={AstroCancelRequest}
+                  className="mt-4 w-full rounded-lg border border-red-400 bg-red-500/10 py-2.5 text-sm font-semibold text-red-400 transition hover:bg-red-500 hover:text-white"
+                >
+                  Cancel Request
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

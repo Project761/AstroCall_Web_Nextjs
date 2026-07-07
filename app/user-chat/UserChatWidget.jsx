@@ -41,6 +41,7 @@ export default function UserChatWidget() {
   const [showReviewPopup, setShowReviewPopup] = useState(false);
 
   const handleUserMessages = useCallback((data) => {
+    console.log("📩 Handling WebSocket message:", data);
     switch (data?.Message) {
 
       case "Please Accept Request":
@@ -290,7 +291,10 @@ export default function UserChatWidget() {
   }, [router, setPopupData, setUserCalculateTime, setBusyTimes, setUserCheckEndedChat, Get_SingleData_User, setChatPopUpStatus, setUsermessage, setShowReviewPopup]);
 
   const handleUserMessagesRef = useRef(handleUserMessages);
-  handleUserMessagesRef.current = handleUserMessages;
+
+  useEffect(() => {
+    handleUserMessagesRef.current = handleUserMessages;
+  }, [handleUserMessages]);
 
   useEffect(() => {
     const userId = UserLoginId || getStoredUserId();
@@ -301,6 +305,7 @@ export default function UserChatWidget() {
     socketService.setupVisibilityHandler(userId, null);
 
     const unsubscribe = socketService.addUserListener((messageData) => {
+      console.log("📩 Received WebSocket message:", messageData);
       handleUserMessagesRef.current(messageData);
     });
 
@@ -318,15 +323,6 @@ export default function UserChatWidget() {
       Type: "chat",
       Message: "Accepted"
     });
-    console.log(
-      {
-        UserId: `WU${popupData?.UserId}`,
-        AstroId: `WA${popupData?.AstroId}`,
-        Status: "AstroUserBusy",
-        Type: "chat",
-        Message: "Accepted"
-      }
-    )
   };
 
   const HandleJoinChatUser = () => {
@@ -415,63 +411,106 @@ export default function UserChatWidget() {
             }`}
         >
 
-          <div className="pointer-events-auto w-full max-w-md space-y-4">
-            <div className="relative flex items-center gap-4 rounded-2xl border border-orange-100 bg-white p-4 shadow-xl">
-              <div className="relative shrink-0">
-                {popupData?.AvatarUrl && (
-                  <Image
-                    src={`https://${popupData.AvatarUrl.replace(/\\/g, "/")}`}
-                    alt="Avatar"
-                    width={64}
-                    height={64}
-                    className="rounded-full border-2 border-orange-100 object-cover"
-                  />
+          <div className="pointer-events-auto w-full max-w-[400px]">
+            <div className="relative overflow-hidden rounded-3xl border border-orange-400/20 bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#020617] p-3 shadow-[0_25px_70px_rgba(0,0,0,.45)] backdrop-blur-xl">
+
+              {/* Decorative Glow */}
+              <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl"></div>
+              <div className="absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-blue-500/10 blur-3xl"></div>
+
+              {/* Close Button */}
+              {popupData?.Message !== "Please Accept Request" &&
+                popupData?.Message !== "User Chat is Start" &&
+                popupData?.IsChatProgress !== 1 && (
+                  <button
+                    onClick={handleDeleteClick}
+                    className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-1.5 text-gray-300 backdrop-blur transition hover:bg-red-500 hover:text-white"
+                  >
+                    <IoIosCloseCircleOutline className="text-3xl" />
+                  </button>
                 )}
+
+              <div className="relative flex items-center gap-4">
+
+                {/* Avatar */}
+                <div className="relative shrink-0">
+                  {/* <div className="rounded-full border-2 border-orange-400 p-1 shadow-lg">
+                    <Image
+                      src={`https://${popupData?.AvatarUrl?.replace(/\\/g, "/")}`}
+                      alt="Astrologer"
+                      width={72}
+                      height={72}
+                      className="rounded-full object-cover"
+                    />
+                  </div> */}
+                  <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-orange-400 bg-white p-[2px] shadow-md">
+                    <Image
+                      src={`https://${popupData?.AvatarUrl?.replace(/\\/g, "/")}`}
+                      alt="Astrologer"
+                      fill
+                      className="rounded-full object-cover"
+                      sizes="56px"
+                    />
+                  </div>
+
+                  {/* Online Badge */}
+                  <span className="absolute bottom-1 right-1 flex h-4 w-4">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex h-4 w-4 rounded-full border-2 border-[#0F172A] bg-green-500"></span>
+                  </span>
+                </div>
+
+                {/* Content */}
+                <div className="min-w-0 flex-1">
+
+                  <h3 className="truncate text-lg font-bold text-white">
+                    {popupData?.AstroName}
+                  </h3>
+
+                  <div className="mt-1 flex items-center gap-2 text-sm text-gray-300">
+                    <span>₹{popupData?.Rate}/min</span>
+                    <span className="text-orange-400">•</span>
+                    <span>{popupData?.Type}</span>
+                  </div>
+
+                  <p className="mt-2 text-sm font-medium text-orange-400">
+                    {(popupData?.IsChatProgress === "1" ||
+                      popupData?.IsChatProgress === 1 ||
+                      popupData?.Message === "User Chat is Start")
+                      ? "💬 Chat in Progress"
+                      : userMessage}
+                  </p>
+
+                </div>
               </div>
 
-              <div className="min-w-0 flex-1 pr-16">
-                <h3 className="truncate text-base font-semibold text-[#1A1A1A]">
-                  {popupData?.AstroName}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  ₹{popupData?.Rate}/min · {popupData?.Type}
-                </p>
-                <p className="mt-1 text-xs font-medium text-[#FF5C00]">
-                  {(popupData?.IsChatProgress === '1' || popupData?.IsChatProgress === 1) || popupData?.Message === "User Chat is Start"
-                    ? "Chat in progress — tap Join"
-                    : userMessage}
-                </p>
-              </div>
-
-              <div className="absolute bottom-4 right-4">
+              {/* Button */}
+              <div className="mt-6">
                 {popupData?.Message === "Please Accept Request" ? (
                   <button
-                    type="button"
-                    className="rounded-lg bg-[#FF5C00] px-4 py-1.5 text-sm font-medium text-white shadow transition hover:opacity-90"
-                    onClick={() => { AstroUserBusyAccepted(); }}
+                    onClick={AstroUserBusyAccepted}
+                    className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-orange-500/40"
                   >
-                    Accept
+                    Accept Request
                   </button>
                 ) : (
                   <>
-                    {(popupData?.IsChatProgress === '1' || popupData?.IsChatProgress === 1) || popupData?.Message === "User Chat is Start" ? (
-                      <button
-                        type="button"
-                        className="rounded-lg bg-[#FF5C00] px-4 py-1.5 text-sm font-medium text-white shadow transition hover:opacity-90"
-                        onClick={() => { HandleJoinChatUser(); }}
-                      >
-                        Join Chat
-                      </button>
-                    ) : (
-                      <button type="button" onClick={() => { handleDeleteClick(); }} className="text-gray-400 transition hover:text-red-500">
-                        <IoIosCloseCircleOutline className="text-4xl" />
-                      </button>
-                    )}
+                    {(popupData?.IsChatProgress === "1" ||
+                      popupData?.IsChatProgress === 1 ||
+                      popupData?.Message === "User Chat is Start") && (
+                        <button
+                          onClick={HandleJoinChatUser}
+                          className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-green-500/40"
+                        >
+                          Join Chat
+                        </button>
+                      )}
                   </>
                 )}
               </div>
             </div>
           </div>
+
         </div>
       )}
 

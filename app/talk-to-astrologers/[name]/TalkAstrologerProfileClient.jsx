@@ -20,7 +20,7 @@ const ORANGE = "#FF5C00";
 const GREEN = "#00A35C";
 const PURPLE = "#6D5DFB";
 const CREAM = "#FFF9F3";
-const BLUE = "#3B82F6";
+const BLUE = "#3B82F6"; 
 
 const TABS = ["About", "Expertise", "Reviews", "Ratings", "Availability", "Articles"];
 

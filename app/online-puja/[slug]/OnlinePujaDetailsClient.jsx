@@ -154,14 +154,14 @@ export default function OnlinePujaDetailsClient({ initialPujaRows = null }) {
 
   return (
     <div className="min-h-screen bg-white pt-[72px] pb-8">
-      <PageBanner
+      {/* <PageBanner
         bannerSrc={PAGE_BANNER_IMAGES.puja}
         currentPage={item.PujaName}
         crumbs={[{ label: "Online Puja", href: "/online-puja" }]}
         title={item.PujaName}
         subtitle={item.ShortDescription || "Authentic Vedic puja performed by experienced pandits for peace and prosperity."}
         titleClassName="font-heading text-xl font-bold text-[#1A1A1A] sm:text-2xl md:text-3xl"
-      />
+      /> */}
       <div className="main-container px-4 py-4">
 
         {/* Top section */}

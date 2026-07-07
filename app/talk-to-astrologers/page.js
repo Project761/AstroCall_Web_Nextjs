@@ -31,7 +31,7 @@ const talkSchema = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "Organization",
+      "@type": "Organization", 
       name: "AstroCall",
       url: `${SITE}/`,
       logo: `${SITE}/assets/logo.png`,

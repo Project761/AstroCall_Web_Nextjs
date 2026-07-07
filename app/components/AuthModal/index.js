@@ -265,6 +265,8 @@ export default function AuthModal({
     }
   };
 
+  
+
   const Get_astro = async () => {
     try {
       const val = {

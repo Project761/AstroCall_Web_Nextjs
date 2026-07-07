@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   FaBrain,
-  FaUser,
+  FaUser,  
+  
   FaCommentDots,
   FaShieldAlt,
   FaClock,
@@ -143,7 +144,7 @@ export default function AIAstrologerClient() {
   return (
     <div className="min-h-screen bg-white pt-[72px]">
       {/* Hero */}
-
+ 
 
       <PageBanner
         bannerSrc="/Banner/AI Bennar.png"

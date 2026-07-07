@@ -16,7 +16,7 @@ class SocketService {
 
     this.userReconnectAttempts = 0;
     this.astroReconnectAttempts = 0;
-    this.maxReconnectAttempts = 30;
+    this.maxReconnectAttempts = 30; 
 
     this.userLastPong = Date.now();
     this.astroLastPong = Date.now();

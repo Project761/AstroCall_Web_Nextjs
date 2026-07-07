@@ -11,7 +11,7 @@ export const metadata = {
   keywords:
     "AstroCall privacy policy, data protection, user privacy, personal information, online privacy, data security",
   alternates: {
-    canonical: CANONICAL,
+    canonical: CANONICAL, 
   },
   openGraph: {
     title: "Privacy Policy – AstroCall Data Protection & Security",

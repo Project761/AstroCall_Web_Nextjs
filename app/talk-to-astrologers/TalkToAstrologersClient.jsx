@@ -26,7 +26,7 @@ const MUTED = "#64748B";
 const BLUE = "#3B82F6";
 const INITIAL_VISIBLE = 9;
 const LOAD_MORE = 9;
-
+ 
 const CATEGORIES = [
   { id: "all", label: "All Astrologers", icon: FaUsers },
   { id: "love", label: "Love & Relationship", icon: FaHeart },

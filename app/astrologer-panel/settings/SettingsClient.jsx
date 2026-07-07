@@ -37,7 +37,7 @@ const AstroGallery = () => {
             };
             const res = await postWithToken("AstrologerGallery/GetSinglaData_AstrologerGallery", val);
             if (res?.length > 0) {
-                setGalleryData(res);
+                setGalleryData(res); 
                 const initialToggleStates = {};
                 res.forEach((item) => {
                     initialToggleStates[item.GalleryID] = item.IsVisible === true;
