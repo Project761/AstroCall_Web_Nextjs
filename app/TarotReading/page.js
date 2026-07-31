@@ -1,32 +1,24 @@
 import TarotReadingClient from "./TarotReadingClient";
+import PageSeoSchemas from "@/app/components/SEO/PageSeoSchemas";
+import { buildPageMetadata } from "@/app/lib/seo";
 
-const SITE = "https://astrocall.live";
-const CANONICAL = `${SITE}/TarotReading`;
+const PATH = "/TarotReading";
+const TITLE = "Tarot Reading Online – Accurate Tarot Predictions";
+const DESCRIPTION =
+  "Get a personalised tarot reading on AstroCall. Talk to expert tarot readers online for clarity on love, relationships, career, finances and important life choices.";
 
-export const metadata = {
-  title: "Tarot Reading Online – Accurate Tarot Predictions",
-  description:
-    "Get a personalised tarot reading on AstroCall. Talk to expert tarot readers online for clarity on love, relationships, career, finances and important life choices.",
-  keywords:
-    "tarot reading, tarot cards, tarot reader, tarot reading online, tarot card reading, tarot predictions, tarot guidance",
-  alternates: { canonical: CANONICAL },
-  openGraph: {
-    title: "Tarot Reading Online – Accurate Tarot Predictions",
-    description:
-      "Get a personalised tarot reading on AstroCall. Talk to expert tarot readers online for clarity on love, relationships, career, finances and important life choices.",
-    url: CANONICAL,
-    type: "website",
-    siteName: "AstroCall",
-    locale: "en_IN",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Tarot Reading Online – Accurate Tarot Predictions",
-    description:
-      "Get a personalised tarot reading on AstroCall. Talk to expert tarot readers online for clarity on love, relationships, career, finances and important life choices.",
-  },
-};
+export const metadata = buildPageMetadata({
+  title: TITLE,
+  description: DESCRIPTION,
+  path: PATH,
+  keywords: "tarot reading, tarot cards, tarot reader, tarot reading online, tarot card reading, tarot predictions, tarot guidance",
+});
 
 export default function TarotReadingPage() {
-  return <TarotReadingClient />;
+  return (
+    <>
+      <PageSeoSchemas title={TITLE} description={DESCRIPTION} path={PATH} breadcrumbLabel="Tarot Reading" />
+      <TarotReadingClient />
+    </>
+  );
 }

@@ -1,7 +1,9 @@
 "use client";
-import React, { createContext, useEffect, useRef, useState, useCallback } from "react";
+import React, { createContext, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { postWithToken, GetWithToken, TokenWithDeleteUpadateAdd, getPostData } from "../utils/api";
+import { USER_SESSION_EVENT } from "../lib/wsUrl";
+import { runWhenIdle } from "../lib/performance";
 import { format } from "date-fns";
 export const MenuContext = createContext();
 
@@ -93,7 +95,27 @@ export const MenuProvider = ({ children }) => {
         typeof window !== "undefined" ? localStorage.getItem("visitor_Id") || "" : ""
     );
 
-    const toggleMenu = () => setisMenuOpen(prev => !prev);
+    const toggleMenu = useCallback(() => setisMenuOpen(prev => !prev), []);
+
+    const userFetchRef = useRef("");
+    const astroFetchRef = useRef("");
+    const agoraFetchRef = useRef(false);
+    const fingerprintStartedRef = useRef(false);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const syncAuthIds = () => {
+            setUserLoginId(localStorage.getItem("UserLoginId") || "");
+            setGetAstroLoginId(localStorage.getItem("AstroLoginId") || "");
+        };
+        syncAuthIds();
+        window.addEventListener(USER_SESSION_EVENT, syncAuthIds);
+        window.addEventListener("storage", syncAuthIds);
+        return () => {
+            window.removeEventListener(USER_SESSION_EVENT, syncAuthIds);
+            window.removeEventListener("storage", syncAuthIds);
+        };
+    }, []);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -150,26 +172,25 @@ export const MenuProvider = ({ children }) => {
     }, [isLogin, GetAstroLoginId]);
 
     useEffect(() => {
-        void (async () => {
-            await Get_SingleData_User(UserLoginId);
-        })();
-    }, [UserLoginId, Get_SingleData_User]);
+        if (!UserLoginId) return;
+        if (userFetchRef.current === UserLoginId && loginUserData) return;
+        userFetchRef.current = UserLoginId;
+        void Get_SingleData_User(UserLoginId);
+    }, [UserLoginId, Get_SingleData_User, loginUserData]);
 
     useEffect(() => {
-        if (isLogin || GetAstroLoginId) {
-            void (async () => {
-                await Get_Data_GetDataAgoraKey();
-            })();
-        }
-    }, [isLogin, GetAstroLoginId, Get_Data_GetDataAgoraKey]);
+        if (!isLogin && !GetAstroLoginId) return;
+        if (agoraFetchRef.current && GetAgoraKey) return;
+        agoraFetchRef.current = true;
+        void Get_Data_GetDataAgoraKey();
+    }, [isLogin, GetAstroLoginId, Get_Data_GetDataAgoraKey, GetAgoraKey]);
 
     useEffect(() => {
-        if (GetAstroLoginId) {
-            void (async () => {
-                await Get_SingleData_Astrologer(GetAstroLoginId);
-            })();
-        }
-    }, [GetAstroLoginId, Get_SingleData_Astrologer]);
+        if (!GetAstroLoginId) return;
+        if (astroFetchRef.current === GetAstroLoginId && loginAstrologerData) return;
+        astroFetchRef.current = GetAstroLoginId;
+        void Get_SingleData_Astrologer(GetAstroLoginId);
+    }, [GetAstroLoginId, Get_SingleData_Astrologer, loginAstrologerData]);
 
     // Get_Data_RazorPayKey function
     const Get_Data_RazorPayKey = async () => {
@@ -469,26 +490,24 @@ export const MenuProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        if (pathname === "/")
-            return;
-        if (visitorId)
-            return;
-        const loadFingerprint = async () => {
+        if (pathname === "/") return;
+        if (visitorId || fingerprintStartedRef.current) return;
+        fingerprintStartedRef.current = true;
+
+        runWhenIdle(async () => {
             try {
-                // Dynamic import for fingerprintjs
-                const FingerprintJS = await import("@fingerprintjs/fingerprintjs");
+                const { default: FingerprintJS } = await import("@fingerprintjs/fingerprintjs");
                 const fp = await FingerprintJS.load();
                 const result = await fp.get();
                 setVisitorId(result.visitorId);
-                if (typeof window !== 'undefined') {
+                if (typeof window !== "undefined") {
                     localStorage.setItem("visitor_Id", result.visitorId);
                 }
-            }
-            catch (error) {
+            } catch (error) {
                 console.error("Fingerprint error:", error);
+                fingerprintStartedRef.current = false;
             }
-        };
-        loadFingerprint();
+        });
     }, [visitorId, pathname]);
 
     useEffect(() => {
@@ -502,7 +521,7 @@ export const MenuProvider = ({ children }) => {
         })();
     }, [pathname, Get_Data_Muhurat, Get_Data_VratandUpvaas]);
 
-    return (<MenuContext.Provider value={{
+    const contextValue = useMemo(() => ({
         // User IDs
         UserLoginId, setUserLoginId, GetAstroLoginId,
         // Menu and UI states
@@ -524,7 +543,6 @@ export const MenuProvider = ({ children }) => {
         // Chat and call states
         ChatPopUpStatus, setChatPopUpStatus, userMessage, setUsermessage,
         ChatCallTrue, setChatCallTrue,
-
         popupAceept, setpopupAceept, Gemstonereviewstatus, setGemstonereviewstatus,
         chatOffline, setchatOffline, chatonline, setchatonline, reviewstatus, setreviewstatus,
         PlanSuccessPopup, setPlanSuccessPopup,
@@ -547,12 +565,28 @@ export const MenuProvider = ({ children }) => {
         // Utility functions
         Get_Data_Muhurat, Get_Data_VratandUpvaas, Get_Data_RazorPayKey, Get_Data_GetDataAgoraKey,
         Get_Data_Astrologer, GetDropDownData_Skills, GetDropDownData_lstLanguages,
-        GetDropDownData_AstrologersCategory, GetData_ActivityLog, visitorId, setVisitorId, astroCheckEndedChat, setAstroCheckEndedChat, astroParsedData, setAstroParsedData, UserCheckEndedChat, setUserCheckEndedChat
+        GetDropDownData_AstrologersCategory, GetData_ActivityLog, visitorId, setVisitorId,
+        astroCheckEndedChat, setAstroCheckEndedChat, astroParsedData, setAstroParsedData,
+        UserCheckEndedChat, setUserCheckEndedChat,
+        Astropageload, setAstropageload, userCalculateTime, setUserCalculateTime,
+        AstroCalculateTime, setAstroCalculateTime,
+    }), [
+        UserLoginId, GetAstroLoginId, isMenuOpen, toggleMenu, isModalOpen, isOpen,
+        loginAstrologerData, Get_SingleData_Astrologer, loginUserData, Get_SingleData_User,
+        orderid, LanguageDropdown, LanguageStatus, ws, astrows, popupData, pingIntervalWS,
+        AstroNameHomePage, AstroNameHomePageCall, astrologerToggleStatus, AstroBusyMap,
+        ChatPopUpStatus, userMessage, ChatCallTrue, popupAceept, Gemstonereviewstatus,
+        chatOffline, chatonline, reviewstatus, PlanSuccessPopup, isLogin, loadingUserData,
+        MuhuratData, VratUpvaasData, FAQData, sunmoonData, FindTithiData, nakshatraData,
+        yogaData, SkillsData, LanguagesData, CategoryData, astrologers, astrologerdata,
+        displayedAstrologers, isLoadingAstrologerData, Callstatus, isPopUPOpen, showPopupCall,
+        callPopupData, twominchatpopup, playSound, RazorPayKey, GetAgoraKey, AstroNotBusyStatus,
+        BusyTimes, AstroNotBusy, AstroNotBusyCall, Get_Data_Muhurat, Get_Data_VratandUpvaas,
+        visitorId, astroCheckEndedChat, astroParsedData, UserCheckEndedChat,
+        Astropageload, userCalculateTime, AstroCalculateTime,
+    ]);
 
-        , Astropageload, setAstropageload, userCalculateTime, setUserCalculateTime, AstroCalculateTime, setAstroCalculateTime
-
-
-    }}>
+    return (<MenuContext.Provider value={contextValue}>
         {children}
     </MenuContext.Provider>);
 };

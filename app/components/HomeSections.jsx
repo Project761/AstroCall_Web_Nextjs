@@ -162,11 +162,12 @@ export function CitySection() {
                 </p>
 
                 <button
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 font-semibold transition hover:bg-[#F16322] hover:text-white"
-                  style={{
-                    color: ORANGE,
-                    borderColor: "#FED7AA",
-                  }}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 font-semibold transition hover:bg-[#F16322] 
+                    hover:text-white text-[#F16322] border-[#FED7AA]"
+                  // style={{
+                  //   color: ORANGE,
+                  //   borderColor: "#FED7AA",
+                  // }}
                 >
                   <FaPhoneAlt />
                   Talk Now

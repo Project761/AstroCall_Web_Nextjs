@@ -1,32 +1,14 @@
 import PolicyPageClient from "@/app/components/policy/PolicyPageClient";
+import PageSeoSchemas from "@/app/components/SEO/PageSeoSchemas";
 import { fetchPolicyPageData } from "@/app/lib/fetchPolicyPage";
+import { buildPageMetadata } from "@/app/lib/seo";
 
-const SITE = "https://astrocall.live";
-const CANONICAL = `${SITE}/Disclaimer`;
+const PATH = "/Disclaimer";
+const TITLE = "Disclaimer | AstroCall Live";
+const DESCRIPTION =
+  "Read the official Disclaimer of AstroCall Live. Understand limitations of astrology services and liability policies.";
 
-export const metadata = {
-  title: "Disclaimer | AstroCall Live",
-  description:
-    "Read the official Disclaimer of AstroCall Live. Understand limitations of astrology services and liability policies.",
-  alternates: {
-    canonical: CANONICAL,
-  },
-  openGraph: {
-    title: "Disclaimer | AstroCall Live",
-    description:
-      "Read the official Disclaimer of AstroCall Live. Understand limitations of astrology services and liability policies.",
-    url: CANONICAL,
-    type: "website",
-    siteName: "AstroCall",
-    locale: "en_IN",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Disclaimer | AstroCall Live",
-    description:
-      "Read the official Disclaimer of AstroCall Live. Understand limitations of astrology services and liability policies.",
-  },
-};
+export const metadata = buildPageMetadata({ title: TITLE, description: DESCRIPTION, path: PATH });
 
 async function getDisclaimerItems() {
   const res = await fetchPolicyPageData({
@@ -44,5 +26,10 @@ async function getDisclaimerItems() {
 export default async function DisclaimerPage() {
   const items = await getDisclaimerItems();
 
-  return <PolicyPageClient items={items} layoutVariant="plain" />;
+  return (
+    <>
+      <PageSeoSchemas title={TITLE} description={DESCRIPTION} path={PATH} breadcrumbLabel="Disclaimer" />
+      <PolicyPageClient items={items} layoutVariant="plain" pageTitle="Disclaimer" />
+    </>
+  );
 }

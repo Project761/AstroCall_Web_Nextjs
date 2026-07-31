@@ -5,58 +5,49 @@ import socketService from "@/app/services/socketService";
 import {
   USER_SESSION_EVENT,
   getStoredUserId,
+  getStoredAstroId,
   hasUserAuthSession,
-  notifyUserSessionChange,
+  hasAstroAuthSession,
 } from "@/app/lib/wsUrl";
 
-function ensureConnected() {
-  const userId = getStoredUserId();
-  if (!userId || !hasUserAuthSession()) return false;
-
-  const state = socketService.userSocket?.readyState;
-  if (state === WebSocket.OPEN) return true;
-
-  socketService.connectUser(userId);
-  socketService.setupVisibilityHandler(userId, null);
-  return true;
-}
-
-/** Android-safe socket init — localStorage based, not React state */
+/**
+ * Single owner for WebSocket connections.
+ * - Does NOT disconnect on unmount (singleton service survives route changes).
+ * - Does NOT poll every N seconds (was causing background reconnect loops).
+ * - Reconnect on login/session change and when tab becomes visible (socketService).
+ */
 export default function SocketBootstrap() {
   useEffect(() => {
-    ensureConnected();
+    const sync = (source = "SocketBootstrap") => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        console.log(`[WS] sync skipped (tab hidden) source=${source}`);
+        return;
+      }
 
-    const onSession = () => ensureConnected();
-    const onVisible = () => {
-      if (document.visibilityState === "visible") ensureConnected();
+      const userId = getStoredUserId();
+      const astroId = getStoredAstroId();
+
+      if (hasUserAuthSession() && userId) {
+        socketService.ensureUserConnected(userId, source);
+      }
+
+      if (hasAstroAuthSession() && astroId) {
+        socketService.ensureAstroConnected(astroId, source);
+      }
     };
 
+    sync("initial-mount");
+
+    const onSession = () => sync("USER_SESSION_EVENT");
     window.addEventListener(USER_SESSION_EVENT, onSession);
     window.addEventListener("storage", onSession);
-    document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("online", onSession);
-    window.addEventListener("focus", onSession);
-
-    // Android fallback — poll until connected after login
-    const poll = setInterval(() => {
-      if (!hasUserAuthSession()) return;
-      const state = socketService.userSocket?.readyState;
-      if (state !== WebSocket.OPEN && state !== WebSocket.CONNECTING) {
-        ensureConnected();
-      }
-    }, 2500);
 
     return () => {
       window.removeEventListener(USER_SESSION_EVENT, onSession);
       window.removeEventListener("storage", onSession);
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("online", onSession);
-      window.removeEventListener("focus", onSession);
-      clearInterval(poll);
+      // Intentionally do NOT disconnect — socket is app-wide singleton
     };
   }, []);
 
   return null;
 }
-
-export { ensureConnected, notifyUserSessionChange };

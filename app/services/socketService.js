@@ -1,8 +1,31 @@
 // app/services/socketService.js
+// Single WebSocket owner — mirrors legacy React MenuContext HandleUser/HandleAstro logic.
 
 import { getWsUrlCandidates } from "../lib/wsUrl";
+
+// Legacy React MenuContext timings (HandleUser / HandleAstro)
+const PING_INTERVAL_MS = 3000;
+const PONG_CHECK_INTERVAL_MS = 2000;
+const PONG_TIMEOUT_MS = 7000;
+const RECONNECT_DELAY_MS = 2000;
 const CONNECT_TIMEOUT_MS = 15000;
-const PONG_TIMEOUT_MS = 20000;
+const MAX_PENDING = 20;
+const MAX_RECONNECT_ATTEMPTS = 30;
+
+const LOG = {
+  user: (msg, extra) => console.log(`[WS:USER] ${msg}`, extra ?? ""),
+  astro: (msg, extra) => console.log(`[WS:ASTRO] ${msg}`, extra ?? ""),
+  warn: (msg, extra) => console.warn(`[WS] ${msg}`, extra ?? ""),
+};
+
+const isHidden = () =>
+  typeof document !== "undefined" && document.visibilityState === "hidden";
+
+const parseWsMessage = (raw) => {
+  const text = String(raw ?? "");
+  return JSON.parse(text.replace(/\\/g, "\\\\"));
+};
+
 class SocketService {
   constructor() {
     this.userSocket = null;
@@ -10,73 +33,157 @@ class SocketService {
 
     this.userPingInterval = null;
     this.astroPingInterval = null;
-
+    this.userPongChecker = null;
+    this.astroPongChecker = null;
     this.userReconnectInterval = null;
     this.astroReconnectInterval = null;
 
     this.userReconnectAttempts = 0;
     this.astroReconnectAttempts = 0;
-    this.maxReconnectAttempts = 30; 
 
     this.userLastPong = Date.now();
     this.astroLastPong = Date.now();
 
-    this.userPongChecker = null;
-    this.astroPongChecker = null;
-
     this.userListeners = new Set();
     this.astroListeners = new Set();
-
     this.onUserMessage = null;
     this.onAstroMessage = null;
 
     this._activeUserId = null;
     this._activeAstroId = null;
 
-    this._visibilityHandler = null;
-    this._pageshowHandler = null;
-    this._onlineHandler = null;
-    this._focusHandler = null;
-    this._userConnectTimeout = null;
-    this._astroConnectTimeout = null;
     this._userUrlIndex = 0;
     this._userUrlList = [];
     this._userConnectOpened = false;
+    this._astroUrlIndex = 0;
+    this._astroUrlList = [];
+    this._astroConnectOpened = false;
+
+    this._userConnectTimeout = null;
+    this._astroConnectTimeout = null;
+    this._userIntentionalClose = false;
+    this._astroIntentionalClose = false;
+
+    this._pendingUserMessages = [];
+    this._pendingAstroMessages = [];
+
     this._visibilityUserId = null;
     this._visibilityAstroId = null;
-  }
+    this._visibilityHandler = null;
+    this._visibilityBound = false;
 
-  getWsUrl = () => getWsUrlCandidates()[0];
+    // Legacy: userInitializedRef / hasInitializedConnection — connect once per session
+    this._userSessionInitialized = false;
+    this._astroSessionInitialized = false;
+  }
 
   getWsUrlCandidates = () => getWsUrlCandidates();
 
+  /* ─── ensure (idempotent — same guards as legacy HandleUser/HandleAstro) ─── */
+
+  ensureUserConnected = (userId, source = "unknown") => {
+    if (!userId || typeof window === "undefined") return false;
+    const id = String(userId);
+    const state = this.userSocket?.readyState;
+
+    if (state === WebSocket.OPEN && this._activeUserId === id) {
+      this.setupVisibilityHandler(id, undefined);
+      return true;
+    }
+
+    if (state === WebSocket.CONNECTING && this._activeUserId === id) {
+      LOG.user(`ensure skipped — CONNECTING source=${source}`);
+      this.setupVisibilityHandler(id, undefined);
+      return false;
+    }
+
+    if (this._userSessionInitialized && this._activeUserId === id && state === WebSocket.OPEN) {
+      return true;
+    }
+
+    LOG.user(`ensure → connect source=${source}`, { userId: id });
+    this.connectUser(id, source);
+    this.setupVisibilityHandler(id, undefined);
+    return false;
+  };
+
+  ensureAstroConnected = (astroId, source = "unknown") => {
+    if (!astroId || typeof window === "undefined") return false;
+    const id = String(astroId);
+    const state = this.astroSocket?.readyState;
+
+    if (state === WebSocket.OPEN && this._activeAstroId === id) {
+      this.setupVisibilityHandler(undefined, id);
+      return true;
+    }
+
+    if (state === WebSocket.CONNECTING && this._activeAstroId === id) {
+      LOG.astro(`ensure skipped — CONNECTING source=${source}`);
+      this.setupVisibilityHandler(undefined, id);
+      return false;
+    }
+
+    LOG.astro(`ensure → connect source=${source}`, { astroId: id });
+    this.connectAstro(id, source);
+    this.setupVisibilityHandler(undefined, id);
+    return false;
+  };
+
+  isUserConnected = () => this.userSocket?.readyState === WebSocket.OPEN;
+  isAstroConnected = () => this.astroSocket?.readyState === WebSocket.OPEN;
+
   safeSend = (socket, data) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
+    if (socket?.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify(data));
       return true;
     }
-    console.warn("⚠️ Socket not connected");
     return false;
+  };
+
+  sendUser = (data) => {
+    if (this.safeSend(this.userSocket, data)) return true;
+    if (this._pendingUserMessages.length < MAX_PENDING) {
+      this._pendingUserMessages.push(data);
+    }
+    if (this._activeUserId) {
+      this.ensureUserConnected(this._activeUserId, "sendUser");
+    }
+    return false;
+  };
+
+  sendAstro = (data) => {
+    if (this.safeSend(this.astroSocket, data)) return true;
+    if (this._pendingAstroMessages.length < MAX_PENDING) {
+      this._pendingAstroMessages.push(data);
+    }
+    if (this._activeAstroId) {
+      this.ensureAstroConnected(this._activeAstroId, "sendAstro");
+    }
+    return false;
+  };
+
+  _flushPendingUser = () => {
+    while (this._pendingUserMessages.length && this.isUserConnected()) {
+      this.safeSend(this.userSocket, this._pendingUserMessages.shift());
+    }
+  };
+
+  _flushPendingAstro = () => {
+    while (this._pendingAstroMessages.length && this.isAstroConnected()) {
+      this.safeSend(this.astroSocket, this._pendingAstroMessages.shift());
+    }
   };
 
   notifyUserListeners = (data) => {
     this.userListeners.forEach((cb) => {
-      try {
-        cb(data);
-      } catch (e) {
-        console.error("User listener error:", e);
-      }
+      try { cb(data); } catch (e) { console.error("User listener error:", e); }
     });
     this.onUserMessage?.(data);
   };
 
   notifyAstroListeners = (data) => {
     this.astroListeners.forEach((cb) => {
-      try {
-        cb(data);
-      } catch (e) {
-        console.error("Astro listener error:", e);
-      }
+      try { cb(data); } catch (e) { console.error("Astro listener error:", e); }
     });
     this.onAstroMessage?.(data);
   };
@@ -93,86 +200,101 @@ class SocketService {
     return () => this.astroListeners.delete(cb);
   };
 
-  setUserListener = (cb) => {
-    this.onUserMessage = cb;
-  };
+  setUserListener = (cb) => { this.onUserMessage = cb; };
+  setAstroListener = (cb) => { this.onAstroMessage = cb; };
 
-  setAstroListener = (cb) => {
-    this.onAstroMessage = cb;
-  };
+  /* ─── detach old socket without triggering reconnect (fixes code=1000 loop) ─── */
 
-  _closeUserSocket = () => {
+  _detachUserSocket = () => {
     this.clearUserIntervals();
-
-    if (this.userSocket) {
-      this.userSocket.onclose = null;
-      this.userSocket.close();
-      this.userSocket = null;
+    if (!this.userSocket) return;
+    const old = this.userSocket;
+    old.onopen = null;
+    old.onmessage = null;
+    old.onerror = null;
+    old.onclose = null;
+    if (old.readyState === WebSocket.OPEN || old.readyState === WebSocket.CONNECTING) {
+      old.close();
     }
+    if (this.userSocket === old) this.userSocket = null;
   };
 
-  _closeAstroSocket = () => {
+  _detachAstroSocket = () => {
     this.clearAstroIntervals();
-
-    if (this.astroSocket) {
-      this.astroSocket.onclose = null;
-      this.astroSocket.close();
-      this.astroSocket = null;
+    if (!this.astroSocket) return;
+    const old = this.astroSocket;
+    old.onopen = null;
+    old.onmessage = null;
+    old.onerror = null;
+    old.onclose = null;
+    if (old.readyState === WebSocket.OPEN || old.readyState === WebSocket.CONNECTING) {
+      old.close();
     }
+    if (this.astroSocket === old) this.astroSocket = null;
   };
 
-  connectUser = (userId) => {
+  connectUser = (userId, source = "connectUser") => {
     if (!userId || typeof window === "undefined") return;
-
+    const id = String(userId);
     const state = this.userSocket?.readyState;
-    if (this._activeUserId === String(userId) && state === WebSocket.OPEN) {
+
+    if (this._activeUserId === id && state === WebSocket.OPEN) {
+      LOG.user(`connect skipped — already OPEN source=${source}`);
+      return;
+    }
+
+    if (this._activeUserId === id && state === WebSocket.CONNECTING) {
+      LOG.user(`connect skipped — already CONNECTING source=${source}`);
       return;
     }
 
     this._clearUserConnectTimeout();
-    this._closeUserSocket();
+    if (this.userReconnectInterval) {
+      clearInterval(this.userReconnectInterval);
+      this.userReconnectInterval = null;
+    }
 
-    this._activeUserId = String(userId);
+    this._detachUserSocket();
+
+    this._activeUserId = id;
     this._userUrlList = this.getWsUrlCandidates();
     this._userUrlIndex = 0;
     this._userConnectOpened = false;
-    this._openUserSocket(userId);
+    this._userSessionInitialized = true;
+    this._openUserSocket(id);
   };
 
   _openUserSocket = (userId) => {
     if (this._userUrlIndex >= this._userUrlList.length) {
-      console.error("❌ All USER websocket URLs failed, will retry...");
+      LOG.warn("All USER websocket URLs failed");
       this._userUrlIndex = 0;
-      if (!this.userReconnectInterval) {
-        this.reconnectUser(userId);
-      }
+      if (!this.userReconnectInterval) this.reconnectUser(userId);
       return;
     }
 
     const wsUrl = this._userUrlList[this._userUrlIndex];
-    console.log(
-      "🔌 Connecting USER websocket:",
-      wsUrl,
-      `(${this._userUrlIndex + 1}/${this._userUrlList.length})`
-    );
+    LOG.user(`connecting ${wsUrl} (${this._userUrlIndex + 1}/${this._userUrlList.length})`);
 
-    this.userSocket = new WebSocket(wsUrl);
+    const socket = new WebSocket(wsUrl);
+    this.userSocket = socket;
 
     this._userConnectTimeout = setTimeout(() => {
-      if (this.userSocket?.readyState === WebSocket.CONNECTING) {
-        console.warn("⏱️ USER websocket connect timeout → trying next URL");
-        this._tryNextUserUrl(userId);
+      if (socket.readyState === WebSocket.CONNECTING) {
+        LOG.user("connect timeout → next URL");
+        this._tryNextUserUrl(userId, socket);
       }
     }, CONNECT_TIMEOUT_MS);
 
-    this.userSocket.onopen = () => {
+    socket.onopen = () => {
+      if (this.userSocket !== socket) return;
       this._clearUserConnectTimeout();
       this._userConnectOpened = true;
-      console.log("🟢 USER CONNECTED via", wsUrl);
+      this._userIntentionalClose = false;
+      LOG.user("connected", wsUrl);
       this.userReconnectAttempts = 0;
       this.userLastPong = Date.now();
 
-      this.safeSend(this.userSocket, {
+      this.safeSend(socket, {
         UserId: `WU${userId}`,
         OnlineType: "1",
         Status: "Online",
@@ -180,63 +302,455 @@ class SocketService {
 
       this.startUserPing(userId);
       this.startUserPongCheck(userId);
+      this._flushPendingUser();
 
       if (this.userReconnectInterval) {
         clearInterval(this.userReconnectInterval);
         this.userReconnectInterval = null;
       }
     };
-    this.userSocket.onmessage = (event) => {
+
+    socket.onmessage = (event) => {
+      if (this.userSocket !== socket) return;
       try {
-        const parsed = JSON.parse(event.data);
+        const parsed = parseWsMessage(event.data);
         if (parsed?.Type === "pong") {
           this.userLastPong = Date.now();
           return;
         }
-
         if (parsed?.messageId) {
-          this.safeSend(this.userSocket, {
-            Type: "ACK",
-            messageId: parsed.messageId,
-          });
+          this.safeSend(socket, { Type: "ACK", messageId: parsed.messageId });
         }
-
         this.notifyUserListeners(parsed);
       } catch (e) {
         console.error("❌ User parse error", e);
       }
     };
 
-    this.userSocket.onclose = (event) => {
+    socket.onclose = (event) => {
+      if (this.userSocket !== socket) return;
       this._clearUserConnectTimeout();
-      console.log("🔴 USER DISCONNECTED", event?.code || "");
+      this.userSocket = null;
 
-      if (!this._userConnectOpened && this._userUrlIndex + 1 < this._userUrlList.length) {
-        this._tryNextUserUrl(userId);
+      if (this._userIntentionalClose) {
+        this._userIntentionalClose = false;
+        LOG.user("closed (intentional)");
         return;
       }
 
+      if (!this._userConnectOpened && this._userUrlIndex + 1 < this._userUrlList.length) {
+        this._tryNextUserUrl(userId, socket);
+        return;
+      }
+
+      LOG.user(`disconnected code=${event?.code ?? "?"} reason=${event?.reason || "none"}`);
       this.clearUserIntervals();
-      if (this._activeUserId === String(userId)) {
+
+      if (this._activeUserId !== String(userId)) return;
+
+      if (isHidden()) {
+        LOG.user("tab hidden → reconnect paused until visible");
+        return;
+      }
+
+      if (!this.userReconnectInterval) {
         this.reconnectUser(userId);
       }
     };
 
-    this.userSocket.onerror = () => {
-      console.warn("❌ USER SOCKET ERROR on", wsUrl);
+    socket.onerror = () => {
+      if (this.userSocket !== socket) return;
+      LOG.warn("USER socket error", wsUrl);
     };
   };
 
-  _tryNextUserUrl = (userId) => {
+  _tryNextUserUrl = (userId, staleSocket) => {
     this._clearUserConnectTimeout();
-    if (this.userSocket) {
-      this.userSocket.onclose = null;
-      this.userSocket.onerror = null;
-      this.userSocket.close();
-      this.userSocket = null;
+    if (staleSocket) {
+      staleSocket.onclose = null;
+      staleSocket.onerror = null;
+      if (staleSocket.readyState !== WebSocket.CLOSED) staleSocket.close();
     }
+    if (this.userSocket === staleSocket) this.userSocket = null;
     this._userUrlIndex += 1;
     this._openUserSocket(userId);
+  };
+
+  reconnectUser = (userId) => {
+    if (this.userReconnectInterval) return;
+    LOG.user("reconnect scheduler started (2s interval — legacy)");
+
+    this.userReconnectInterval = setInterval(() => {
+      if (isHidden()) return;
+
+      if (this.userReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        clearInterval(this.userReconnectInterval);
+        this.userReconnectInterval = null;
+        LOG.warn("USER max reconnect attempts");
+        return;
+      }
+
+      if (this.isUserConnected()) {
+        clearInterval(this.userReconnectInterval);
+        this.userReconnectInterval = null;
+        this.userReconnectAttempts = 0;
+        return;
+      }
+
+      if (this.userSocket?.readyState === WebSocket.CONNECTING) return;
+
+      if (!localStorage.getItem("UserLoginId")) {
+        clearInterval(this.userReconnectInterval);
+        this.userReconnectInterval = null;
+        return;
+      }
+
+      this.userReconnectAttempts += 1;
+      LOG.user(`reconnect attempt ${this.userReconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
+      this._userUrlIndex = 0;
+      this._userConnectOpened = false;
+      this._openUserSocket(userId);
+    }, RECONNECT_DELAY_MS);
+  };
+
+  startUserPing = (userId) => {
+    if (this.userPingInterval) clearInterval(this.userPingInterval);
+    this.userPingInterval = setInterval(() => {
+      if (this.isUserConnected()) {
+        this.safeSend(this.userSocket, { UserId: `WU${userId}`, Type: "ping" });
+      }
+    }, PING_INTERVAL_MS);
+  };
+
+  startUserPongCheck = (userId) => {
+    this.userLastPong = Date.now();
+    if (this.userPongChecker) clearInterval(this.userPongChecker);
+
+    this.userPongChecker = setInterval(() => {
+      if (!this.isUserConnected()) return;
+      if (isHidden()) {
+        this.userLastPong = Date.now();
+        return;
+      }
+      const diff = Date.now() - this.userLastPong;
+      if (diff > PONG_TIMEOUT_MS) {
+        LOG.user(`no pong for ${PONG_TIMEOUT_MS / 1000}s → reconnect`);
+        const s = this.userSocket;
+        if (s) {
+          s.onclose = null;
+          s.close();
+          if (this.userSocket === s) this.userSocket = null;
+        }
+        this.clearUserIntervals();
+        if (!this.userReconnectInterval) this.reconnectUser(userId);
+      }
+    }, PONG_CHECK_INTERVAL_MS);
+  };
+
+  clearUserIntervals = () => {
+    if (this.userPingInterval) clearInterval(this.userPingInterval);
+    if (this.userPongChecker) clearInterval(this.userPongChecker);
+    this.userPingInterval = null;
+    this.userPongChecker = null;
+  };
+
+  /* ─── astro socket (same pattern) ─── */
+
+  connectAstro = (astroId, source = "connectAstro") => {
+    if (!astroId || typeof window === "undefined") return;
+    const id = String(astroId);
+    const state = this.astroSocket?.readyState;
+
+    if (this._activeAstroId === id && state === WebSocket.OPEN) {
+      LOG.astro(`connect skipped — already OPEN source=${source}`);
+      return;
+    }
+
+    if (this._activeAstroId === id && state === WebSocket.CONNECTING) {
+      LOG.astro(`connect skipped — already CONNECTING source=${source}`);
+      return;
+    }
+
+    this._clearAstroConnectTimeout();
+    if (this.astroReconnectInterval) {
+      clearInterval(this.astroReconnectInterval);
+      this.astroReconnectInterval = null;
+    }
+
+    this._detachAstroSocket();
+
+    this._activeAstroId = id;
+    this._astroUrlList = this.getWsUrlCandidates();
+    this._astroUrlIndex = 0;
+    this._astroConnectOpened = false;
+    this._astroSessionInitialized = true;
+    this._openAstroSocket(id);
+  };
+
+  _openAstroSocket = (astroId) => {
+    if (this._astroUrlIndex >= this._astroUrlList.length) {
+      LOG.warn("All ASTRO websocket URLs failed");
+      this._astroUrlIndex = 0;
+      if (!this.astroReconnectInterval) this.reconnectAstro(astroId);
+      return;
+    }
+
+    const wsUrl = this._astroUrlList[this._astroUrlIndex];
+    LOG.astro(`connecting ${wsUrl} (${this._astroUrlIndex + 1}/${this._astroUrlList.length})`);
+
+    const socket = new WebSocket(wsUrl);
+    this.astroSocket = socket;
+
+    this._astroConnectTimeout = setTimeout(() => {
+      if (socket.readyState === WebSocket.CONNECTING) {
+        LOG.astro("connect timeout → next URL");
+        this._tryNextAstroUrl(astroId, socket);
+      }
+    }, CONNECT_TIMEOUT_MS);
+
+    socket.onopen = () => {
+      if (this.astroSocket !== socket) return;
+      this._clearAstroConnectTimeout();
+      this._astroConnectOpened = true;
+      this._astroIntentionalClose = false;
+      LOG.astro("connected", wsUrl);
+      this.astroReconnectAttempts = 0;
+      this.astroLastPong = Date.now();
+
+      this.safeSend(socket, {
+        UserId: `WA${astroId}`,
+        OnlineType: "0",
+        Status: "Online",
+      });
+
+      this.startAstroPing(astroId);
+      this.startAstroPongCheck(astroId);
+      this._flushPendingAstro();
+
+      if (this.astroReconnectInterval) {
+        clearInterval(this.astroReconnectInterval);
+        this.astroReconnectInterval = null;
+      }
+    };
+
+    socket.onmessage = (event) => {
+      if (this.astroSocket !== socket) return;
+      try {
+        const parsed = parseWsMessage(event.data);
+        if (parsed?.Type === "pong") {
+          this.astroLastPong = Date.now();
+          return;
+        }
+        if (parsed?.messageId) {
+          this.safeSend(socket, { Type: "ACK", messageId: parsed.messageId });
+        }
+        this.notifyAstroListeners(parsed);
+      } catch (e) {
+        console.error("❌ Astro parse error", e);
+      }
+    };
+
+    socket.onclose = (event) => {
+      if (this.astroSocket !== socket) return;
+      this._clearAstroConnectTimeout();
+      this.astroSocket = null;
+
+      if (this._astroIntentionalClose) {
+        this._astroIntentionalClose = false;
+        LOG.astro("closed (intentional)");
+        return;
+      }
+
+      if (!this._astroConnectOpened && this._astroUrlIndex + 1 < this._astroUrlList.length) {
+        this._tryNextAstroUrl(astroId, socket);
+        return;
+      }
+
+      LOG.astro(`disconnected code=${event?.code ?? "?"} reason=${event?.reason || "none"}`);
+      this.clearAstroIntervals();
+
+      if (this._activeAstroId !== String(astroId)) return;
+
+      if (isHidden()) {
+        LOG.astro("tab hidden → reconnect paused until visible");
+        return;
+      }
+
+      if (!this.astroReconnectInterval) {
+        this.reconnectAstro(astroId);
+      }
+    };
+
+    socket.onerror = () => {
+      if (this.astroSocket !== socket) return;
+      LOG.warn("ASTRO socket error", wsUrl);
+    };
+  };
+
+  _tryNextAstroUrl = (astroId, staleSocket) => {
+    this._clearAstroConnectTimeout();
+    if (staleSocket) {
+      staleSocket.onclose = null;
+      staleSocket.onerror = null;
+      if (staleSocket.readyState !== WebSocket.CLOSED) staleSocket.close();
+    }
+    if (this.astroSocket === staleSocket) this.astroSocket = null;
+    this._astroUrlIndex += 1;
+    this._openAstroSocket(astroId);
+  };
+
+  reconnectAstro = (astroId) => {
+    if (this.astroReconnectInterval) return;
+    LOG.astro("reconnect scheduler started (2s interval — legacy)");
+
+    this.astroReconnectInterval = setInterval(() => {
+      if (isHidden()) return;
+
+      if (this.astroReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        clearInterval(this.astroReconnectInterval);
+        this.astroReconnectInterval = null;
+        return;
+      }
+
+      if (this.isAstroConnected()) {
+        clearInterval(this.astroReconnectInterval);
+        this.astroReconnectInterval = null;
+        this.astroReconnectAttempts = 0;
+        return;
+      }
+
+      if (this.astroSocket?.readyState === WebSocket.CONNECTING) return;
+
+      if (!localStorage.getItem("AstroLoginId")) {
+        clearInterval(this.astroReconnectInterval);
+        this.astroReconnectInterval = null;
+        return;
+      }
+
+      this.astroReconnectAttempts += 1;
+      LOG.astro(`reconnect attempt ${this.astroReconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
+      this._astroUrlIndex = 0;
+      this._astroConnectOpened = false;
+      this._openAstroSocket(astroId);
+    }, RECONNECT_DELAY_MS);
+  };
+
+  startAstroPing = (astroId) => {
+    if (this.astroPingInterval) clearInterval(this.astroPingInterval);
+    this.astroPingInterval = setInterval(() => {
+      if (this.isAstroConnected()) {
+        this.safeSend(this.astroSocket, { UserId: `WA${astroId}`, Type: "ping" });
+      }
+    }, PING_INTERVAL_MS);
+  };
+
+  startAstroPongCheck = (astroId) => {
+    this.astroLastPong = Date.now();
+    if (this.astroPongChecker) clearInterval(this.astroPongChecker);
+
+    this.astroPongChecker = setInterval(() => {
+      if (!this.isAstroConnected()) return;
+      if (isHidden()) {
+        this.astroLastPong = Date.now();
+        return;
+      }
+      const diff = Date.now() - this.astroLastPong;
+      if (diff > PONG_TIMEOUT_MS) {
+        LOG.astro(`no pong for ${PONG_TIMEOUT_MS / 1000}s → reconnect`);
+        const s = this.astroSocket;
+        if (s) {
+          s.onclose = null;
+          s.close();
+          if (this.astroSocket === s) this.astroSocket = null;
+        }
+        this.clearAstroIntervals();
+        if (!this.astroReconnectInterval) this.reconnectAstro(astroId);
+      }
+    }, PONG_CHECK_INTERVAL_MS);
+  };
+
+  clearAstroIntervals = () => {
+    if (this.astroPingInterval) clearInterval(this.astroPingInterval);
+    if (this.astroPongChecker) clearInterval(this.astroPongChecker);
+    this.astroPingInterval = null;
+    this.astroPongChecker = null;
+  };
+
+  /* ─── visibility: legacy behavior — refresh ping only if OPEN, reconnect if CLOSED ─── */
+
+  setupVisibilityHandler = (userId, astroId) => {
+    if (userId != null && userId !== "") this._visibilityUserId = String(userId);
+    if (astroId != null && astroId !== "") this._visibilityAstroId = String(astroId);
+    if (!this._visibilityBound) this._bindVisibilityHandlers();
+  };
+
+  _onTabVisible = () => {
+    if (this._visibilityUserId) {
+      if (this.isUserConnected()) {
+        LOG.user("tab visible — already connected, refreshing ping");
+        this.safeSend(this.userSocket, {
+          UserId: `WU${this._visibilityUserId}`,
+          Type: "ping",
+        });
+        this.userLastPong = Date.now();
+      } else if (
+        !this.userSocket ||
+        this.userSocket.readyState === WebSocket.CLOSED
+      ) {
+        if (this.userReconnectInterval) {
+          clearInterval(this.userReconnectInterval);
+          this.userReconnectInterval = null;
+        }
+        this.userReconnectAttempts = 0;
+        LOG.user("tab visible — socket closed, reconnecting");
+        this.ensureUserConnected(this._visibilityUserId, "visibility-visible");
+      }
+    }
+
+    if (this._visibilityAstroId) {
+      if (this.isAstroConnected()) {
+        LOG.astro("tab visible — already connected, refreshing ping");
+        this.safeSend(this.astroSocket, {
+          UserId: `WA${this._visibilityAstroId}`,
+          Type: "ping",
+        });
+        this.astroLastPong = Date.now();
+      } else if (
+        !this.astroSocket ||
+        this.astroSocket.readyState === WebSocket.CLOSED
+      ) {
+        if (this.astroReconnectInterval) {
+          clearInterval(this.astroReconnectInterval);
+          this.astroReconnectInterval = null;
+        }
+        this.astroReconnectAttempts = 0;
+        LOG.astro("tab visible — socket closed, reconnecting");
+        this.ensureAstroConnected(this._visibilityAstroId, "visibility-visible");
+      }
+    }
+  };
+
+  _bindVisibilityHandlers = () => {
+    if (this._visibilityBound) return;
+    this._visibilityBound = true;
+
+    this._visibilityHandler = () => {
+      if (document.visibilityState === "visible") {
+        this._onTabVisible();
+      }
+    };
+
+    document.addEventListener("visibilitychange", this._visibilityHandler);
+  };
+
+  removeVisibilityHandler = () => {
+    if (this._visibilityHandler) {
+      document.removeEventListener("visibilitychange", this._visibilityHandler);
+    }
+    this._visibilityHandler = null;
+    this._visibilityBound = false;
+    this._visibilityUserId = null;
+    this._visibilityAstroId = null;
   };
 
   _clearUserConnectTimeout = () => {
@@ -252,290 +766,39 @@ class SocketService {
       this._astroConnectTimeout = null;
     }
   };
-  startUserPing = (userId) => {
-    if (this.userPingInterval) clearInterval(this.userPingInterval);
-
-    this.userPingInterval = setInterval(() => {
-      if (this.userSocket?.readyState === WebSocket.OPEN) {
-        this.safeSend(this.userSocket, {
-          UserId: `WU${userId}`,
-          Type: "ping",
-        });
-      }
-    }, 5000);
-  };
-
-  startUserPongCheck = () => {
-    this.userLastPong = Date.now();
-    if (this.userPongChecker) clearInterval(this.userPongChecker);
-
-    this.userPongChecker = setInterval(() => {
-      if (Date.now() - this.userLastPong > PONG_TIMEOUT_MS) {
-        console.warn("❌ USER no pong → reconnect");
-        this.userSocket?.close();
-      }
-    }, 5000);  };
-
-  clearUserIntervals = () => {
-    if (this.userPingInterval) clearInterval(this.userPingInterval);
-    if (this.userPongChecker) clearInterval(this.userPongChecker);
-    this.userPingInterval = null;
-    this.userPongChecker = null;
-  };
-
-  reconnectUser = (userId) => {
-    if (this.userReconnectInterval) return;
-
-    this.userReconnectInterval = setInterval(() => {
-      if (this.userReconnectAttempts >= this.maxReconnectAttempts) {
-        clearInterval(this.userReconnectInterval);
-        this.userReconnectInterval = null;
-        console.warn("❌ USER reconnect max attempts reached");
-        return;
-      }
-
-      this.userReconnectAttempts += 1;
-      console.log("🔄 Reconnecting USER...");
-      this.connectUser(userId);
-
-      if (this.userSocket?.readyState === WebSocket.OPEN) {
-        clearInterval(this.userReconnectInterval);
-        this.userReconnectInterval = null;
-        this.userReconnectAttempts = 0;
-      }
-    }, 2000);
-  };
-
-  sendUser = (data) => {
-    this.safeSend(this.userSocket, data);
-  };
-
-  connectAstro = (astroId) => {
-    if (!astroId || typeof window === "undefined") return;
-
-    const state = this.astroSocket?.readyState;
-    if (this._activeAstroId === String(astroId) && state === WebSocket.OPEN) {
-      return;
-    }
-
-    if (state === WebSocket.CONNECTING) {
-      this._closeAstroSocket();
-    }
-
-    this._clearAstroConnectTimeout();
-    this._closeAstroSocket();
-
-    this._activeAstroId = String(astroId);
-    const wsUrl = this.getWsUrl();
-    console.log("🔌 Connecting ASTRO websocket:", wsUrl);
-
-    this.astroSocket = new WebSocket(wsUrl);
-
-    this._astroConnectTimeout = setTimeout(() => {
-      if (this.astroSocket?.readyState === WebSocket.CONNECTING) {
-        console.warn("⏱️ ASTRO websocket connect timeout");
-        this._closeAstroSocket();
-        this.reconnectAstro(astroId);
-      }
-    }, CONNECT_TIMEOUT_MS);
-
-    this.astroSocket.onopen = () => {
-      this._clearAstroConnectTimeout();
-      console.log("🟢 ASTRO CONNECTED");
-      this.astroReconnectAttempts = 0;
-      this.astroLastPong = Date.now();
-      this.safeSend(this.astroSocket, {
-        UserId: `WA${astroId}`,
-        OnlineType: "0",
-        Status: "Online",
-      });
-
-      this.startAstroPing(astroId);
-      this.startAstroPongCheck(astroId);
-
-      if (this.astroReconnectInterval) {
-        clearInterval(this.astroReconnectInterval);
-        this.astroReconnectInterval = null;
-      }
-    };
-
-    this.astroSocket.onmessage = (event) => {
-      try {
-        const parsed = JSON.parse(event.data);
-        if (parsed?.Type === "pong") {
-          this.astroLastPong = Date.now();
-          return;
-        }
-
-        if (parsed?.messageId) {
-          this.safeSend(this.astroSocket, {
-            Type: "ACK",
-            messageId: parsed.messageId,
-          });
-        }
-
-        this.notifyAstroListeners(parsed);
-      } catch (e) {
-        console.error("❌ Astro parse error", e);
-      }
-    };
-
-    this.astroSocket.onclose = (event) => {
-      this._clearAstroConnectTimeout();
-      console.log("🔴 ASTRO DISCONNECTED", event?.code || "");
-      this.clearAstroIntervals();
-      if (this._activeAstroId === String(astroId)) {
-        this.reconnectAstro(astroId);
-      }
-    };
-
-    this.astroSocket.onerror = (event) => {
-      console.warn("❌ ASTRO SOCKET ERROR", event?.type || "");
-    };
-  };
-  startAstroPing = (astroId) => {
-    if (this.astroPingInterval) clearInterval(this.astroPingInterval);
-
-    this.astroPingInterval = setInterval(() => {
-      if (this.astroSocket?.readyState === WebSocket.OPEN) {
-        this.safeSend(this.astroSocket, {
-          UserId: `WA${astroId}`,
-          Type: "ping",
-        });
-      }
-    }, 5000);
-  };
-
-  startAstroPongCheck = () => {
-    this.astroLastPong = Date.now();
-    if (this.astroPongChecker) clearInterval(this.astroPongChecker);
-
-    this.astroPongChecker = setInterval(() => {
-      if (Date.now() - this.astroLastPong > PONG_TIMEOUT_MS) {
-        console.warn("❌ ASTRO no pong → reconnect");
-        this.astroSocket?.close();
-      }
-    }, 5000);  };
-
-  clearAstroIntervals = () => {
-    if (this.astroPingInterval) clearInterval(this.astroPingInterval);
-    if (this.astroPongChecker) clearInterval(this.astroPongChecker);
-    this.astroPingInterval = null;
-    this.astroPongChecker = null;
-  };
-
-  reconnectAstro = (astroId) => {
-    if (this.astroReconnectInterval) return;
-
-    this.astroReconnectInterval = setInterval(() => {
-      if (this.astroReconnectAttempts >= this.maxReconnectAttempts) {
-        clearInterval(this.astroReconnectInterval);
-        this.astroReconnectInterval = null;
-        console.warn("❌ ASTRO reconnect max attempts reached");
-        return;
-      }
-
-      this.astroReconnectAttempts += 1;
-      console.log("🔄 Reconnecting ASTRO...");
-      this.connectAstro(astroId);
-
-      if (this.astroSocket?.readyState === WebSocket.OPEN) {
-        clearInterval(this.astroReconnectInterval);
-        this.astroReconnectInterval = null;
-        this.astroReconnectAttempts = 0;
-      }
-    }, 2000);
-  };
-
-  sendAstro = (data) => {
-    this.safeSend(this.astroSocket, data);
-  };
-
-  setupVisibilityHandler = (userId, astroId) => {
-    this.removeVisibilityHandler();
-
-    this._visibilityUserId = userId ? String(userId) : null;
-    this._visibilityAstroId = astroId ? String(astroId) : null;
-
-    const reconnectIfNeeded = () => {
-      if (
-        this._visibilityUserId &&
-        (!this.userSocket || this.userSocket.readyState !== WebSocket.OPEN)
-      ) {
-        console.log("🔄 Reconnecting USER socket");
-        this.connectUser(this._visibilityUserId);
-      }
-
-      if (
-        this._visibilityAstroId &&
-        (!this.astroSocket || this.astroSocket.readyState !== WebSocket.OPEN)
-      ) {
-        console.log("🔄 Reconnecting ASTRO socket");
-        this.connectAstro(this._visibilityAstroId);
-      }
-    };
-
-    this._visibilityHandler = () => {
-      if (document.visibilityState === "visible") reconnectIfNeeded();
-    };
-
-    this._pageshowHandler = () => reconnectIfNeeded();
-
-    this._onlineHandler = () => reconnectIfNeeded();
-
-    this._focusHandler = () => reconnectIfNeeded();
-
-    document.addEventListener("visibilitychange", this._visibilityHandler);
-    window.addEventListener("pageshow", this._pageshowHandler);
-    window.addEventListener("online", this._onlineHandler);
-    window.addEventListener("focus", this._focusHandler);
-  };
-
-  removeVisibilityHandler = () => {
-    if (this._visibilityHandler) {
-      document.removeEventListener("visibilitychange", this._visibilityHandler);
-      this._visibilityHandler = null;
-    }
-    if (this._pageshowHandler) {
-      window.removeEventListener("pageshow", this._pageshowHandler);
-      this._pageshowHandler = null;
-    }
-    if (this._onlineHandler) {
-      window.removeEventListener("online", this._onlineHandler);
-      this._onlineHandler = null;
-    }
-    if (this._focusHandler) {
-      window.removeEventListener("focus", this._focusHandler);
-      this._focusHandler = null;
-    }    this._visibilityUserId = null;
-    this._visibilityAstroId = null;
-  };
 
   disconnectUser = (clearActiveId = true) => {
+    LOG.user("disconnectUser", { clearActiveId });
     this._clearUserConnectTimeout();
-    this._closeUserSocket();
     if (this.userReconnectInterval) {
       clearInterval(this.userReconnectInterval);
       this.userReconnectInterval = null;
     }
-
+    this._userIntentionalClose = true;
+    this._detachUserSocket();
     this.userReconnectAttempts = 0;
+    this._userSessionInitialized = false;
+    this._pendingUserMessages = [];
     if (clearActiveId) this._activeUserId = null;
   };
 
   disconnectAstro = (clearActiveId = true) => {
+    LOG.astro("disconnectAstro", { clearActiveId });
     this._clearAstroConnectTimeout();
-    this._closeAstroSocket();
     if (this.astroReconnectInterval) {
       clearInterval(this.astroReconnectInterval);
       this.astroReconnectInterval = null;
     }
-
+    this._astroIntentionalClose = true;
+    this._detachAstroSocket();
     this.astroReconnectAttempts = 0;
+    this._astroSessionInitialized = false;
+    this._pendingAstroMessages = [];
     if (clearActiveId) this._activeAstroId = null;
   };
 
   disconnectAll = () => {
+    LOG.user("disconnectAll");
     this.removeVisibilityHandler();
     this.disconnectUser();
     this.disconnectAstro();

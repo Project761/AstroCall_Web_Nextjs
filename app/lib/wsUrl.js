@@ -3,11 +3,6 @@ const DEV_WS_URL = "ws://astrocallapi.com/api/Chat";
 
 export { PRODUCTION_WS_URL, DEV_WS_URL };
 
-export function resolveWsUrl() {
-  return getWsUrlCandidates()[0];
-}
-
-/** Ordered list — mobile tries each until one connects */
 export function getWsUrlCandidates() {
   if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_WS_URL) {
     return [process.env.NEXT_PUBLIC_WS_URL];
@@ -21,13 +16,16 @@ export function getWsUrlCandidates() {
     hostname === "www.astrocall.live" ||
     hostname.endsWith(".astrocall.live");
 
-  // HTTPS / production domain — secure websocket only (Android blocks ws:// on https)
   if (protocol === "https:" || isProdHost) {
     return [PRODUCTION_WS_URL];
   }
 
-  // HTTP dev (localhost, LAN IP on phone) — insecure ws works
-  return [DEV_WS_URL, PRODUCTION_WS_URL];
+  // Legacy React app used only dev URL on localhost — no immediate prod fallback
+  return [DEV_WS_URL];
+}
+
+export function resolveWsUrl() {
+  return getWsUrlCandidates()[0];
 }
 
 export function getStoredUserId() {
@@ -35,9 +33,29 @@ export function getStoredUserId() {
   return localStorage.getItem("UserLoginId") || "";
 }
 
+export function getStoredAstroId() {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("AstroLoginId") || "";
+}
+
 export function hasUserAuthSession() {
   if (typeof window === "undefined") return false;
   return Boolean(localStorage.getItem("LoginTokenData") && getStoredUserId());
+}
+
+export function hasAstroAuthSession() {
+  if (typeof window === "undefined") return false;
+  const token = localStorage.getItem("LoginTokenData");
+  const astroId = getStoredAstroId();
+  if (!token || !astroId) return false;
+  try {
+    const data = JSON.parse(token);
+    // User accounts use Astro === "0"; astrologer accounts have a real Astro id
+    const isUserAccount = data?.Astro === "0" || data?.Astro === 0;
+    return !isUserAccount && Boolean(astroId);
+  } catch {
+    return Boolean(astroId);
+  }
 }
 
 export const USER_SESSION_EVENT = "astrocall:user-session";

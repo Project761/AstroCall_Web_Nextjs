@@ -177,15 +177,15 @@ const Profile = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      getLanguages();
-      getSkills();
-      GetDropDownData_DregeeDiploma();
-      GetDropDownData_Qualification();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [getLanguages, getSkills, GetDropDownData_DregeeDiploma, GetDropDownData_Qualification]);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     getLanguages();
+  //     getSkills(); 
+  //     GetDropDownData_DregeeDiploma();
+  //     GetDropDownData_Qualification();
+  //   }, 0);aW
+  //   return () => clearTimeout(timer);
+  // }, [getLanguages, getSkills, GetDropDownData_DregeeDiploma, GetDropDownData_Qualification]);
 
   useEffect(() => {
     if (loginAstrologerData) {

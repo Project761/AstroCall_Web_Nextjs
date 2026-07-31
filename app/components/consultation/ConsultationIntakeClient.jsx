@@ -27,6 +27,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import socketService from "@/app/services/socketService";
+import { toastifyInfo } from "@/app/utils/utility";
 import Image from "next/image";
 import { ORANGE, CREAM, CREAM_ALT, PEACH } from "@/app/lib/siteTheme";
 import { toCdnSrcOrFallback } from "@/app/lib/cdnImage";
@@ -376,10 +377,6 @@ export default function ConsultationIntakeClient({ variant = "chat" }) {
       Insert_UserChat_Data();
       return;
     }
-    if (!socketService.userSocket || socketService.userSocket.readyState !== WebSocket.OPEN) {
-      console.warn("WebSocket not connected yet!");
-      return;
-    }
     const payload = {
       AstroId: `WA${AstroId}`,
       UserId: `WU${UserLoginId}`,
@@ -388,7 +385,24 @@ export default function ConsultationIntakeClient({ variant = "chat" }) {
       ChatUserBioID: ChatUserBioID,
       messageId: "NewRequest",
     };
-    socketService.sendUser(payload);
+
+    if (!socketService.isUserConnected()) {
+      socketService.ensureUserConnected(UserLoginId, "ConsultationIntakeClient");
+      const sent = socketService.sendUser(payload);
+      if (!sent) {
+        toastifyInfo("Connecting… your request will be sent shortly.");
+        const retry = setInterval(() => {
+          if (socketService.sendUser(payload)) {
+            clearInterval(retry);
+            UpDate_CHATINTAKEFORM_Data();
+          }
+        }, 1500);
+        setTimeout(() => clearInterval(retry), 30000);
+        return;
+      }
+    } else {
+      socketService.sendUser(payload);
+    }
     UpDate_CHATINTAKEFORM_Data();
   };
 
@@ -634,14 +648,14 @@ export default function ConsultationIntakeClient({ variant = "chat" }) {
                   <>
                     <div className="flex flex-col items-center text-center">
                       <div className="relative">
-                        <Image
-                          src={toCdnSrcOrFallback(astro?.AvatarUrl || astroimage)}
+                        {/* <Image
+                          src={toCdnSrcOrFallback(astro?.AvatarUrl || astroimage || "/images/profile pic.webp")}
                           alt={astro?.DisplayName || astroname || "Astrologer"}
                           width={88}
                           height={88}
                           className="h-20 w-20 rounded-2xl object-cover ring-4 ring-orange-50 sm:h-[88px] sm:w-[88px]"
                           unoptimized={!!(astro?.AvatarUrl || astroimage)}
-                        />
+                        /> */}
                         <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 ring-2 ring-white">
                           <span className="h-2 w-2 rounded-full bg-white" />
                         </span>
@@ -969,14 +983,14 @@ export default function ConsultationIntakeClient({ variant = "chat" }) {
           {astrodata?.map((card, index) => (
             <div key={index} className="w-full max-w-sm rounded-2xl border border-orange-100 bg-white p-6 text-center shadow-xl">
               <div className="mx-auto h-1 w-16 rounded-full" style={{ backgroundColor: ORANGE }} />
-              <Image
+              {/* <Image
                 src={card?.AvatarUrl ? toCdnSrcOrFallback(card?.AvatarUrl) : "/images/profile pic.webp"}
                 alt={card?.DisplayName || "Astrologer"}
                 width={80}
                 height={80}
                 className="mx-auto mt-4 h-20 w-20 rounded-2xl object-cover ring-2 ring-orange-100"
                 unoptimized={!!card?.AvatarUrl}
-              />
+              /> */}
               <h2 className="font-heading mt-3 text-lg font-bold text-[#1A1A1A]">{card?.DisplayName}</h2>
               <p className="font-body mt-2 text-sm leading-relaxed text-gray-600">
                 If you join the waitlist, we will notify <span className="font-semibold text-[#FF5C00]">{card?.DisplayName}</span> to take the session, if possible.
@@ -1027,28 +1041,28 @@ export default function ConsultationIntakeClient({ variant = "chat" }) {
             <h2 className="font-heading text-center text-lg font-bold text-[#1A1A1A]">Waitlist Joined!</h2>
             <div className="mt-5 flex items-center justify-center gap-4">
               <div className="flex flex-col items-center">
-                <Image
+                {/* <Image
                   src={loginUserData?.ProfilePic ? toCdnSrcOrFallback(loginUserData?.ProfilePic) : "/images/profile pic.webp"}
                   alt="User"
                   width={48}
                   height={48}
                   className="h-12 w-12 rounded-full border-2 border-orange-100 object-cover"
                   unoptimized={!!loginUserData?.ProfilePic}
-                />
+                /> */}
                 <p className="mt-1 text-xs font-medium text-gray-600">
                   {loginUserData?.FirstName} {loginUserData?.LastName}
                 </p>
               </div>
               <ConsultIcon className="text-lg text-[#FF5C00]" />
               <div className="flex flex-col items-center">
-                <Image
+                {/* <Image
                   src={astroimage ? toCdnSrcOrFallback(astroimage) : "/images/profile pic.webp"}
                   alt={astroname || "Astrologer"}
                   width={48}
                   height={48}
                   className="h-12 w-12 rounded-full border-2 border-orange-100 object-cover"
                   unoptimized={!!astroimage}
-                />
+                /> */}
                 <p className="mt-1 text-xs font-semibold text-[#1A1A1A]">{astroname}</p>
               </div>
             </div>

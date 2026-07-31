@@ -18,6 +18,7 @@ import InsufficientBalancePopup from "@/app/components/InsufficientBalancePopup.
 import AuthModal from "../components/AuthModal";
 import PageBanner from "@/app/components/PageBanner";
 import { PAGE_BANNER_IMAGES } from "@/app/lib/siteTheme";
+import { el } from "date-fns/locale";
 
 const ORANGE = "#FF5C00";
 const PEACH = "#FFF9F1";
@@ -26,7 +27,7 @@ const MUTED = "#64748B";
 const BLUE = "#3B82F6";
 const INITIAL_VISIBLE = 9;
 const LOAD_MORE = 9;
- 
+
 const CATEGORIES = [
   { id: "all", label: "All Astrologers", icon: FaUsers },
   { id: "love", label: "Love & Relationship", icon: FaHeart },
@@ -233,7 +234,7 @@ function AstrologerCard({ card, onlineStatus, onPrimary, onSecondary, onProfile,
 }
 
 export default function TalkToAstrologersClient() {
-  const { loginUserData } = useMenuContext();
+  const { loginUserData, popupData } = useMenuContext();
   const router = useRouter();
   const UserLoginId = typeof window !== "undefined" ? localStorage.getItem("UserLoginId") || "" : "";
 
@@ -323,14 +324,32 @@ export default function TalkToAstrologersClient() {
   const onlineCount = countOnline(displayAstrologers, chatOnlineStatus);
   const languages = useMemo(() => extractLanguages(displayAstrologers), [displayAstrologers]);
 
+  //  const loginOrChatModal = (card) => {
+  //     if (popupData) {
+  //       toastifyInfo("You already have a pending request. Please wait for the astrologer to respond.");
+  //     }
+  //     else {
+  //       router.push(`/chat-to-astrologers/user-chat-home?AstroId=${card?.ID}&Type=chat&IsChat=${card?.IsChat}`);
+  //     }
+  //   };
+
   const loginOrChatModal = (card) => {
     try {
       if (typeof window !== "undefined" && localStorage.getItem("UserLoginId")) {
-        router.push(`/talk-to-astrologers/user-talk-home?AstroId=${card?.ID}&Type=call&IsCall=${card?.IsCall}`);
+        if (popupData) {
+          toastifyInfo("You already have a pending request. Please wait for the astrologer to respond.");
+        } else {
+          router.push(`/talk-to-astrologers/user-talk-home?AstroId=${card?.ID}&Type=call&IsCall=${card?.IsCall}`);
+        }
       }
     } catch (error) {
       if (typeof window !== "undefined" && localStorage.getItem("UserLoginId") && card?.ID) {
-        window.location.href = `/talk-to-astrologers/user-talk-home?AstroId=${card?.ID}&Type=call&IsCall=${card?.IsCall}`;
+        if (popupData) {
+          toastifyInfo("You already have a pending request. Please wait for the astrologer to respond.");
+        } else {
+          // router.push(`/talk-to-astrologers/user-talk-home?AstroId=${card?.ID}&Type=call&IsCall=${card?.IsCall}`);
+          window.location.href = `/talk-to-astrologers/user-talk-home?AstroId=${card?.ID}&Type=call&IsCall=${card?.IsCall}`;
+        }
       }
     }
   };
@@ -434,7 +453,7 @@ export default function TalkToAstrologersClient() {
         </ul>
       </PageBanner>
 
-      <section className="border-b border-gray-100 bg-white py-5 sm:py-6">
+      {/* <section className="border-b border-gray-100 bg-white py-5 sm:py-6">
         <div className="main-container px-4">
           <h2 className="mb-4 text-sm font-bold sm:text-base" style={{ color: TEXT }}>Popular Categories</h2>
           <div className="flex gap-3 overflow-x-auto pb-1">
@@ -450,9 +469,56 @@ export default function TalkToAstrologersClient() {
             })}
           </div>
         </div>
+      </section> */}
+
+      <section className="bg-white py-2">
+        <div className="main-container px-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h2
+              className="text-lg font-bold sm:text-xl"
+              style={{ color: TEXT }}
+            >
+              Popular Categories
+            </h2>
+          </div>
+
+          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+            {CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = activeCategory === cat.id;
+
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setActiveCategory(cat.id);
+                    setVisibleCount(INITIAL_VISIBLE);
+                  }}
+                  className={`group flex shrink-0 items-center gap-2 rounded-full border  px-3 py-2 transition-all duration-300
+            ${isActive
+                      ? "border-[#FF5C00] bg-[#FF5C00] text-white shadow-lg"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-[#FF5C00] hover:text-[#FF5C00]"
+                    }`}
+                >
+                  <Icon
+                    size={14}
+                    className={`transition  ${isActive
+                      ? "text-white"
+                      : "text-gray-500 group-hover:text-[#FF5C00]"
+                      }`}
+                  />
+
+                  <span className="whitespace-nowrap text-[12px] font-medium">
+                    {cat.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
-      <div className="main-container px-4 pb-10 pt-10 sm:pt-12">
+      <div className="main-container px-4 pb-10 pt-8 sm:pt-4">
         <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
           <button type="button" onClick={() => setMobileFilterOpen(true)} className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-semibold text-gray-700 lg:hidden">
             <FaFilter size={14} className="text-[#FF5C00]" /> Filters

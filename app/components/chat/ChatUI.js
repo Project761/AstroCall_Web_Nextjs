@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import {
   ArrowLeft, Phone, MoreVertical, BadgeCheck, Wallet, Clock, Timer, Power,
   AlertTriangle, Paperclip, Smile, Send, FileText, Camera, ImageIcon, Star, Gift, Lock, CheckCheck,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -73,8 +74,8 @@ export default function ChatUI({ role = "user", layoutMode = "overlay" }) {
   const router = useRouter();
   const params = useSearchParams();
 
-  const { popupData, UserCheckEndedChat, setUserCheckEndedChat, loginAstrologerData, astroParsedData, astroCheckEndedChat, setAstroCheckEndedChat, userCalculateTime, AstroCalculateTime, setPopupData, loginUserData } = useMenuContext();
-
+  const { popupData, UserCheckEndedChat, setUserCheckEndedChat, loginAstrologerData, astroParsedData, astroCheckEndedChat, setAstroCheckEndedChat, userCalculateTime, AstroCalculateTime, setPopupData, loginUserData, GetAgoraKey } = useMenuContext();
+  const UserLoginId = typeof window !== 'undefined' && localStorage.getItem("UserLoginId") ? localStorage.getItem("UserLoginId") : "";
 
 
   const [chatCompletedState, setChatCompletedState] = useState("");
@@ -294,12 +295,14 @@ export default function ChatUI({ role = "user", layoutMode = "overlay" }) {
       if (!cancelled) agoraRTM.reconnect();
     };
 
+    const agoraAppId = GetAgoraKey || "6b24a712e983467b9ace351f51518f08";
+
     const initRTM = async () => {
       setRtmStatus("connecting");
       setIsReady(false);
 
       const ok = await agoraRTM.init({
-        appId: "6b24a712e983467b9ace351f51518f08",
+        appId: agoraAppId,
         uid: myUid,
         channelName: channel,
         token: roleData.token,
@@ -337,7 +340,7 @@ export default function ChatUI({ role = "user", layoutMode = "overlay" }) {
         setIsReady(false);
       });
     };
-  }, [channel, roleData.token, roleData.loginId, role, appendLiveMessage]);
+  }, [channel, roleData.token, roleData.loginId, role, appendLiveMessage, GetAgoraKey]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -746,12 +749,17 @@ I'm ready for the consultation.`;
   };
 
   // Handle send message
-  const handleSend = () => {
+  const handleSend = async () => {
     const message = inputValue.trim();
-    if (message && !isSending) {
-      sendMessage(message);
-      setInputValue("");
-    }
+
+    if (!message || isSending) return;
+
+    await sendMessage(message);
+    setInputValue("");
+
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
   };
 
   // Handle key press
@@ -784,10 +792,15 @@ I'm ready for the consultation.`;
   };
 
   const getAvatarSrc = (path) => {
-    if (!path) return null;
+    if (!path || typeof path !== "string") return null;
     const cleaned = path.replace(/\\/g, "/");
     return cleaned.startsWith("http") ? cleaned : `https://${cleaned}`;
   };
+  // const getAvatarSrc = (path) => {
+  //   if (!path) return null;
+  //   const cleaned = path.replace(/\\/g, "/");
+  //   return cleaned.startsWith("http") ? cleaned : `https://${cleaned}`;
+  // };
 
   const walletBalance = loginUserData?.WalletAmt ?? popupData?.WalletAmt ?? 0;
   const chatRate = headerInfo?.rate || popupData?.Rate || roleData.contextData?.Rate || 0;
@@ -1022,6 +1035,37 @@ I'm ready for the consultation.`;
   const displayName = headerInfo?.name || (role === "user" ? (storedAstroName || popupData?.AstroName || "Astrologer") : (storedUserName || astroParsedData?.UserName || "User"));
   const avatarSrc = getAvatarSrc(headerInfo?.avatar);
 
+
+  const [plansdata, setplansdata] = useState([]);
+
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [showRechargeStatus, setShowRechargeStatus] = useState(false);
+
+  useEffect(() => {
+    if (UserLoginId) {
+      Get_Data_WalletPackage();
+    }
+  }, [UserLoginId]);
+
+  const Get_Data_WalletPackage = useCallback(async () => {
+    try {
+      const payload = { IsActive: "1", };
+      const res = await postWithToken("WalletPackage/GetData_WalletPackage", payload);
+      if (Array.isArray(res)) {
+        const sortedPlans = res.sort((a, b) => Number(a.PackageAmt) - Number(b.PackageAmt));
+        setplansdata(sortedPlans);
+      } else {
+        setplansdata([]);
+      }
+    } catch (error) {
+      console.error("Wallet Package Error:", error);
+      setplansdata([]);
+    }
+  }, []);
+
+
+
   return (
     <div className={pageOuterClass}>
       {!isPageLayout && <div className="absolute inset-0 bg-black/10" />}
@@ -1158,7 +1202,7 @@ I'm ready for the consultation.`;
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
               <span>Wallet low · Est. time left: {formatTimeLeftShort(displayTimeLeft)}</span>
             </div>
-            <button type="button" onClick={() => router.push("/plans")} className="shrink-0 font-semibold text-[#FF5C00] hover:underline">
+            <button type="button" onClick={() => {setShowRechargeStatus(false)}} className="shrink-0 font-semibold text-[#FF5C00] hover:underline">
               Recharge Now &gt;
             </button>
           </div>
@@ -1260,24 +1304,70 @@ I'm ready for the consultation.`;
         </div>
 
         {/* ── Recharge strip (bottom) ── */}
+        {/* {showLowWalletBanner && ( */}
         {showLowWalletBanner && (
-          <div className="shrink-0 border-t border-red-100 bg-[#FFF5F5] px-3 py-2.5">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="flex items-center gap-1 text-xs font-semibold text-red-600">
-                  <Wallet className="h-3.5 w-3.5" /> Wallet Balance: ₹{walletBalance}
-                </p>
-                <p className="text-[10px] text-red-400">Chat will end in less than {Math.max(1, Math.ceil(displayTimeLeft / 60))} minute{displayTimeLeft > 60 ? "s" : ""}.</p>
+          !showRechargeStatus ?
+            <>
+
+              <div className="relative rounded-sm border border-orange-200 bg-white p-4 shadow-sm">
+                <button
+                  onClick={() => { setShowRechargeStatus(true) }}
+                  className="absolute left-2 -top-4 z-20 flex h-7 w-8 items-center justify-center rounded-full border border-red-200 bg-white text-red-600 shadow-lg transition-all duration-200 hover:scale-105 hover:bg-red-50 hover:text-red-500 hover:shadow-xl"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+
+                {/* Close Button */}
+
+                <div className="flex flex-col gap-4 lg:flex-row">
+                  <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-orange-300 scrollbar-track-orange-100">
+                    <div className="flex min-w-max gap-3 py-2">
+                      {plansdata?.map((item) => (
+                        <div
+                          key={item.WalletPackageID}
+                          className="relative min-w-[55px] rounded-lg border border-orange-200 bg-white p-2 shadow-sm transition hover:border-orange-500 hover:shadow-md"
+                        >
+                          {/* Popular Badge */}
+                          {Number(item.PackageAmt) === 200 && (
+                            <span className="absolute -top-2 right-2 rounded bg-orange-500 px-2 py-0.5 text-[9px] font-bold uppercase text-white">
+                              Popular
+                            </span>
+                          )}
+
+                          <h3 className="text-center text-xl font-bold text-gray-800">
+                            ₹{item.PackageAmt}
+                          </h3>
+
+                          <p className="mt-1 text-center text-xs font-medium text-orange-600">
+                            +₹{item.BonusAmt} Bonus
+                          </p>
+
+                          <button
+                            className="mt-2 w-full rounded-md bg-gradient-to-r from-orange-500 to-orange-600 py-1.5 text-[11px] font-semibold text-white"
+                            onClick={() => {
+                              setSelectedPlan(item);
+                              setShowRechargeModal(true);
+                            }}
+                          >
+                            Choose
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => router.push("/plans")}
-                className="shrink-0 rounded-lg bg-red-500 px-2.5 py-2 text-[10px] font-bold leading-tight text-white hover:bg-red-600 sm:text-[11px]"
-              >
-                Recharge ₹99<br className="sm:hidden" /> Get ₹99 Extra
+            </>
+            :
+            <div className="flex shrink-0 items-center justify-between gap-2 bg-[#FFF0E6] px-3 py-2 text-[11px]">
+              <div className="flex items-center gap-1.5 text-[#FF5C00]">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <span>Wallet low · Est. time left: {formatTimeLeftShort(displayTimeLeft)}</span>
+              </div>
+              <button type="button" onClick={() => { setShowRechargeStatus(false) }} className="shrink-0 font-semibold text-[#FF5C00] hover:underline">
+                Recharge Now &gt;
               </button>
             </div>
-          </div>
         )}
 
         {/* ── Input row ── */}
@@ -1438,6 +1528,71 @@ I'm ready for the consultation.`;
           activeTab={activeTab}
           setActiveTab={setActiveTab}
         />
+      )}
+
+      {showRechargeModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+          <div className="w-[95%] max-w-md rounded-2xl bg-white shadow-2xl">
+
+            <div className="flex items-center justify-between border-b p-4">
+              <h2 className="text-lg font-bold">
+                Recharge Wallet
+              </h2>
+
+              <button
+                onClick={() => setShowRechargeModal(false)}
+                className="text-xl font-bold text-gray-500 hover:text-red-500"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5">
+
+              <div className="rounded-xl bg-orange-50 p-4 text-center">
+                <h3 className="text-3xl font-bold text-orange-600">
+                  ₹{selectedPlan?.PackageAmt}
+                </h3>
+
+                <p className="mt-1 text-sm text-orange-500">
+                  Bonus ₹{selectedPlan?.BonusAmt}
+                </p>
+              </div>
+
+              <div className="mt-5">
+                <p className="mb-3 text-sm font-semibold">
+                  Select Payment Method
+                </p>
+
+                <div className="space-y-3">
+
+                  <button className="flex w-full items-center justify-between rounded-xl border p-3 hover:border-orange-500">
+                    <span>📱 UPI</span>
+                    <span>›</span>
+                  </button>
+
+                  <button className="flex w-full items-center justify-between rounded-xl border p-3 hover:border-orange-500">
+                    <span>💙 PhonePe</span>
+                    <span>›</span>
+                  </button>
+
+                  <button className="flex w-full items-center justify-between rounded-xl border p-3 hover:border-orange-500">
+                    <span>🟦 Paytm</span>
+                    <span>›</span>
+                  </button>
+
+                  <button className="flex w-full items-center justify-between rounded-xl border p-3 hover:border-orange-500">
+                    <span>💳 Cards / Net Banking</span>
+                    <span>›</span>
+                  </button>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
       )}
     </div>
   );

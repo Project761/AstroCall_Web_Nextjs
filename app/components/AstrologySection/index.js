@@ -89,17 +89,16 @@ export default function AstrologySection() {
 
         {/* ── Hero heading ── */}
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-[#111] mb-4 leading-snug">
-            Your Gateway to{" "}
+          <h2 className="text-3xl md:text-4xl font-extrabold text-[#111] mb-4 leading-snug">
+            India&apos;s Trusted Platform for{" "}
             <span className="text-[#FF5C00] underline underline-offset-4 decoration-[#FF5C00]">
-              Cosmic Wisdom
+              Vedic Astrology
             </span>{" "}
-            and Astrological Excellence
-          </h1>
+            &amp; Online Consultations
+          </h2>
           <p className="text-[#666] text-sm md:text-base leading-relaxed">
-            Discover the profound mysteries of the universe through authentic Vedic
-            astrology, personalized consultations, and time-tested cosmic guidance
-            that transforms lives across the globe.
+            Connect with verified astrologers for kundli matching, horoscope predictions,
+            career guidance, and personalised remedies — backed by authentic Vedic science.
           </p>
         </div>
 

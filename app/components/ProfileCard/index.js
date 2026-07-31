@@ -14,6 +14,7 @@ import {
   ORANGE,
 } from "@/app/lib/userPanelNav";
 import { CREAM, CREAM_ALT, PEACH } from "@/app/lib/siteTheme";
+import { UpdateWebFCMToken } from "@/app/utils/api";
 
 function getProfileImage(user) {
   if (user?.ProfilePic) {
@@ -31,7 +32,7 @@ function getDisplayName(user) {
 }
 
 const MENU_SECTIONS = [
-  { title: "Account", hrefs: ["/my-account", "/my-account/edit-profile", "/my-wallet"] },
+  { title: "Account", hrefs: ["/my-account", "/my-account/edit-profile", "/my-wallet", "/notification"] },
   // { title: "Activity", hrefs: ["/my-chats", "/my-calls", "/my-favorites", "/my-following"] },
   // { title: "Services", hrefs: ["/my-gemstone", "/my-online-puja", "/freekundli", "/my-account/suggested", "/wait-list"] },
   { title: "More", hrefs: ["/plans", "/support"] },
@@ -79,14 +80,35 @@ export default function ProfileCard({ onClose, isOpen, onLogout, variant = "drop
     onClose?.();
   };
 
-  const handleLogout = () => {
-    if (onLogout) onLogout();
-    else {
-      localStorage.clear();
-      sessionStorage.clear();
-      router.push("/");
+  // const handleLogout = () => {
+  //   if (onLogout) onLogout();
+  //   else {
+  //     localStorage.clear();
+  //     sessionStorage.clear();
+  //     router.push("/");
+  //   }
+  //   onClose?.();
+  // };
+  const handleLogout = async () => {
+    try {
+      const userId = localStorage.getItem("UserLoginId");
+
+      if (userId) {
+        await UpdateWebFCMToken("");
+      }
+
+      if (onLogout) {
+        onLogout();
+      } else {
+        localStorage.clear();
+        sessionStorage.clear();
+        router.push("/");
+      }
+
+      onClose?.();
+    } catch (error) {
+      console.log(error);
     }
-    onClose?.();
   };
 
   if (!isOpen) return null;
@@ -107,16 +129,14 @@ export default function ProfileCard({ onClose, isOpen, onLogout, variant = "drop
         key={item.href}
         type="button"
         onClick={() => handleNavigation(item.href)}
-        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
-          active
-            ? "bg-gradient-to-r from-orange-50 to-[#FFF9F1] shadow-sm ring-1 ring-orange-100"
-            : "hover:bg-white hover:shadow-sm"
-        }`}
+        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${active
+          ? "bg-gradient-to-r from-orange-50 to-[#FFF9F1] shadow-sm ring-1 ring-orange-100"
+          : "hover:bg-white hover:shadow-sm"
+          }`}
       >
         <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition group-hover:scale-105 ${
-            active ? "bg-[#FF5C00] text-white shadow-md shadow-orange-200/50" : "bg-white text-[#FF5C00] ring-1 ring-orange-100"
-          }`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition group-hover:scale-105 ${active ? "bg-[#FF5C00] text-white shadow-md shadow-orange-200/50" : "bg-white text-[#FF5C00] ring-1 ring-orange-100"
+            }`}
         >
           <Icon size={14} />
         </span>
@@ -131,9 +151,8 @@ export default function ProfileCard({ onClose, isOpen, onLogout, variant = "drop
           </span>
         ) : null}
         <FaChevronRight
-          className={`shrink-0 text-[9px] transition group-hover:translate-x-0.5 ${
-            active ? "text-[#FF5C00]" : "text-gray-300"
-          }`}
+          className={`shrink-0 text-[9px] transition group-hover:translate-x-0.5 ${active ? "text-[#FF5C00]" : "text-gray-300"
+            }`}
         />
       </button>
     );
@@ -233,11 +252,10 @@ export default function ProfileCard({ onClose, isOpen, onLogout, variant = "drop
       )}
 
       <div
-        className={`${
-          isDropdown
-            ? "max-h-[min(46vh,380px)] overflow-y-auto px-2 py-2 [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-orange-200"
-            : "space-y-3 px-1 py-1"
-        }`}
+        className={`${isDropdown
+          ? "max-h-[min(46vh,380px)] overflow-y-auto px-2 py-2 [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-orange-200"
+          : "space-y-3 px-1 py-1"
+          }`}
       >
         {MENU_SECTIONS.map((section) => {
           const items = section.hrefs.map((href) => navByHref[href]).filter(Boolean);

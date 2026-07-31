@@ -15,6 +15,8 @@ import {
   FaHeadset,
   FaSignOutAlt,
 } from "react-icons/fa";
+import { MdOutlineNotificationsActive } from "react-icons/md";
+
 
 export const ORANGE = "#FF5C00";
 export const CREAM = "#FFF9F1";
@@ -33,7 +35,7 @@ export const USER_PANEL_NAV = [
   { label: "Suggested", href: "/my-account/suggested", icon: FaLightbulb },
   { label: "Wait List", href: "/wait-list", icon: FaListUl },
   // { label: "My Kundlis", href: "/freekundli", icon: FaBookOpen },
-  // { label: "Recharge Plans", href: "/plans", icon: FaTag },
+  { label: "Notification", href: "/notification", icon: MdOutlineNotificationsActive },
   { label: "Support", href: "/support", icon: FaHeadset },
 ];
 

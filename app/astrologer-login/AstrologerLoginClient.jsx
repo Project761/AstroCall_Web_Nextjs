@@ -13,10 +13,11 @@ import {
   FaUsers,
   FaUserPlus,
 } from "react-icons/fa";
-import { postWithToken, loginApi, saveAuthToken, getPostData, postData } from "@/app/utils/api";
+import { saveAuthToken, getPostData, postData } from "@/app/utils/api";
 import { toastifySuccess, toastifyError } from "@/app/utils/utility";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
 import { CREAM, CREAM_ALT, ORANGE } from "@/app/lib/siteTheme";
+import { notifyUserSessionChange } from "@/app/lib/wsUrl";
 
 const LEFT_FEATURES = [
   {
@@ -218,29 +219,20 @@ const AstrologerLogin = () => {
     try {
       const { phoneNumber } = value;
       const val = { MobileNo: phoneNumber };
-      const res = await getPostData("SMS/GetData_SMS", val);
-      if (res?.success === true || res?.[0]?.success === true || (res && res.length > 0 && res[0].success === true)) {
+      const res = await postData("SMS/GetData_SMS", val);
+      if (res?.success === true) {
         setExpireOtp(true);
         setTimerOn(true);
         setnumstatus(false);
         setSendOtp(true);
         setErrorMessage("");
+        toastifySuccess("OTP sent successfully!");
       } else {
-        try {
-          const res2 = await postData("SMS/GetData_SMS", val);
-          if (res2?.success === true) {
-            setExpireOtp(true);
-            setTimerOn(true);
-            setnumstatus(false);
-            setSendOtp(true);
-            setErrorMessage("");
-          }
-        } catch (altError) {
-          console.log("Alternative method also failed:", altError);
-        }
+        setErrorMessage("Failed to send OTP. Please try again.");
       }
     } catch (error) {
       console.log("Error in Get_OTP:", error);
+      setErrorMessage("Failed to send OTP. Please try again.");
     }
   };
 
@@ -252,16 +244,20 @@ const AstrologerLogin = () => {
     try {
       const { phoneNumber } = value;
       const val = { Otp: otp, MobileNo: phoneNumber };
-      const res = await postWithToken("SMS/Check_Otp", val);
+      const res = await getPostData("SMS/Check_Otp", val);
       if (res?.[0]?.Status === true || res?.[0]?.Status === "true") {
-        Get_astro();
+        await Get_astro();
       } else {
         setErrorMessage("The OTP you entered is incorrect. Please try again.");
       }
     } catch (error) {
       console.log(error);
+      setErrorMessage("OTP verification failed. Please try again.");
     }
   };
+
+  const isVerified = (row) => String(row?.IsVerified) === "1";
+  const hasUserName = (row) => String(row?.userName || row?.UserName || "").trim().length > 0;
 
   const Get_astro = async () => {
     const val = {
@@ -271,41 +267,54 @@ const AstrologerLogin = () => {
       Medium: "Web",
     };
     try {
-      const Resdata = await loginApi(val);
+      const Resdata = await getPostData("Astrologer/Astrologer_Login", val);
+      const row = Resdata?.[0];
+      if (!row) {
+        toastifyError("Login failed. Please try again.");
+        return;
+      }
+
       if (
-        Resdata?.[0]?.userName === "" &&
-        Resdata?.[0]?.IsVerified === "0" &&
-        Resdata?.[0]?.FullName === "" &&
-        Resdata?.[0]?.error === "200"
+        row?.userName === "" &&
+        String(row?.IsVerified) === "0" &&
+        row?.FullName === "" &&
+        String(row?.error) === "200"
       ) {
+        saveAuthToken(row);
+        setAddAstroId(row?.Astro);
         router.push("/astrologer-register");
-        saveAuthToken(Resdata[0]);
-        setAddAstroId(Resdata[0]?.Astro);
-      } else if (Resdata?.[0]?.userName?.length > 0 && Resdata?.[0]?.IsVerified === "1") {
-        saveAuthToken(Resdata[0]);
-        setAddAstroId(Resdata[0]?.Astro);
-        Get_SingleData_Astrologer(Resdata[0]?.Astro);
+      } else if (hasUserName(row) && isVerified(row)) {
+        saveAuthToken(row);
+        const astroId = row?.Astro || row?.ID;
+        setAddAstroId(astroId);
+        Get_SingleData_Astrologer(astroId);
         setSendOtp(false);
+        notifyUserSessionChange();
         toastifySuccess("Successfully LogIn");
         router.push("/astrologer-panel/dashboard");
       } else if (
-        Resdata?.[0]?.IsVerified === "0" &&
-        Resdata?.[0]?.error === "200" &&
-        Resdata?.[0]?.userName?.length > 0
+        String(row?.IsVerified) === "0" &&
+        String(row?.error) === "200" &&
+        hasUserName(row)
       ) {
-        saveAuthToken(Resdata[0]);
-        setAddAstroId(Resdata[0]?.Astro);
+        saveAuthToken(row);
+        setAddAstroId(row?.Astro || row?.ID);
         router.push("/astrologer-panel/profile");
       } else if (
-        Resdata?.[0]?.Astro === "0" &&
-        Resdata?.[0]?.ID === "0" &&
-        Resdata?.[0]?.error_description === "Blocked Your Id .Please Contact to Admin."
+        (row?.Astro === "0" || row?.Astro === 0) &&
+        (row?.ID === "0" || row?.ID === 0) &&
+        row?.error_description === "Blocked Your Id .Please Contact to Admin."
       ) {
         toastifyError("Blocked Your Id .Please Contact to Admin.");
         setValue({ ...value, phoneNumber: "" });
         setnumstatus(true);
         setSendOtp(false);
         setMobileOtp("");
+      } else if (row?.error_description) {
+        toastifyError(row.error_description);
+      } else {
+        toastifyError("Unable to login. Please contact support.");
+        console.error("Unhandled astrologer login response:", row);
       }
     } catch (error) {
       if (error.response) {
@@ -350,38 +359,31 @@ const AstrologerLogin = () => {
     }
   };
 
-  const saveTokenToServer = async (Id) => {
-    const payload = {
-      Id: "",
-      WebFCMTokenID: fireBaseToken,
-      CurrentAstrologerId: Id,
-    };
-    try {
-      await postWithToken("Users/UpdateWebFCMToken", payload);
-    } catch (error) {
-      console.error("Token save failed:", error);
-    }
-  };
 
   return (
     <>
-      <div className="relative h-dvh overflow-hidden" style={{ backgroundColor: CREAM }}>
-        <div className="main-container flex h-full items-center px-4 py-4 sm:px-6 lg:py-6">
-          <div className="grid h-full max-h-[calc(100dvh-2rem)] w-full min-h-0 items-center gap-6 lg:grid-cols-[1.05fr_420px] lg:gap-10 xl:grid-cols-[1.1fr_440px] xl:gap-14">
+      <div
+        className="relative min-h-screen overflow-x-hidden overflow-y-auto"
+        style={{ backgroundColor: CREAM }}
+      >
+        <div className="main-container flex min-h-screen items-center px-4 py-6 sm:px-6 lg:py-8">
+          <div className="grid w-full items-center gap-8 lg:grid-cols-[1fr_420px] lg:gap-12 xl:grid-cols-[1.1fr_500px] xl:gap-16">
             {/* Left — mockup */}
 
 
 
-            <div className="relative hidden h-full min-h-0 flex-col justify-center lg:flex lg:pr-4 xl:pr-8">
-              <h1 className="font-heading shrink-0 text-[clamp(2rem,3.2vw,2.75rem)] font-bold leading-[1.15] text-[#1A1A1A]">
+            {/* <div className="relative hidden h-full min-h-0 flex-col justify-center lg:flex lg:pr-4 xl:pr-8"> */}
+
+            <div className="relative hidden flex-col justify-center lg:flex lg:pr-6 xl:pr-10">
+              <h1 className="font-heading shrink-0 text-[clamp(2.2rem,3vw,3rem)] font-bold leading-[1.15] text-[#1A1A1A]">
                 Astrologer <span style={{ color: ORANGE }}>Login</span>
               </h1>
-              <p className="font-body mt-3 max-w-[34rem] shrink-0 text-[clamp(0.8125rem,1.15vw,0.9375rem)] leading-relaxed text-gray-600">
+              <p className="font-body mt-3 max-w-[36rem] shrink-0 text-[clamp(0.8125rem,1.15vw,0.9375rem)] leading-relaxed text-gray-600">
                 Welcome back! Please login to your account to manage your profile, connect with your clients, and grow
                 your astrology business with AstroCall.
               </p>
 
-              <ul className="mt-5 shrink-0 space-y-4 xl:mt-6 xl:space-y-5">
+              <ul className="mt-6 shrink-0 space-y-5">
                 {LEFT_FEATURES.map(({ icon: Icon, title, sub }) => (
                   <li key={title} className="flex gap-3.5">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF0E6] xl:h-11 xl:w-11">
@@ -395,7 +397,7 @@ const AstrologerLogin = () => {
                 ))}
               </ul>
 
-              <div className="pointer-events-none relative mt-4 min-h-[10rem] w-full max-w-[74rem] flex-1 xl:min-h-[12rem]">
+              <div className="pointer-events-none relative mt-8 h-[260px] xl:h-[320px] w-full max-w-[560px]">
                 <Image
                   src="/images/AstrologerLogin.png"
                   alt="Astrology illustration"
@@ -405,12 +407,23 @@ const AstrologerLogin = () => {
                   priority
                 />
               </div>
+
+              {/* <div className="pointer-events-none relative min-h-[10rem] w-full max-w-[74rem] flex-1 xl:min-h-[12rem]">
+                <Image
+                  src="/images/AstrologerLogin.png"
+                  alt="Astrology illustration"
+                  fill
+                  className="object-contain object-left-bottom"
+                  sizes="(max-width: 1280px) 520px, 640px"
+                  priority
+                />
+              </div> */}
             </div>
 
             {/* Right — login card */}
-            <div className="mx-auto flex w-full max-w-[400px] items-center justify-center lg:mx-0 lg:max-h-[calc(100dvh-2rem)]">
-              <div className="w-full overflow-hidden rounded-[24px] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.1)]">
-                <div className="px-6 pb-2 pt-7 sm:px-7 sm:pt-8">
+            <div className="mx-auto flex w-full max-w-[430px] items-center justify-center lg:mx-0">
+              <div className="w-full overflow-hidden rounded-[28px] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.12)]">
+                <div className="px-7 pb-4 pt-8 sm:px-8">
                   <BrandHeader compact={sendOtp} />
 
                   {numstatus && (
@@ -594,7 +607,7 @@ const AstrologerLogin = () => {
         >
           Back to Home 
         </Link> */}
-        <div className="font-body absolute bottom-3 left-1/2 -translate-x-1/2 text-[13px] text-gray-700 lg:bottom-6">
+        <div className="font-body py-5 text-center text-xs text-gray-600">
           © Copyright 2026 by Astrocall Live Services Private Limited. All rights reserved..
         </div>
 

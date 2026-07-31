@@ -272,7 +272,7 @@ export default function GemstonePageClient() {
         </div>
 
         {/* By Planet */}
-        <section id="by-planet">
+        {/* <section id="by-planet">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-[#0F172A]">Gemstones by Planet</h2>
             <button type="button" className="text-sm font-semibold text-[#FF5C00] hover:underline">View All Planets →</button>
@@ -303,10 +303,10 @@ export default function GemstonePageClient() {
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
 
         {/* Recommended + Finder */}
-        <section id="recommended" className="grid gap-5 lg:grid-cols-4">
+        {/* <section id="recommended" className="grid gap-5 lg:grid-cols-4">
           <div className="lg:col-span-3">
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -369,33 +369,11 @@ export default function GemstonePageClient() {
               Find My Gemstone <FaChevronRight size={11} />
             </button>
           </div>
-        </section>
+        </section> */}
 
-        {/* Learn More */}
-        <section id="benefits">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-[#0F172A]">Learn More About Gemstones</h2>
-            <button type="button" onClick={() => router.push("/astrology-blog")} className="text-sm font-semibold text-[#FF5C00] hover:underline">View All Articles →</button>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {ARTICLES.map((a) => (
-              <div key={a.title} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-                <div className="relative h-28">
-                  <Image src={a.img} alt={a.title} fill className="object-cover" sizes="250px" />
-                </div>
-                <div className="p-3">
-                  <h3 className="text-sm font-bold text-[#0F172A]">{a.title}</h3>
-                  <p className="mt-1 text-xs text-gray-500 line-clamp-2">{a.excerpt}</p>
-                  <button type="button" onClick={() => router.push("/astrology-blog")} className="mt-2 text-xs font-semibold text-red-600 hover:underline">Read More →</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
 
-        {/* All gemstones grid */}
         <section>
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 mt-4 flex flex-col gap-3 sm:flex-row sm:items-center  sm:justify-between">
             <h2 className="text-lg font-bold text-[#0F172A]">All Gemstones</h2>
             <div className="flex gap-2">
               <div className="relative flex-1 sm:w-48">
@@ -423,19 +401,43 @@ export default function GemstonePageClient() {
             ))}
           </div>
         </section>
+        {/* Learn More */}
+        <section id="benefits">
+          <div className="mb-4 mt-10 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-[#0F172A]">Learn More About Gemstones</h2>
+            <button type="button" onClick={() => router.push("/astrology-blog")} className="text-sm font-semibold text-[#FF5C00] hover:underline">View All Articles →</button>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {ARTICLES.map((a) => (
+              <div key={a.title} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                <div className="relative h-28">
+                  <Image src={a.img} alt={a.title} fill className="object-cover" sizes="250px" />
+                </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-bold text-[#0F172A]">{a.title}</h3>
+                  <p className="mt-1 text-xs text-gray-500 line-clamp-2">{a.excerpt}</p>
+                  <button type="button" onClick={() => router.push("/astrology-blog")} className="mt-2 text-xs font-semibold text-red-600 hover:underline">Read More →</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* All gemstones grid */}
+
 
         {/* Certification & FAQs placeholders */}
-        <section id="certification" className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <section id="certification" className="rounded-xl mt-10 border border-gray-100 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-[#0F172A]">Certification</h2>
           <p className="mt-2 text-sm text-gray-600">Every gemstone comes with a free lab certificate verifying authenticity, origin, and quality grade.</p>
         </section>
 
-        <section id="how-to-wear" className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <section id="how-to-wear" className="rounded-xl mt-10 border border-gray-100 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-[#0F172A]">How to Wear Gemstones</h2>
           <p className="mt-2 text-sm text-gray-600">Wear gemstones on the correct finger, metal, and day as per Vedic astrology for maximum benefits.</p>
         </section>
 
-        <section id="faqs" className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <section id="faqs" className="rounded-xl border mt-10 border-gray-100 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-[#0F172A]">FAQs</h2>
           <p className="mt-2 text-sm text-gray-600">Contact our experts for personalized gemstone recommendations based on your birth chart.</p>
         </section>

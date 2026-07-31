@@ -73,12 +73,13 @@ const AstrologerSidebar = ({ isOpen = true, onNavigate }) => {
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
+      Logout_RemoveRecord();
+      socketService.disconnectAstro();
       localStorage.removeItem("AstroLoginId");
       localStorage.removeItem("LoginTokenData");
       localStorage.removeItem("AstroChatTokenId");
       sessionStorage.clear();
       localStorage.clear();
-      Logout_RemoveRecord();
     }
     router.replace("/astrologer-login");
   };

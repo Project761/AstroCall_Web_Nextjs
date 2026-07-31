@@ -1,5 +1,7 @@
 // Next.js API utilities - Converted from React version
 
+import { measureApi } from "@/app/lib/performance";
+
 const normalizeBaseUrl = (baseUrl) => {
   if (!baseUrl) return '';
   return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
@@ -110,26 +112,28 @@ export const fetchData = async (URL) => {
 
 // POST request without token
 export const getPostData = async (url, postData) => {
-  try {
-    const visitorId = getVisitorId();
-    const fullUrl = buildUrl(getApiUrl(), url);
+  return measureApi(`POST ${url}`, async () => {
+    try {
+      const visitorId = getVisitorId();
+      const fullUrl = buildUrl(getApiUrl(), url);
 
-    const response = await fetch(fullUrl, {
-      method: 'POST',
-      headers: {
-        'FingerPrintJsKey': visitorId,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(postData),
-    });
+      const response = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'FingerPrintJsKey': visitorId,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(postData),
+      });
 
-    const data = await response.json();
-    const parseData = JSON.parse(data?.data);
-    return parseData?.Table;
-  } catch (error) {
-    console.error('Post data error:', error);
-    return null;
-  }
+      const data = await response.json();
+      const parseData = JSON.parse(data?.data);
+      return parseData?.Table;
+    } catch (error) {
+      console.error('Post data error:', error);
+      return null;
+    }
+  });
 };
 
 // GET request with token and auto-refresh
@@ -176,7 +180,7 @@ export const GetWithToken = async (url) => {
     return finalData || null;
   };
 
-  return await makeApiCall();
+  return measureApi(`GET ${url}`, makeApiCall);
 };
 
 // POST request with token and auto-refresh
@@ -224,7 +228,7 @@ export const postWithToken = async (url, postData) => {
     return finalData?.Table || null;
   };
 
-  return await makeApiCall();
+  return measureApi(`POST ${url}`, makeApiCall);
 };
 
 // POST/PUT/DELETE with token (for CRUD operations)
@@ -376,7 +380,7 @@ export const postData = async (url, requestData) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestData),
-    });    
+    });
     if (!response.ok) {
       console.error("HTTP error:", response.status, response.statusText);
       return null;
@@ -476,8 +480,17 @@ export const loginApi = async (loginData) => {
 export const saveAuthToken = (tokenData) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('LoginTokenData', JSON.stringify(tokenData));
-    if (tokenData?.Astro) {
-      localStorage.setItem('AstroLoginId', tokenData.Astro);
+    const isUserAccount = tokenData?.Astro === "0" || tokenData?.Astro === 0;
+    const astroId =
+      !isUserAccount && tokenData?.Astro && String(tokenData.Astro) !== "0"
+        ? tokenData.Astro
+        : tokenData?.ID;
+    if (astroId && String(astroId) !== "0" && !isUserAccount) {
+      localStorage.setItem('AstroLoginId', String(astroId));
+    }
+    const userId = tokenData?.ID;
+    if (userId && isUserAccount) {
+      localStorage.setItem('UserLoginId', String(userId));
     }
   }
 };
@@ -502,4 +515,41 @@ export const isAuthenticated = () => {
 export const getCurrentAstrologerId = () => {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('AstroLoginId') || null;
+};
+
+
+// export const UpdateWebFCMToken = async (currentToken) => {
+//   const val = {
+//     Id: localStorage.getItem("UserLoginId") || "",
+//     WebFCMTokenID: currentToken,
+//     CurrentAstrologerId: localStorage.getItem("AstroLoginId") || "",
+//   };
+
+//   try {
+//     const res = await TokenWithDeleteUpadateAdd(
+//       "Users/UpdateWebFCMToken",
+//       val
+//     );
+
+//     return res;
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
+
+export const UpdateWebFCMToken = async (token = "") => {
+  const val = {
+    Id: localStorage.getItem("UserLoginId") || "",
+    WebFCMTokenID: token,
+    CurrentAstrologerId: localStorage.getItem("AstroLoginId") || "",
+  };
+
+  try {
+    return await TokenWithDeleteUpadateAdd(
+      "Users/UpdateWebFCMToken",
+      val
+    );
+  } catch (error) {
+    console.log(error);
+  }
 };

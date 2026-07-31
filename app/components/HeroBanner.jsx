@@ -170,13 +170,12 @@ export default function HeroBanner() {
           <div className="relative py-5 sm:py-6 md:min-h-[320px] md:py-8 lg:min-h-[370px]">
             <div className="max-w-full pr-0 md:max-w-[58%] lg:max-w-xl lg:pr-4">
               <h1 className="font-heading text-[1.25rem] font-bold leading-snug tracking-[-0.02em] text-[#1A1A1A] min-[380px]:text-[1.35rem] sm:text-[1.65rem] md:text-[1.85rem] lg:text-[2.1rem] lg:leading-[1.15] xl:text-[2.35rem]">
-                Your Gateway to{" "}
-                <span className="text-[#FF5C00]">Cosmic Wisdom</span>
-                {" "}&amp; Astrological Excellence
+                Talk to India&apos;s Best{" "}
+                <span className="text-[#FF5C00]">Astrologers Online</span>
               </h1>
 
               <p className="mt-2 max-w-full font-body text-xs leading-relaxed text-gray-600 sm:mt-2.5 sm:text-sm sm:leading-6">
-                Discover authentic Vedic astrology, personalised consultations, and cosmic guidance.
+                Free kundli, daily horoscope &amp; expert predictions for love, career, marriage and finance — via chat or call, 24/7.
               </p>
 
               {/* Mobile: one row flex | sm+: grid */}

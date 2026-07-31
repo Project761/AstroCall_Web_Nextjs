@@ -1,20 +1,26 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import ProfileCard from "../ProfileCard";
 import ClientOnly from "../ClientOnly";
-import UserChatWidget from "@/app/user-chat/UserChatWidget";
 import { toastifySuccess } from "../../utils/utility";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
 import { RiUserShared2Fill } from "react-icons/ri";
 import { FaChevronDown, FaPlus, FaCoins, FaTimes } from "react-icons/fa";
-import AuthModal from "../AuthModal";
 import { ORANGE, CREAM, CREAM_ALT } from "@/app/lib/siteTheme";
 import { isUserPanelRoute } from "@/app/lib/userPanelNav";
 import { MdLanguage } from "react-icons/md";
 import socketService from "@/app/services/socketService";
+import PerfRenderMark from "../PerfRenderMark";
+
+const AuthModal = dynamic(() => import("../AuthModal"), { ssr: false, loading: () => null });
+const UserChatWidget = dynamic(() => import("@/app/user-chat/UserChatWidget"), {
+  ssr: false,
+  loading: () => null,
+});
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -162,14 +168,12 @@ function NavLinkButton({ link, mobile = false, pathname, onNavigate }) {
   );
 }
 
-export default function Header() {
+function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const isUserPanel = isUserPanelRoute(pathname);
 
   const { loginUserData, isMenuOpen, setisMenuOpen, isLogin, setisLogin } = useMenuContext();
-
-  // console.log("Header loginUserData:", loginUserData);
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [showProfileCard, setShowProfileCard] = useState(false);
@@ -268,11 +272,16 @@ export default function Header() {
     setTimeout(() => { window.location.href = "/"; }, 500);
   };
 
-  const handleNavigation = (path) => {
+  const handleNavigation = useCallback((path) => {
+    try {
+      router.prefetch(path);
+    } catch {
+      /* prefetch optional */
+    }
     router.push(path);
     setMobileMenuOpen(false);
     setisMenuOpen(false);
-  };
+  }, [router, setisMenuOpen]);
 
   const toggleMobileMenu = () => {
     const next = !mobileMenuOpen;
@@ -293,6 +302,7 @@ export default function Header() {
   };
 
   return (
+    <PerfRenderMark name="Header">
     <>
       <header className="fixed top-0 z-50 w-full border-b border-orange-50 bg-white/95 shadow-sm backdrop-blur-md">
         <div className="main-container flex h-[72px] min-w-0 items-center justify-between gap-1.5 sm:gap-2 lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-4 xl:gap-6">
@@ -530,8 +540,11 @@ export default function Header() {
       />
 
       <ClientOnly>
-        <UserChatWidget />
+        {isLogin ? <UserChatWidget /> : null}
       </ClientOnly>
     </>
+    </PerfRenderMark>
   );
 }
+
+export default memo(Header);

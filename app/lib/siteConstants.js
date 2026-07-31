@@ -15,7 +15,7 @@ export const HOROSCOPE_SIGNS = [
   "virgo",
 ];
 
-/** Public static routes (App Router paths). Category 1 SEO pages included. */
+/** Public static routes for sitemap (excludes noindex routes via filterIndexableStaticRoutes). */
 export const STATIC_SITEMAP_ROUTES = [
   "",
   "/privacy-policy",
@@ -52,9 +52,8 @@ export const STATIC_SITEMAP_ROUTES = [
   "/chat-to-astrologers",
   "/reels",
   "/support",
+  "/about-us",
+  "/contact",
   "/plans",
-  "/wait-list",
-  "/astrologer-login",
   "/astrologer-register",
-  "/suggested",
 ];

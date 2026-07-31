@@ -21,7 +21,7 @@ import {
   FaPhone,
   FaBolt,
   FaCheckCircle,
-  FaChevronRight,
+  FaChevronRight, 
 } from "react-icons/fa";
 import { MdVerified } from "react-icons/md";
 import PageBanner from "../components/PageBanner";

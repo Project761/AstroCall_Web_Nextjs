@@ -691,13 +691,7 @@ const BasicDetailClient = () => {
 
       {/* <Header /> */}
       <div className="min-h-screen bg-[#F5F6F8] pt-[72px] pb-28">
-        <PageBanner
-          bannerSrc={PAGE_BANNER_IMAGES.horoscope}
-          currentPage="Kundli Details"
-          crumbs={[{ label: "Free Kundli", href: "/freekundli" }]}
-          title="Your Janam Kundli"
-          subtitle="View your detailed Vedic birth chart, planetary positions, dashas and predictions."
-        />
+       
         <div className="main-container px-4 py-5">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
 

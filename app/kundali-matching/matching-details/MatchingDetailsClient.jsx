@@ -197,52 +197,9 @@ function KundliMatchingDetailsContent() {
 
   return (
     <div className="min-h-screen bg-white pt-[72px] pb-28">
-      <PageBanner
-        bannerSrc={PAGE_BANNER_IMAGES.horoscope}
-        currentPage="Matching Report"
-        crumbs={[
-          { label: "Free Kundli", href: "/freekundli" },
-          { label: "Kundli Matching", href: "/kundali-matching" },
-        ]}
-        title={
-          <>
-            Kundli Matching Report
-            <span className="mt-2 block text-lg font-bold text-[#FF5C00] sm:text-xl">
-              Your cosmic compatibility analysis is ready
-            </span>
-          </>
-        }
-        subtitle="Detailed Ashtakoot Guna Milan report with dosha analysis and personalized insights for your relationship."
-      >
-        <div className="mt-4 flex flex-wrap gap-4">
-          {HERO_FEATURES.map(({ icon: Icon, t }) => (
-            <span key={t} className="flex items-center gap-2 text-xs font-semibold text-gray-700">
-              <Icon size={13} className="text-[#FF5C00]" /> {t}
-            </span>
-          ))}
-        </div>
-      </PageBanner>
+      
 
-      {/* Stepper — Report step active */}
-      <div className="border-b border-gray-100 bg-white">
-        <div className="main-container flex items-center justify-center gap-2 overflow-x-auto px-4 py-4 sm:gap-6">
-          {STEPS.map((step, i) => (
-            <div key={step} className="flex items-center gap-2 sm:gap-4">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${i <= 3 ? "text-white" : "border border-gray-300 text-gray-400"}`}
-                  style={i <= 3 ? { backgroundColor: i === 3 ? ORANGE : "#22c55e" } : {}}
-                >
-                  {i < 3 ? "✓" : i + 1}
-                </span>
-                <span className={`whitespace-nowrap text-xs font-bold sm:text-sm ${i === 3 ? "text-[#FF5C00]" : i < 3 ? "text-green-600" : "text-gray-400"}`}>{step}</span>
-              </div>
-              {i < STEPS.length - 1 && <span className="hidden h-px w-8 bg-gray-200 sm:block" />}
-            </div>
-          ))}
-        </div>
-      </div>
-
+     
       <div className="main-container px-4 py-8">
         {/* Couple header */}
         <div className={`mb-6 flex flex-col items-center justify-center gap-4 p-5 sm:flex-row ${CARD}`}>

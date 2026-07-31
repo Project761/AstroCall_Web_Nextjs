@@ -1,30 +1,19 @@
 import NumerologyClient from "./NumerologyClient";
+import PageSeoSchemas from "@/app/components/SEO/PageSeoSchemas";
+import { buildPageMetadata } from "@/app/lib/seo";
 
-const SITE = "https://astrocall.live";
-const CANONICAL = `${SITE}/Numerology`;
+const PATH = "/Numerology";
+const TITLE = "Numerology Services - Life Path, Name & Compatibility";
+const DESCRIPTION =
+  "Get personalised numerology services on AstroCall. Discover your life path number, name numerology and relationship compatibility with guidance from expert numerologists.";
 
-export const metadata = {
-  title: "Numerology Services - Life Path, Name & Compatibility",
-  description:
-    "Get personalised numerology services on AstroCall. Discover your life path number, name numerology and relationship compatibility with guidance from expert numerologists.",
-  alternates: { canonical: CANONICAL },
-  openGraph: {
-    title: "Numerology Services - Life Path, Name & Compatibility",
-    description:
-      "Get personalised numerology services on AstroCall. Discover your life path number, name numerology and relationship compatibility with guidance from expert numerologists.",
-    url: CANONICAL,
-    type: "website",
-    siteName: "AstroCall",
-    locale: "en_IN",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Numerology Services - Life Path, Name & Compatibility",
-    description:
-      "Get personalised numerology services on AstroCall. Discover your life path number, name numerology and relationship compatibility with guidance from expert numerologists.",
-  },
-};
+export const metadata = buildPageMetadata({ title: TITLE, description: DESCRIPTION, path: PATH });
 
 export default function NumerologyPage() {
-  return <NumerologyClient />;
+  return (
+    <>
+      <PageSeoSchemas title={TITLE} description={DESCRIPTION} path={PATH} breadcrumbLabel="Numerology" />
+      <NumerologyClient />
+    </>
+  );
 }

@@ -161,7 +161,7 @@ export default function VedicAstrologyClient() {
       <PageBanner
         bannerSrc="/Banner/Vastu.png"
         bannerAlt="AstroCall Blog"
-        currentPage="Vastu"
+        currentPage="Vedic Astrology"
         backHref="/"
         backLabel="Home"
       >

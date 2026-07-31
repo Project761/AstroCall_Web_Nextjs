@@ -195,7 +195,7 @@ export default function TarotReadingClient() {
       <PageBanner
         bannerSrc="/Banner/Tarot Reading.png"
         bannerAlt="AstroCall Blog"
-        currentPage="Numerology"
+        currentPage="Tarot Reading"
         backHref="/"
         backLabel="Home"
       >

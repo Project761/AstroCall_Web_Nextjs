@@ -16,8 +16,8 @@ import axios from "axios";
 import { useMenuContext } from "@/app/hooks/useMenuContext";
 import Image from "next/image";
 import { ORANGE, CREAM_ALT } from "@/app/lib/siteTheme";
-import socketService from "@/app/services/socketService";
 import { notifyUserSessionChange } from "@/app/lib/wsUrl";
+import { requestNotificationPermission } from "@/app/lib/firebase";
 
 const LOGIN_TRUST = [
   { icon: FaShieldAlt, title: "100% Secure" },
@@ -265,7 +265,7 @@ export default function AuthModal({
     }
   };
 
-  
+
 
   const Get_astro = async () => {
     try {
@@ -296,10 +296,9 @@ export default function AuthModal({
 
             setUserLoginId(String(userData?.ID));
             setisLogin(true);
-            socketService.connectUser(String(userData?.ID));
-            socketService.setupVisibilityHandler(String(userData?.ID), null);
             notifyUserSessionChange();
-            await Get_SingleData_User(userData?.ID);
+            // await Get_SingleData_User(userData?.ID);
+            await requestNotificationPermission();
 
             const fullNameMissing =
               !userData?.FullName || userData?.FullName?.trim() === "";

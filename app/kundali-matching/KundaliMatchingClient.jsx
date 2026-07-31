@@ -689,7 +689,7 @@ const KundaliMatchingClient = () => {
               </form>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
+            {/* <div className="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
               <div className="border-b border-orange-50 px-5 py-4" style={{ backgroundColor: CREAM_ALT }}>
                 <h2 className="font-heading text-base font-bold text-[#1A1A1A] sm:text-lg">Sample Matching Result</h2>
                 <p className="font-body mt-0.5 text-xs text-gray-500">Preview of what your compatibility report looks like</p>
@@ -728,6 +728,45 @@ const KundaliMatchingClient = () => {
                     View Full Report
                   </button>
                 </div>
+              </div>
+            </div> */}
+
+            <div className="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
+              <div className="border-b border-orange-50 px-4 py-3" style={{ backgroundColor: CREAM_ALT }}>
+                <h3 className="font-heading text-sm font-bold text-[#1A1A1A]">Saved Profiles</h3>
+              </div>
+              <div className="p-4">
+                {UserLoginId ? (
+                  <>
+                    <div className="mb-3 flex items-center rounded-xl border border-orange-100 bg-[#FFF9F1] px-3 py-2">
+                      <FaSearch className="mr-2 shrink-0 text-[#FF5C00]" size={12} />
+                      <input type="text" placeholder="Search saved profile..." value={searchVal} onChange={handleSearchChange} className="font-body w-full bg-transparent text-xs outline-none placeholder:text-gray-400" />
+                    </div>
+                    <div className="max-h-52 space-y-2 overflow-y-auto">
+                      {filteredData?.length > 0 ? filteredData.map((item) => (
+                        <div key={item?.Id} className="flex items-center justify-between rounded-xl border border-orange-50 p-2 transition hover:border-orange-200 hover:bg-orange-50/30">
+                          <button type="button" onClick={() => setEditvalMale(item)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white" style={{ background: `linear-gradient(135deg, ${ORANGE}, #FF7A33)` }}>
+                              {item?.Name?.charAt(0)?.toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-bold text-[#1A1A1A]">{item?.Name}</p>
+                              <p className="truncate text-[10px] text-gray-400">{item?.PlaceOfBirth}</p>
+                            </div>
+                          </button>
+                          <button type="button" onClick={() => { setKundliDeleteId(item?.Id); setIsPopupOpen(true); }} className="shrink-0 rounded-lg p-1.5 text-red-500 hover:bg-red-50">
+                            <MdDeleteOutline size={16} />
+                          </button>
+                        </div>
+                      )) : <p className="py-4 text-center text-xs text-gray-400">No saved profiles yet</p>}
+                    </div>
+                  </>
+                ) : (
+                  <div className="py-4 text-center">
+                    <p className="font-body mb-3 text-xs text-gray-500">Login to view saved profiles</p>
+                    <button type="button" onClick={() => { setIsAuthModalOpen(true); setAuthMode("login"); }} className="font-heading rounded-xl px-5 py-2 text-xs font-bold text-white" style={{ backgroundColor: ORANGE }}>Login</button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -780,44 +819,7 @@ const KundaliMatchingClient = () => {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
-              <div className="border-b border-orange-50 px-4 py-3" style={{ backgroundColor: CREAM_ALT }}>
-                <h3 className="font-heading text-sm font-bold text-[#1A1A1A]">Saved Profiles</h3>
-              </div>
-              <div className="p-4">
-                {UserLoginId ? (
-                  <>
-                    <div className="mb-3 flex items-center rounded-xl border border-orange-100 bg-[#FFF9F1] px-3 py-2">
-                      <FaSearch className="mr-2 shrink-0 text-[#FF5C00]" size={12} />
-                      <input type="text" placeholder="Search saved profile..." value={searchVal} onChange={handleSearchChange} className="font-body w-full bg-transparent text-xs outline-none placeholder:text-gray-400" />
-                    </div>
-                    <div className="max-h-52 space-y-2 overflow-y-auto">
-                      {filteredData?.length > 0 ? filteredData.map((item) => (
-                        <div key={item?.Id} className="flex items-center justify-between rounded-xl border border-orange-50 p-2 transition hover:border-orange-200 hover:bg-orange-50/30">
-                          <button type="button" onClick={() => setEditvalMale(item)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white" style={{ background: `linear-gradient(135deg, ${ORANGE}, #FF7A33)` }}>
-                              {item?.Name?.charAt(0)?.toUpperCase()}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-bold text-[#1A1A1A]">{item?.Name}</p>
-                              <p className="truncate text-[10px] text-gray-400">{item?.PlaceOfBirth}</p>
-                            </div>
-                          </button>
-                          <button type="button" onClick={() => { setKundliDeleteId(item?.Id); setIsPopupOpen(true); }} className="shrink-0 rounded-lg p-1.5 text-red-500 hover:bg-red-50">
-                            <MdDeleteOutline size={16} />
-                          </button>
-                        </div>
-                      )) : <p className="py-4 text-center text-xs text-gray-400">No saved profiles yet</p>}
-                    </div>
-                  </>
-                ) : (
-                  <div className="py-4 text-center">
-                    <p className="font-body mb-3 text-xs text-gray-500">Login to view saved profiles</p>
-                    <button type="button" onClick={() => { setIsAuthModalOpen(true); setAuthMode("login"); }} className="font-heading rounded-xl px-5 py-2 text-xs font-bold text-white" style={{ backgroundColor: ORANGE }}>Login</button>
-                  </div>
-                )}
-              </div>
-            </div>
+
           </div>
         </div>
       </div>

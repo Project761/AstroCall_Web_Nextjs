@@ -83,7 +83,7 @@ export default function UserChatWidget() {
         const ChatStartUser = 'User Chat is Start';
         setUsermessage(ChatStartUser);
         setPopupData(data);
-        setChatPopUpStatus(true);
+        setChatPopUpStatus(false);
         router.push(`/user-chat/chat?channel=${encodeURIComponent(data?.ChannelName || '')}&UserChatTokenId=${encodeURIComponent(data?.UserChatTokenId || '')}&WaitingListId=${encodeURIComponent(data?.WaitingListId || '')}&UserId=${encodeURIComponent(data?.UserId)}&AstroId=${encodeURIComponent(data?.AstroId || '')}`);
         break;
 
@@ -301,11 +301,7 @@ export default function UserChatWidget() {
     const loggedIn = isLogin || hasUserAuthSession();
     if (!userId || !loggedIn) return;
 
-    socketService.connectUser(userId);
-    socketService.setupVisibilityHandler(userId, null);
-
     const unsubscribe = socketService.addUserListener((messageData) => {
-      console.log("📩 Received WebSocket message:", messageData);
       handleUserMessagesRef.current(messageData);
     });
 
@@ -327,7 +323,8 @@ export default function UserChatWidget() {
 
   const HandleJoinChatUser = () => {
     // setShowChatOverlay(true);
-    if (popupData?.Message === "User Chat is Start" || popupData?.Message === "User Chat is Live.") {
+    // if (popupData?.Message === "User Chat is Start" || popupData?.Message === "User Chat is Live.") {
+    if (popupData?.Message === "User Chat is Live.") {
       router.push(`/user-chat/chat?channel=${encodeURIComponent(popupData?.ChannelName || '')}&UserChatTokenId=${encodeURIComponent(popupData?.UserChatTokenId || '')}&WaitingListId=${encodeURIComponent(popupData?.WaitingListId || '')}&UserId=${encodeURIComponent(popupData?.UserId || '')}&AstroId=${encodeURIComponent(popupData?.AstroId || '')}`);
     }
     setChatPopUpStatus(false);
@@ -443,9 +440,22 @@ export default function UserChatWidget() {
                       className="rounded-full object-cover"
                     />
                   </div> */}
-                  <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-orange-400 bg-white p-[2px] shadow-md">
+                  {/* <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-orange-400 bg-white p-[2px] shadow-md">
                     <Image
                       src={`https://${popupData?.AvatarUrl?.replace(/\\/g, "/")}`}
+                      alt="Astrologer"
+                      fill
+                      className="rounded-full object-cover"
+                      sizes="56px"
+                    />
+                  </div> */}
+                  <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-orange-400 bg-white p-[2px] shadow-md">
+                    <Image
+                      src={
+                        popupData?.AvatarUrl
+                          ? `https://${popupData.AvatarUrl.replace(/\\/g, "/")}`
+                          : "/images/default-avatar.png"
+                      }
                       alt="Astrologer"
                       fill
                       className="rounded-full object-cover"
@@ -497,7 +507,7 @@ export default function UserChatWidget() {
                   <>
                     {(popupData?.IsChatProgress === "1" ||
                       popupData?.IsChatProgress === 1 ||
-                      popupData?.Message === "User Chat is Start") && (
+                      popupData?.Message === "User Chat is Start.") && (
                         <button
                           onClick={HandleJoinChatUser}
                           className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-green-500/40"

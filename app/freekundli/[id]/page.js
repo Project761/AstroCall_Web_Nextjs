@@ -10,3 +10,4 @@ export default async function FreeKundliRedirect({ params }) {
   const { id } = await params;
   redirect(`/freekundli/basic-detail?FreekundliID=${encodeURIComponent(id)}`);
 }
+ 

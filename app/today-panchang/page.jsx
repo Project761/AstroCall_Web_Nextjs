@@ -1,20 +1,19 @@
 import TodayPanchangClient from './TodayPanchangClient';
+import PageSeoSchemas from '@/app/components/SEO/PageSeoSchemas';
+import { buildPageMetadata } from '@/app/lib/seo';
 
-// SEO Metadata for Next.js
-export const metadata = {
-    title: "Today's Panchang – Daily Hindu Calendar | AstroCall Live",
-    description: "Check today's Panchang on AstroCall Live. Get accurate daily Hindu calendar with Tithi, Nakshatra, Yoga, Karana, Rahu Kaal, and auspicious timings for every day.",
-    openGraph: {
-        title: "Today's Panchang – Daily Hindu Calendar | AstroCall Live",
-        description: "Check today's Panchang on AstroCall Live. Get accurate daily Hindu calendar with Tithi, Nakshatra, Yoga, Karana, Rahu Kaal, and auspicious timings for every day.",
-        url: "https://astrocall.live/today-panchang",
-        type: "website",
-    },
-    alternates: {
-        canonical: "https://astrocall.live/today-panchang",
-    },
-};
+const PATH = '/today-panchang';
+const TITLE = "Today's Panchang – Daily Hindu Calendar";
+const DESCRIPTION =
+  "Check today's Panchang on AstroCall. Accurate daily Hindu calendar with Tithi, Nakshatra, Yoga, Karana, Rahu Kaal, and auspicious timings for your city.";
+
+export const metadata = buildPageMetadata({ title: TITLE, description: DESCRIPTION, path: PATH });
 
 export default function TodayPanchang() {
-    return <TodayPanchangClient />;
+  return (
+    <>
+      <PageSeoSchemas title={TITLE} description={DESCRIPTION} path={PATH} breadcrumbLabel="Today's Panchang" />
+      <TodayPanchangClient />
+    </>
+  );
 }

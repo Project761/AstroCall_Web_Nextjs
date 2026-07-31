@@ -27,7 +27,7 @@ export default function ServicePageClient({
       items.map((item, index) => (
         <div className="main-container" key={index}>
           <div className="my-6 flex flex-col justify-center text-center">
-            <h1 className="text-3xl font-semibold">{item?.Category}</h1>
+            <h2 className="text-3xl font-semibold">{item?.Category}</h2>
             <div className="m-auto mt-1 h-[3px] w-[20%] rounded-full bg-primaryColor" />
           </div>
           <div className="paragraph px-2 md:px-6">
@@ -50,6 +50,7 @@ export default function ServicePageClient({
           currentPage={currentPage || heroTitle?.split("|")[0]?.trim() || heroTitle}
           title={heroTitle}
           subtitle={heroSubtitle}
+          backHref="/"
         />
         <div className="main-container py-5">{content}</div>
       </div>

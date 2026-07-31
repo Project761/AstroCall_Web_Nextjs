@@ -18,8 +18,6 @@ import Image from "next/image";
 
 const ORANGE = "#FF5C00";
 const GREEN = "#00A35C";
-const PURPLE = "#6D5DFB";
-const CREAM = "#FFF9F3";
 const BLUE = "#3B82F6";
 
 const TABS = ["About", "Expertise", "Reviews", "Ratings", "Availability", "Articles"];
@@ -28,6 +26,7 @@ export default function ChatAstrologerProfileClient() {
   const router = useRouter();
   const { loginUserData } = useMenuContext();
   const UserLoginId = typeof window !== "undefined" ? localStorage.getItem("UserLoginId") || "" : "";
+  const id = typeof window !== "undefined" ? sessionStorage.getItem("AstroIDCallChat") : null;
 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showInsufficientBalancePopup, setShowInsufficientBalancePopup] = useState(false);
@@ -54,7 +53,6 @@ export default function ChatAstrologerProfileClient() {
   useEffect(() => {
     (async () => {
       try {
-        const id = typeof window !== "undefined" ? sessionStorage.getItem("AstroIDCallChat") : null;
         if (id) {
           const res = await postWithToken("Astrologer/UserGetSingleData_Astrologer", { ID: id });
           if (res) setAstro((prev) => ({ ...prev, ...res }));
@@ -81,6 +79,30 @@ export default function ChatAstrologerProfileClient() {
 
   const skillTags = (data.Skills || "").split(",").map((s) => s.trim()).filter(Boolean);
   const EXPERTISE_LIST = skillTags.length ? skillTags : ["Vedic Astrology", "Kundli Analysis", "Vastu Shastra", "Career Guidance", "Marriage Prediction"];
+
+  const [allFeedback, setAllFeedback] = useState([]);
+
+
+  useEffect(() => {
+    if (!id && UserLoginId) return;
+    fetchFeedback();
+  }, [id, UserLoginId]);
+
+  const fetchFeedback = async () => {
+    const val = { AstroId: id, Status: "" };
+    try {
+      const res = await postWithToken("Feedback/GetData_Feedback", val);
+      console.log("Feedback response:", res);
+      if (res) {
+        setAllFeedback(res);
+      }
+    } catch (error) {
+      console.error("Failed to fetch feedback:", error);
+    }
+  };
+
+
+
   const REVIEWS = [
     { name: "Priya Sharma", time: "2 days ago", rating: 5, text: "Very accurate predictions. Helped me with career decisions. Highly recommended!" },
     { name: "Rohit Verma", time: "1 week ago", rating: 5, text: "Consulted for marriage problem and got amazing results. Thank you!" },
@@ -112,7 +134,7 @@ export default function ChatAstrologerProfileClient() {
 
   const startCall = () => {
     if (!UserLoginId) { setShowAuthModal(true); return; }
-    const price = parseFloat(data.CallPrice);
+    const price = parseFloat(data.PricePerMin);
     if (!checkBalance(price)) return;
     router.push(`/talk-to-astrologers/user-talk-home?AstroId=${astro?.ID}&Type=call&IsCall=${astro?.IsCall}`);
   };
@@ -143,12 +165,12 @@ export default function ChatAstrologerProfileClient() {
         </nav>
 
         {/* Hero */}
-        <section className="relative overflow-hidden rounded-2xl border border-orange-100/50 p-5 sm:p-6 md:p-8" style={{ backgroundColor: CREAM }}>
+        <section className="relative overflow-hidden rounded-2xl border border-orange-100/50 p-5 sm:p-6 md:p-8" style={{ backgroundColor: "#fdead9" }}>
           <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 opacity-20">
-            <Image src="/horoimg/1.png" alt="" fill className="object-contain object-right" sizes="400px" />
+            {/* <Image src="/horoimg/1.png" alt="" fill className="object-contain object-right" sizes="400px" /> */}
           </div>
           <div className="relative grid gap-6 lg:grid-cols-[auto_1fr_220px] lg:items-start">
-            <div className="relative mx-auto h-28 w-28 shrink-0 overflow-hidden rounded-full border-4 border-white shadow-lg ring-2 ring-orange-100 sm:h-32 sm:w-32 lg:mx-0">
+            <div className="relative mx-auto h-28 w-28 shrink-0 overflow-hidden rounded-full border-4 border-white shadow-lg ring-2 ring-orange-100 sm:h-52 sm:w-52 lg:mx-0">
               <Image src={avatarSrc} alt={data.DisplayName} fill className="object-cover" sizes="128px" priority />
             </div>
             <div className="text-center lg:text-left">
@@ -180,7 +202,7 @@ export default function ChatAstrologerProfileClient() {
             </div>
             <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
               <p className="mb-3 text-sm font-bold text-[#0F172A]">Available for</p>
-              {[{ icon: FaCommentDots, label: "Online Chat" }, { icon: FaPhoneAlt, label: "Voice Call" }, { icon: FaVideo, label: "Video Call" }].map(({ icon: Icon, label }) => (
+              {[{ icon: FaCommentDots, label: "Online Chat" }, { icon: FaPhoneAlt, label: "Voice Call" },].map(({ icon: Icon, label }) => (
                 <div key={label} className="mb-2 flex items-center gap-2 text-xs text-gray-600 last:mb-0">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-50 text-[#22C55E]"><Icon size={11} /></span>
                   {label}
@@ -198,9 +220,7 @@ export default function ChatAstrologerProfileClient() {
           <button type="button" onClick={startCall} className="flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90" style={{ backgroundColor: GREEN }}>
             <FaPhoneAlt size={13} /> Call Now <span className="text-xs opacity-90">₹{data.CallPrice}/min</span>
           </button>
-          <button type="button" className="flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90" style={{ backgroundColor: PURPLE }}>
-            <FaVideo size={14} /> Video Call <span className="text-xs opacity-90">₹{data.VideoPrice}/min</span>
-          </button>
+
           <button type="button" onClick={() => setIsFavorite(!isFavorite)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm">
             <FaHeart size={16} className={isFavorite ? "text-red-500" : "text-gray-300"} />
           </button>
@@ -245,20 +265,75 @@ export default function ChatAstrologerProfileClient() {
                 </div>
               )}
               {activeTab === "Reviews" && (
-                <div className="space-y-4">
-                  {REVIEWS.map((r) => (
-                    <div key={r.name} className="rounded-xl border border-gray-100 p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-[#FF5C00]">{r.name[0]}</div>
-                        <div>
-                          <p className="text-sm font-bold text-[#0F172A]">{r.name}</p>
-                          <p className="text-xs text-gray-400">{r.time}</p>
+                <div className="max-h-[500px] space-y-4 overflow-y-auto pr-2">
+                  {allFeedback?.length > 0 ? (
+                    allFeedback.map((review, index) => {
+                      const initials =
+                        review?.UserName
+                          ?.split(" ")
+                          .map((word) => word[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase() || "U";
+
+                      const rating = Number(review?.Rating || 4);
+
+                      return (
+                        <div
+                          key={review?.Id || index}
+                          className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:shadow-md"
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Avatar */}
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-[#FF5C00]">
+                              {initials}
+                            </div>
+
+                            {/* User Info */}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <div>
+                                  <h4 className="truncate text-sm font-semibold text-gray-900">
+                                    {review?.UserName || "Anonymous"}
+                                  </h4>
+
+                                  <p className="mt-0.5 text-xs text-gray-500">
+                                    {review?.CreatedTime || ""}
+                                  </p>
+                                </div>
+
+                                {/* Rating */}
+                                <div className="flex items-center gap-1">
+                                  {Array.from({ length: 5 }).map((_, i) => (
+                                    <FaStar
+                                      key={i}
+                                      size={13}
+                                      className={
+                                        i < rating
+                                          ? "text-[#FFB400]"
+                                          : "text-gray-300"
+                                      }
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Review */}
+                              <p className="mt-3 text-sm leading-6 text-gray-600">
+                                {review?.Comments || "No review available."}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="ml-auto flex text-[#FF5C00]">{Array.from({ length: r.rating }).map((_, i) => <FaStar key={i} size={10} />)}</div>
-                      </div>
-                      <p className="mt-2 text-sm text-gray-600">{r.text}</p>
+                      );
+                    })
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-gray-200 py-10 text-center">
+                      <p className="text-sm text-gray-500">
+                        No reviews available.
+                      </p>
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
               {activeTab === "Ratings" && (
@@ -341,7 +416,7 @@ export default function ChatAstrologerProfileClient() {
             <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
               <h3 className="text-sm font-bold text-[#0F172A]">Consultation Charges</h3>
               <div className="mt-3 space-y-3">
-                {[{ label: "Chat", price: data.PricePerMin }, { label: "Voice Call", price: data.CallPrice }, { label: "Video Call", price: data.VideoPrice }].map((c) => (
+                {[{ label: "Chat", price: data.PricePerMin }, { label: "Voice Call", price: data.CallPrice },].map((c) => (
                   <div key={c.label} className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">{c.label}</span>
                     <span className="font-bold text-[#0F172A]">₹{c.price}/min</span>

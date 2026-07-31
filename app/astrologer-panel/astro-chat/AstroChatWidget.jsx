@@ -1,18 +1,17 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import socketService from "@/app/services/socketService";
 import { useRouter } from "next/navigation";
-import { useMenuContext } from "@/app/hooks/useMenuContext";
+import { useMenuContext } from "@/app/hooks/useMenuContext";      
 import ChatKundliPopUp from "@/app/components/ChatKundliPopUp";
 import { CgAdd } from "react-icons/cg";
 import Image from "next/image";
 
 export default function AstroChatWidget() {
 
-  const AstroId = typeof window !== "undefined" ? localStorage.getItem("AstroLoginId") : "";
   const router = useRouter();
-
-  const { loginAstrologerData, astroParsedData, setAstroParsedData, setAstrologerToggleStatus, setAstroCheckEndedChat, callPopupData, setcallPopupData, AstroCalculateTime, setAstroCalculateTime } = useMenuContext();
+  const { loginAstrologerData, GetAstroLoginId, astroParsedData, setAstroParsedData, setAstrologerToggleStatus, setAstroCheckEndedChat, callPopupData, setcallPopupData, AstroCalculateTime, setAstroCalculateTime } = useMenuContext();
+  const AstroId = GetAstroLoginId || (typeof window !== "undefined" ? localStorage.getItem("AstroLoginId") : "");
 
   const [playSound, setPlaySound] = useState(false);
   const [isPopUPOpen, setIsPopupOpen] = useState(false);
@@ -27,7 +26,7 @@ export default function AstroChatWidget() {
 
   const handleAstroMessages = useCallback((messageData) => {
     const msg = messageData?.Message;
-console.log("📩 Received WebSocket message:", messageData);
+    console.log("📩 Received WebSocket message:", messageData);
     switch (msg) {
 
       // 🔥 NEW CHAT REQUEST
@@ -69,6 +68,7 @@ console.log("📩 Received WebSocket message:", messageData);
       case "Accepted":
         setAstroParsedData(messageData);
         setShowChatPopup(false);
+        setpopupAceept(false)
 
         // Update URL with channel ID
         if (messageData?.ChannelName) {
@@ -170,20 +170,22 @@ console.log("📩 Received WebSocket message:", messageData);
     }
   }, [router, setAstroCalculateTime, setAstroCheckEndedChat, setAstroParsedData, setAstrologerToggleStatus, setcallPopupData]);
 
+  const handleAstroMessagesRef = useRef(handleAstroMessages);
+  useEffect(() => {
+    handleAstroMessagesRef.current = handleAstroMessages;
+  }, [handleAstroMessages]);
+
   useEffect(() => {
     if (!AstroId) return;
 
-    socketService.connectAstro(AstroId);
-    socketService.setupVisibilityHandler(null, AstroId);
-
     const unsubscribe = socketService.addAstroListener((messageData) => {
-      handleAstroMessages(messageData);
+      handleAstroMessagesRef.current(messageData);
     });
 
     return () => {
       unsubscribe();
     };
-  }, [AstroId, handleAstroMessages]);
+  }, [AstroId]);
 
 
   const accept_Chat_Request = () => {
@@ -306,8 +308,9 @@ console.log("📩 Received WebSocket message:", messageData);
               {/* Buttons */}
               <div className="mt-4 flex gap-2">
                 {astroParsedData?.IsChatProgress === "1" ||
-                  astroParsedData?.IsChatProgress === 1 ||
-                  astroParsedData?.Message === "Accepted" ? (
+                  astroParsedData?.IsChatProgress === 1 
+                  // || astroParsedData?.Message === "Accepted"
+                   ? (
                   <button
                     onClick={HandleJoinChatUser}
                     className="w-full rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.02]"
@@ -411,10 +414,15 @@ console.log("📩 Received WebSocket message:", messageData);
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center max-w-sm w-full animate-fadeIn scale-100 z-10">
             <img
+              // src={
+              //   callPopupData?.ProfilePic
+              //     ? `https://${callPopupData?.ProfilePic?.replace(/\\/g, "/")}`
+              //     : profilepic
+              // }
               src={
                 callPopupData?.ProfilePic
-                  ? `https://${callPopupData?.ProfilePic?.replace(/\\/g, "/")}`
-                  : profilepic
+                  ? `https://${callPopupData.ProfilePic.replace(/\\/g, "/")}`
+                  : "/images/profile pic.webp"
               }
               className="h-20 w-20 rounded-full border-4 border-[#FF5C00] object-cover shadow-md"
             />
